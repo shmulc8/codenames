@@ -462,9 +462,10 @@ def coach_check():
     j = request.get_json(force=True)
     board = board_from(j)
     clue = j["clue"].strip()
-    # Legality is lemma-based (DictaBERT) by default — no LLM. The stricter shoresh/root gate
-    # (DictaLM) runs only when the client opts in, so the checker works fully offline.
-    illegal = probe.shares_lemma(clue, board)
+    # Legality (offline, no LLM): a clue is illegal if it is a board word / an inflection of one
+    # (DictaBERT lemma), or shares a root (Wiktionary lexicon) with a board word it is transparent
+    # to (fastText cosine). The optional DictaLM root-judge adds extra coverage on opt-in.
+    illegal = probe.shares_lemma(clue, board, enc=get_enc(GEO_ENC))
     if not illegal and j.get("use_llm"):
         illegal = bool(probe.llm_root_conflicts(get_llm(j.get("model")), [clue], board.words))
     read = _read_clue(board, clue)
