@@ -458,27 +458,33 @@ def encoder_spymaster(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas
 def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas=None,
                             n: int = 10, targets: list[str] | None = None,
                             lam_opp: float = 1.0, lam_neu: float = 0.3, lam_a: float = 2.0,
-                            lam_f: float = 0.0, vocab_freq=None, m: int = 2):
-    """Top-n legal clue candidates by the tiered mean-centred score, each with the
-    team words it would connect. Used to hand a Hybrid spymaster's LLM a vetted shortlist.
+                            lam_f: float = 0.0, vocab_freq=None, m: int = 2,
+                            safe_margin: float = 0.0):
+    """Top-n legal clue candidates, each with the team words it *safely* connects.
 
-    If `targets` (a subset of the team words) is given, every candidate is scored to
-    connect *all* of them (the "I want a clue for these specific words" path); otherwise
-    the score auto-selects the best-m team words per candidate."""
+    A team word counts toward a clue only if it is safe — its mean-centred similarity to the
+    clue beats every enemy/neutral/assassin word by `safe_margin`. The team term is the sum of
+    the top-m safe words, so the score credits only words a guesser would reach before any danger
+    word (a stretched m-th word an opponent outranks no longer inflates it), and the returned
+    `intended`/`count` are exactly those safe words. Larger `safe_margin` = more conservative
+    (the risk dial). `targets` forces a clue for a chosen team subset (the "clue for these words"
+    path): there all targets are scored, and safety only informs the tiered penalties."""
     bw, B, cand, keep, C = _legal_candidates(enc, board, clue_vocab, clue_emb, vocab_lemmas)
     adj = C @ B.T; adj = adj - adj.mean(1, keepdims=True)
     roles = np.array([board.role[w] for w in bw])
+    is_my = roles == "my"
     is_opp, is_neu, is_as = roles == "opp", roles == "neutral", roles == "assassin"
     def tmax(mask): return np.clip(adj[:, mask].max(1), 0, None) if mask.any() else np.zeros(len(cand))
+    enemy_ceiling = adj[:, ~is_my].max(1) if (~is_my).any() else np.full(len(cand), -1e9)
     fixed = bool(targets)
+    my_words = [w for w in targets if w in bw] if fixed else [w for w, mm in zip(bw, is_my) if mm]
+    my_cols = [bw.index(w) for w in my_words]
+    adj_my = adj[:, my_cols] if my_cols else np.zeros((len(cand), 0), np.float32)
+    safe = adj_my > (enemy_ceiling[:, None] + safe_margin)     # beats every enemy word by margin
     if fixed:
-        my_words = [w for w in targets if w in bw]
-        adj_my = adj[:, [bw.index(w) for w in my_words]]
-        g_team = adj_my.sum(1)                                  # connect ALL chosen targets
-    else:
-        my_words = [w for w, mm in zip(bw, roles == "my") if mm]
-        adj_my = adj[:, roles == "my"]
-        g_team = np.sort(adj_my, 1)[:, ::-1][:, :m].sum(1)      # best-m team words
+        g_team = adj_my.sum(1)                                 # honour the user's chosen targets
+    else:                                                      # sum of the top-m *safe* team words
+        g_team = np.sort(np.where(safe, adj_my, 0.0), 1)[:, ::-1][:, :m].sum(1)
     g = g_team - lam_a * tmax(is_as) - lam_opp * tmax(is_opp) - lam_neu * tmax(is_neu)
     if vocab_freq is not None and lam_f:
         g = g + lam_f * np.asarray(vocab_freq, dtype=np.float32)[keep]
@@ -487,53 +493,10 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
         if fixed:
             tg = my_words
         else:
-            om = np.argsort(-adj_my[bi])
-            tg = [my_words[j] for j in om if adj_my[bi, j] > 0.05][:3] or [my_words[int(om[0])]]
-        out.append({"word": cand[int(bi)], "intended": tg, "count": len(tg), "score": float(g[bi])})
-    return out
-
-
-def encoder_clue_candidates_wide(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas=None,
-                                 n: int = 10, lam_opp: float = 1.0, lam_neu: float = 0.3,
-                                 lam_a: float = 2.0, lam_f: float = 0.0, vocab_freq=None,
-                                 cohesion_floor: float = 0.20, tight_w: float = 0.5):
-    """Clue candidates scored to **cover the widest tight cluster**, not the top-m words.
-
-    For each clue the team coverage term is the size of the team subset that is both *safe*
-    (each word ranks above every enemy word for this clue) and *cohesive* (each coheres with
-    the cluster head — the strongest safe team word — at cosine >= `cohesion_floor`, the same
-    head-cohesion the served count uses). A tightness bonus breaks ties toward denser clusters.
-    This makes a clue that safely+tightly connects 4 team words outrank one that connects 2 —
-    turning cohesion from a defensive trim into the generation objective, so genuine 3-4 word
-    clues surface. The cluster size is the adaptive `m` (no fixed target size)."""
-    bw, B, cand, keep, C = _legal_candidates(enc, board, clue_vocab, clue_emb, vocab_lemmas)
-    adj = C @ B.T; adj = adj - adj.mean(1, keepdims=True)          # mean-centred clue↔board
-    roles = np.array([board.role[w] for w in bw])
-    is_my, is_as = roles == "my", roles == "assassin"
-    is_opp, is_neu = roles == "opp", roles == "neutral"
-    def tmax(mk): return np.clip(adj[:, mk].max(1), 0, None) if mk.any() else np.zeros(len(cand))
-
-    my_idx = np.where(is_my)[0]
-    my_words = [bw[j] for j in my_idx]
-    adj_my = adj[:, my_idx]                                        # (V, n_my)
-    Bn = B / (np.linalg.norm(B, axis=1, keepdims=True) + 1e-9)
-    T = (Bn @ Bn.T)[np.ix_(my_idx, my_idx)]                       # (n_my, n_my) RAW team↔team cosine
-    enemy_ceiling = adj[:, ~is_my].max(1) if (~is_my).any() else np.full(len(cand), -1e9)
-    safe = adj_my > enemy_ceiling[:, None]                        # (V, n_my) above every enemy
-    head = adj_my.argmax(1)                                       # (V,) strongest team word
-    T_head = T[head]                                              # (V, n_my) cohesion to the head
-    cluster = safe & (T_head >= cohesion_floor)                  # safe AND coheres with head
-    size = cluster.sum(1).astype(np.float32)                      # (V,) adaptive cluster size
-    tight = (T_head * cluster).sum(1) / np.maximum(size, 1)       # mean cohesion within cluster
-
-    g = size + tight_w * tight - lam_a * tmax(is_as) - lam_opp * tmax(is_opp) - lam_neu * tmax(is_neu)
-    if vocab_freq is not None and lam_f:
-        g = g + lam_f * np.asarray(vocab_freq, dtype=np.float32)[keep]
-
-    out = []
-    for bi in np.argsort(-g)[:n]:
-        cl = np.where(cluster[bi])[0]
-        tg = [my_words[j] for j in cl[np.argsort(-adj_my[bi, cl])]] or [my_words[int(adj_my[bi].argmax())]]
+            order = [j for j in np.argsort(-adj_my[bi]) if safe[bi, j]][:m]
+            if not order and adj_my.shape[1]:
+                order = [int(np.argmax(adj_my[bi]))]           # nothing clears the bar: best single word
+            tg = [my_words[j] for j in order]
         out.append({"word": cand[int(bi)], "intended": tg, "count": len(tg), "score": float(g[bi])})
     return out
 

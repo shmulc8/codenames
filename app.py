@@ -48,12 +48,13 @@ SECOND_OPINION = os.environ.get("SECOND_OPINION", "1").lower() not in ("0", "fal
 # how hard to avoid enemy/neutral/assassin words (lam_*). Cautious only plays rock-solid
 # clues (and refuses more); bold reaches for more words and tolerates a tighter enemy.
 RISK_PROFILES = {
-    "cautious": dict(m=2, lam_a=3.0, lam_opp=1.5, lam_neu=0.5, keep=0.68),
-    "balanced": dict(m=2, lam_a=2.0, lam_opp=1.0, lam_neu=0.3, keep=0.55),
-    "bold":     dict(m=3, lam_a=1.5, lam_opp=0.7, lam_neu=0.2, keep=0.45),
+    "cautious": dict(m=2, lam_a=3.0, lam_opp=1.5, lam_neu=0.5, keep=0.68, safe_margin=0.05),
+    "balanced": dict(m=3, lam_a=2.0, lam_opp=1.0, lam_neu=0.3, keep=0.55, safe_margin=0.02),
+    "bold":     dict(m=4, lam_a=1.5, lam_opp=0.7, lam_neu=0.2, keep=0.45, safe_margin=0.0),
 }
-# Which keys parameterise candidate generation vs. the count-trim threshold.
-_CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu")
+# Which keys parameterise candidate generation vs. the count-trim threshold. safe_margin is the
+# real risk dial: how far a team word must outrank every enemy word to count toward a clue.
+_CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu", "safe_margin")
 
 # Cohesion: a counted word must cohere (cosine >= COH_FLOOR) with the cluster's *head* (strongest)
 # word, not merely with the clue — so the number reflects a real cluster, not passengers riding
@@ -428,7 +429,7 @@ def coach_spymaster():
     else:
         vocab, emb, lems, freq = geo_assets()
         cands = probe.encoder_clue_candidates(get_enc(GEO_ENC), board, vocab, emb,
-                                              vocab_lemmas=lems, vocab_freq=freq, lam_f=0.15,
+                                              vocab_lemmas=lems, vocab_freq=freq, lam_f=0.05,
                                               n=10, targets=focus, **cand_kw)
         if engine == "hybrid":     # shoresh/derivative gate (DictaLM); geometry stays LLM-free
             bad = probe.llm_root_conflicts(get_llm(mid), [c["word"] for c in cands], board.words)
