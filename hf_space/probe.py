@@ -126,6 +126,9 @@ class FastTextEncoder:
         self._m = fasttext.load_model(path)
 
     def embed(self, words) -> np.ndarray:
+        words = list(words)
+        if not words:
+            return np.zeros((0, self._m.get_dimension()), np.float32)
         V = np.stack([self._m.get_word_vector(w) for w in words]).astype(np.float32)
         V /= (np.linalg.norm(V, axis=1, keepdims=True) + 1e-9)
         return V
@@ -141,6 +144,9 @@ class CompressedFastTextEncoder:
         self._m = compress_fasttext.models.CompressedFastTextKeyedVectors.load(path)
 
     def embed(self, words) -> np.ndarray:
+        words = list(words)
+        if not words:
+            return np.zeros((0, self._m.vector_size), np.float32)
         V = np.stack([self._m[w] for w in words]).astype(np.float32)
         V /= (np.linalg.norm(V, axis=1, keepdims=True) + 1e-9)
         return V
@@ -614,9 +620,11 @@ def llm_guess_ranking(llm: HebrewLLM, board: Board, clue: str) -> list[str]:
 ROOT_TRANSPARENCY_THETA = 0.30
 
 
-def forbidden_lemmas(board: "Board") -> set[str]:
-    """The board words plus their lemmas — a clue equal to any of these is illegal."""
-    return set(board.words) | set(morph.lemmas(board.words))
+def forbidden_lemmas(board: "Board", lemmas=None) -> set[str]:
+    """The board words plus their lemmas — a clue equal to any of these is illegal. Pass
+    precomputed `lemmas` (aligned with board.words) to avoid re-lemmatising the board."""
+    lems = morph.lemmas(board.words) if lemmas is None else lemmas
+    return set(board.words) | set(lems)
 
 
 def _root_conflict(sig: str, board_sigs) -> bool:
@@ -634,10 +642,11 @@ def _root_conflict(sig: str, board_sigs) -> bool:
     return False
 
 
-def _board_root_signals(board: "Board"):
+def _board_root_signals(board: "Board", lemmas=None):
     """Per board word, the pair (lexicon root set, root_sig fallback string). The root set
-    unions the word's and its lemma's lexicon roots; the sig backs the OOV fallback compare."""
-    lems = morph.lemmas(board.words)
+    unions the word's and its lemma's lexicon roots; the sig backs the OOV fallback compare.
+    Pass precomputed `lemmas` (aligned with board.words) to avoid re-lemmatising the board."""
+    lems = morph.lemmas(board.words) if lemmas is None else lemmas
     return [(morph.roots(w) | morph.roots(lem), morph.root_sig(lem))
             for w, lem in zip(board.words, lems)]
 
@@ -655,15 +664,17 @@ def legal_vocab_mask(clue_vocab, vocab_lemmas, board, cos, theta: float = ROOT_T
     cosine matrix (= C @ B.T for L2-normalised encoders). A candidate is illegal if it (or its
     lemma) is a board word/lemma, or if it shares a root with a board word it is transparent to
     (cosine >= theta). Root work runs only for candidates transparent to some board word."""
-    forbidden = forbidden_lemmas(board)
-    signals = _board_root_signals(board)
+    board_lems = morph.lemmas(board.words)                       # lemmatise the board once
+    forbidden = forbidden_lemmas(board, board_lems)
+    signals = _board_root_signals(board, board_lems)
+    hotmask = cos >= theta                                       # (V, n_board) transparent pairs
     out = []
     for i, (c, clem) in enumerate(zip(clue_vocab, vocab_lemmas)):
         if c in forbidden or clem in forbidden:
             out.append(False)
             continue
-        hot = np.where(cos[i] >= theta)[0]           # board words this clue is transparent to
-        if len(hot) == 0:
+        hot = np.flatnonzero(hotmask[i])             # board words this clue is transparent to
+        if hot.size == 0:
             out.append(True)
             continue
         crs = morph.roots(c) | morph.roots(clem)
@@ -672,17 +683,30 @@ def legal_vocab_mask(clue_vocab, vocab_lemmas, board, cos, theta: float = ROOT_T
     return out
 
 
+_LEGAL_KEEP_CACHE: dict = {}          # (encoder, vocab size, board words) -> legal keep indices
+_LEGAL_KEEP_CACHE_MAX = 64
+
+
 def _legal_candidates(enc, board: "Board", clue_vocab, clue_emb=None, vocab_lemmas=None):
     """Embed the vocab + board, drop illegal clues (composite root + cosine gate), and return
     (board_words, B, kept_candidates, keep_indices, C_kept). Encoders return L2-normalised
-    vectors, so C @ B.T is the cosine used by both the legality gate and the scorer."""
+    vectors, so C @ B.T is the cosine used by both the legality gate and the scorer.
+
+    Legality depends only on the board words (given a fixed vocab + encoder), so the kept-index
+    set is cached per board — repeated risk/focus toggles on one board skip the lemma+mask pass."""
     bw = board.words
-    if vocab_lemmas is None:
-        vocab_lemmas = morph.lemmas(clue_vocab)
     Cfull = enc.embed(clue_vocab) if clue_emb is None else clue_emb
     B = enc.embed(bw)
-    mask = legal_vocab_mask(clue_vocab, vocab_lemmas, board, Cfull @ B.T)
-    keep = [i for i, k in enumerate(mask) if k]
+    key = (getattr(enc, "model_id", ""), len(clue_vocab), tuple(bw))
+    keep = _LEGAL_KEEP_CACHE.get(key)
+    if keep is None:
+        if vocab_lemmas is None:
+            vocab_lemmas = morph.lemmas(clue_vocab)
+        mask = legal_vocab_mask(clue_vocab, vocab_lemmas, board, Cfull @ B.T)
+        keep = [i for i, k in enumerate(mask) if k]
+        if len(_LEGAL_KEEP_CACHE) >= _LEGAL_KEEP_CACHE_MAX:
+            _LEGAL_KEEP_CACHE.clear()
+        _LEGAL_KEEP_CACHE[key] = keep
     cand = [clue_vocab[i] for i in keep]
     return bw, B, cand, keep, Cfull[keep]
 
@@ -691,13 +715,14 @@ def shares_lemma(clue: str, board: "Board", enc=None, theta: float = ROOT_TRANSP
     """Single-clue legality (the coach 'is my clue legal?' check). Illegal if the clue/its lemma
     is a board word/lemma, or it shares a root with a board word it is transparent to. Without an
     encoder the transparency gate cannot run, so any shared root is treated as illegal (strict)."""
-    forbidden = forbidden_lemmas(board)
+    board_lems = morph.lemmas(board.words)                       # lemmatise the board once
+    forbidden = forbidden_lemmas(board, board_lems)
     lem = morph.lemma(clue)
     if clue in forbidden or lem in forbidden:
         return True
     crs = morph.roots(clue) | morph.roots(lem)
     csig = morph.root_sig(lem)
-    shared = [j for j, sig in enumerate(_board_root_signals(board))
+    shared = [j for j, sig in enumerate(_board_root_signals(board, board_lems))
               if _shares_root(crs, csig, *sig)]
     if not shared:
         return False
