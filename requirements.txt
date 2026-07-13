@@ -1,0 +1,13 @@
+flask>=3
+numpy>=1.24
+fasttext-wheel>=0.9.2
+# transformers pinned <5 — NeoDictaBERT emits NaN embeddings on 5.x
+transformers>=4.44,<5
+torch>=2.2
+sentence-transformers>=3.0
+huggingface_hub>=0.24
+# Apple-Silicon only — local DictaLM 3.0 spymaster/guesser (OPTIONAL; the fastText
+# geometry engine is the default and needs none of this).
+mlx-lm>=0.16 ; platform_system == "Darwin"
+# notebook for the alignment probe (optional)
+jupyterlab

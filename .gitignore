@@ -1,0 +1,13 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Large fastText model artifacts (hundreds of MB; downloaded or generated, see SETUP.md)
+data/cc.he.300.*
+hf_space/data/cc.he.300.*
+
+# OS
+.DS_Store

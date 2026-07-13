@@ -1,0 +1,468 @@
+<title>שם קוד · Hebrew Codenames — humans & engines</title>
+<meta name="description" content="Play Hebrew Codenames: any seat (spymaster or operative, either team) can be you, a fastText/EmbeddingGemma embedding engine, or DictaLM 3.0 (run locally). Cross-engine by default — same engine on both ends is trivial cooperation.">
+<style>
+  :root{
+    --bg1:#0f172a; --bg2:#334155; --panel:rgba(51,65,85,.55); --panel2:rgba(30,41,59,.7);
+    --line:rgba(148,163,184,.22); --ink:#e8edf4; --muted:#9aa6b8; --faint:#6b7689;
+    --blue:#2f74ad; --blue-deep:#1d4e78; --red:#bb3b54; --red-deep:#8f2c41;
+    --sand:#d7ccb2; --black:#101218; --amber:#e0a44b; --good:#5fbf86;
+    --heb:"Arial Hebrew","Noto Sans Hebrew","Heebo",system-ui,sans-serif;
+    --ui:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;color:var(--ink);font-family:var(--ui);
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));min-height:100vh}
+  .wrap{display:grid;grid-template-columns:1fr 366px;min-height:100vh}
+  @media (max-width:920px){.wrap{grid-template-columns:1fr}}
+
+  .left{display:flex;flex-direction:column;align-items:center;gap:18px;padding:22px 22px 30px}
+  .masthead{width:100%;max-width:680px;display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .masthead h1{margin:0;font-family:var(--heb);font-size:26px;font-weight:700;letter-spacing:.01em}
+  .masthead .en{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+
+  .scoreboard{width:100%;max-width:680px;border:1px solid var(--line);border-radius:14px;
+    background:var(--panel);backdrop-filter:blur(8px);box-shadow:0 12px 40px #0005;overflow:hidden}
+  .sb-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px}
+  .team{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .team.blue{align-items:flex-start}.team.red{align-items:flex-end}
+  .pill{display:inline-flex;align-items:center;gap:7px;border-radius:11px;padding:4px 9px;font-size:12px;font-weight:600;max-width:165px}
+  .pill.blue{background:rgba(47,116,173,.5);color:#dceafa}
+  .pill.red{background:rgba(187,59,84,.5);color:#fbe0e7}
+  .pill.on{outline:2px solid #fff;outline-offset:0}
+  .pill .av{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;background:#0b1220cc;flex:none}
+  .pill .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .score{display:flex;align-items:center;gap:14px;font-variant-numeric:tabular-nums}
+  .score .n{font-size:30px;font-weight:800;line-height:1}
+  .score .n.blue{color:#7fb2e3}.score .n.red{color:#e8909f}
+  .score .sep{color:var(--faint);font-size:18px}
+  .cluebar{padding:9px 16px;text-align:center;font-family:var(--heb);font-size:15px;font-weight:700;background:rgba(215,204,178,.92);color:#1f2937}
+  .cluebar .num{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:50%;background:#1f2937;color:#f8fafc;font-size:12px;margin-inline-start:6px;vertical-align:middle}
+  .cluebar.idle{background:rgba(15,23,42,.5);color:var(--muted);font-family:var(--ui);font-size:12px;font-weight:500}
+
+  .humanbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:9px 16px;border-top:1px solid var(--line);background:rgba(15,23,42,.55);direction:rtl}
+  .humanbar[hidden]{display:none}
+  .humanbar input{flex:1;min-width:0;background:#0f172a;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-family:var(--heb);font-size:15px}
+  .humanbar input:focus-visible,.humanbar select:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+  .humanbar select{background:#0f172a;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px}
+  .humanbar .hmsg{font-size:11.5px;color:#e8909f;font-family:var(--heb)}
+  .humanbar[data-mode=spy] .hb-op{display:none}
+  .humanbar[data-mode=op] .hb-spy{display:none}
+  .hb-spy{display:flex;align-items:center;flex-wrap:wrap;gap:8px;flex:1}
+  .hb-op{display:flex;align-items:center;gap:8px;flex:1;justify-content:space-between}
+  #hleft{font-family:var(--heb);font-size:14px;color:var(--ink)}
+
+  .board{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;width:100%;max-width:680px}
+  .card{position:relative;aspect-ratio:5/3.1;border-radius:10px;display:grid;place-items:center;padding:4px;
+    box-shadow:0 2px 5px #0006, inset 0 1px 0 #ffffff14;transition:transform .12s,filter .2s,box-shadow .2s;overflow:hidden;isolation:isolate}
+  .card .w{font-family:var(--heb);font-weight:700;text-align:center;z-index:2;line-height:1.05;font-size:clamp(12px,1.55vw,19px)}
+  .card.blue{background:linear-gradient(160deg,var(--blue),var(--blue-deep))}
+  .card.red{background:linear-gradient(160deg,var(--red),var(--red-deep))}
+  .card.neutral{background:linear-gradient(160deg,#e2d8bf,var(--sand))}
+  .card.black{background:linear-gradient(160deg,#23252e,var(--black));outline:1px solid #cf60564d}
+  .card.blue .w,.card.red .w,.card.black .w{color:#f3f7fc}
+  .card.neutral .w{color:#2b2519}
+  .card.unrevealed{filter:saturate(.62) brightness(.96)}
+  .card.unrevealed::after{content:"";position:absolute;inset:0;background:#0b1220;opacity:.30;z-index:1}
+  .card.revealed::before{content:"";position:absolute;inset:0;z-index:1;background:repeating-linear-gradient(45deg,#0000 0 7px,#00000022 7px 9px)}
+  .card.revealed .tick{position:absolute;top:3px;inset-inline-end:5px;z-index:3;font-size:11px;color:#ffffffcc}
+  .card.black.revealed .skull{position:absolute;inset:0;display:grid;place-items:center;font-size:26px;z-index:3}
+  .card.clickable{cursor:pointer}
+  .card.clickable:hover{transform:scale(1.05);box-shadow:0 0 0 2px var(--amber),0 5px 16px #0007}
+  .card.sel-connect{outline:3px solid var(--good)}
+  .card.sel-avoid{outline:3px solid var(--red)}
+  .card .badge{position:absolute;top:3px;inset-inline-start:5px;z-index:4;font-size:13px;font-weight:800}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%;margin-top:2px}
+  .chip{font-family:var(--heb);font-size:14px;font-weight:700;border:1px solid #7a5e2e;background:#1f2433;color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .chip:hover{border-color:var(--amber);background:#262c3d}
+  .chip .sc{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .chip .dot{width:7px;height:7px;border-radius:50%}
+  .hint-sel{font-size:11.5px;color:var(--faint);flex-basis:100%;font-family:var(--heb)}
+  .card.guess{animation:pop .5s ease}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.07)}100%{transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){.card{transition:none}.card.guess{animation:none}}
+
+  .controls{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;width:100%;max-width:680px}
+  .btn{appearance:none;border:1px solid var(--line);background:#1e293b;color:var(--ink);font-family:var(--ui);font-size:13px;font-weight:600;padding:9px 15px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:border-color .15s,background .15s}
+  .btn:hover{border-color:#64748b}
+  .btn.primary{background:#e2e8f0;color:#0f172a;border-color:#e2e8f0}
+  .btn.primary:hover{background:#fff}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .seats{width:100%;max-width:680px;display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;border:1px solid var(--line);border-radius:12px;padding:13px 16px;background:var(--panel2)}
+  .seat{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .seat .lab{min-width:104px;font-weight:600}
+  .seat .lab.blue{color:#7fb2e3}.seat .lab.red{color:#e8909f}
+  .seat select{flex:1;min-width:0;background:#0f172a;color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px 6px;font-family:var(--ui);font-size:12px}
+  .enginfo{width:100%;max-width:680px;font-size:11.5px;color:var(--faint);text-align:center;line-height:1.5}
+  .enginfo b{color:var(--muted)}
+
+  .log{border-inline-start:1px solid var(--line);background:rgba(15,23,42,.45);backdrop-filter:blur(6px);padding:16px 16px 40px;overflow-y:auto;max-height:100vh}
+  @media (max-width:920px){.log{max-height:none;border-inline-start:0;border-top:1px solid var(--line)}}
+  .log h2{margin:2px 0 12px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .msg{border-radius:10px;padding:9px 11px;margin-bottom:9px;border:1px solid var(--line);background:#1e293b66}
+  .msg.blue{border-inline-start:3px solid var(--blue)}
+  .msg.red{border-inline-start:3px solid var(--red)}
+  .msg.sys{border:0;background:none;text-align:center;color:var(--faint);font-size:11.5px;letter-spacing:.04em;padding:4px;margin:2px 0}
+  .msg .who{display:flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .msg .who .eng{margin-inline-start:auto;color:var(--faint);text-transform:none;letter-spacing:0}
+  .msg .clue{font-family:var(--heb);font-size:19px;font-weight:700}
+  .msg .clue .num{font-size:13px;color:var(--muted);font-weight:600;margin-inline-start:8px}
+  .msg .guesses{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .gw{font-family:var(--heb);font-size:13px;border-radius:6px;padding:1px 7px;font-weight:600}
+  .gw.ok{background:rgba(95,191,134,.22);color:#bff0d2;border:1px solid #5fbf8655}
+  .gw.bad{background:rgba(187,59,84,.22);color:#f4c3cd;border:1px solid #bb3b5455}
+  .winner{margin:10px 2px;text-align:center;font-weight:800;font-size:16px}
+</style>
+
+<div class="wrap">
+  <main class="left">
+    <div class="masthead"><h1>שם קוד</h1><span class="en">humans & engines · latent space</span></div>
+
+    <div class="scoreboard">
+      <div class="sb-row">
+        <div class="team blue"><span class="pill blue" id="p-blue-spymaster"></span><span class="pill blue" id="p-blue-operative"></span></div>
+        <div class="score"><span class="n blue" id="s-blue">8</span><span class="sep">·</span><span class="n red" id="s-red">9</span></div>
+        <div class="team red"><span class="pill red" id="p-red-spymaster"></span><span class="pill red" id="p-red-operative"></span></div>
+      </div>
+      <div class="cluebar idle" id="cluebar">לחץ "משחק חדש" כדי להתחיל</div>
+      <div class="humanbar" id="humanbar" hidden>
+        <div class="hb-spy">
+          <input id="hclue" placeholder="הקלד רמז — או סמן מילים בלוח" autocomplete="off">
+          <select id="hnum" aria-label="מספר"></select>
+          <button class="btn" id="hgive">תן רמז</button>
+          <select id="hhelper" aria-label="מנוע הצעות"></select>
+          <span class="hmsg" id="hmsg"></span>
+          <div class="chips" id="hsugg"></div>
+        </div>
+        <div class="hb-op">
+          <span id="hleft"></span>
+          <button class="btn" id="hend">סיים תור</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="controls">
+      <button class="btn primary" id="newgame">♺ משחק חדש</button>
+      <button class="btn" id="play">▶ הרץ</button>
+      <button class="btn" id="step">⤼ צעד</button>
+      <button class="btn" id="helper">💡 עוזר רמזים</button>
+    </div>
+
+    <div class="seats">
+      <div class="seat"><span class="lab blue">כחול · רב מרגלים</span><select data-seat="blue.spymaster"></select></div>
+      <div class="seat"><span class="lab blue">כחול · מנחש</span><select data-seat="blue.operative"></select></div>
+      <div class="seat"><span class="lab red">אדום · רב מרגלים</span><select data-seat="red.spymaster"></select></div>
+      <div class="seat"><span class="lab red">אדום · מנחש</span><select data-seat="red.operative"></select></div>
+    </div>
+    <p class="enginfo" id="enginfo"></p>
+  </main>
+
+  <aside class="log"><h2>Game log</h2><div id="log-body"></div></aside>
+</div>
+
+<script>const DATA = __DATA__;</script>
+<script>
+"use strict";
+(function(){
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const words=DATA.words, clueWords=DATA.clue_words, nDeck=words.length, nClue=clueWords.length;
+
+  // ---------- decode baked geometry engines ----------
+  function b64ToInt8(b){const s=atob(b),n=s.length,a=new Int8Array(n);for(let i=0;i<n;i++)a[i]=(s.charCodeAt(i)<<24)>>24;return a;}
+  function norms(a,n,dim){const o=new Float32Array(n);for(let i=0;i<n;i++){let s=0,b=i*dim;for(let d=0;d<dim;d++){const v=a[b+d];s+=v*v;}o[i]=Math.sqrt(s)||1;}return o;}
+  const GEO={};
+  for(const k in DATA.engines){const e=DATA.engines[k],dim=e.dim,dV=b64ToInt8(e.deck_b64),cV=b64ToInt8(e.clue_b64);
+    GEO[k]={dim,deckV:dV,clueV:cV,deckN:norms(dV,nDeck,dim),clueN:norms(cV,nClue,dim)};}
+  function cosCD(k,ci,di){const g=GEO[k],dim=g.dim;let s=0,a=ci*dim,b=di*dim;for(let d=0;d<dim;d++)s+=g.clueV[a+d]*g.deckV[b+d];return s/(g.clueN[ci]*g.deckN[di]);}
+
+  // ---------- legality (mirror probe._shares_surface) ----------
+  const PARTICLES=new Set("הובכלמש"), SUF=["ים","ות","יה","ה","ת","י","ן"];
+  function stem(w){for(const s of SUF){if(w.length>s.length+1&&w.endsWith(s))return w.slice(0,-s.length);}return w;}
+  function illegal(clue,bw){const cs=stem(clue);for(const w of bw){if(clue===w)return true;
+    if(clue.length===w.length+1&&clue.slice(1)===w&&PARTICLES.has(clue[0]))return true;
+    if(w.length>=4&&clue.includes(w))return true; if(clue.length>=4&&w.includes(clue))return true;
+    if(cs.length>=3&&cs===stem(w))return true;} return false;}
+  function idxOf(w){const i=clueWords.indexOf(w);return i>=0?i:null;}
+
+  // ---------- engines ----------
+  const LABEL={fasttext:"fastText",embeddinggemma:"EmbeddingGemma",neodictabert:"NeoDictaBERT","qwen3-embed":"Qwen3"};
+  const geoKeys=Object.keys(GEO);
+  let ENGINES=[{id:"human",kind:"human",label:"אתה (אנושי)",short:"אתה",av:"🧑"}]
+    .concat(geoKeys.map(k=>({id:k,kind:"geo",label:(LABEL[k]||k)+" · בדפדפן",short:LABEL[k]||k,av:k==="fasttext"?"▦":"◈"})));
+  let serverUp=false;
+  const engById=id=>ENGINES.find(e=>e.id===id)||ENGINES[1]||ENGINES[0];
+
+  // ---------- geometry spymaster (neighbor candidates + mean-centring + tiers) ----------
+  function geoSpymaster(k, team, st){
+    const live=[]; for(let i=0;i<st.cards.length;i++) if(!st.cards[i].revealed) live.push(i);
+    const bIdx=live.map(i=>st.cards[i].deck), bRole=live.map(i=>st.cards[i].color), bWords=bIdx.map(d=>words[d]);
+    const own=live.filter(i=>st.cards[i].color===team).map(i=>st.cards[i].deck);
+    if(!own.length) return null;
+    const K=22, cand=new Set();
+    for(const od of own){const arr=[];for(let c=0;c<nClue;c++)arr.push([c,cosCD(k,c,od)]);arr.sort((a,b)=>b[1]-a[1]);for(let t=0;t<K;t++)cand.add(arr[t][0]);}
+    let best=null;
+    for(const c of cand){
+      if(illegal(clueWords[c],bWords))continue;
+      let mu=0;const adj=new Array(bIdx.length);
+      for(let j=0;j<bIdx.length;j++){const v=cosCD(k,c,bIdx[j]);adj[j]=v;mu+=v;} mu/=bIdx.length;
+      const mine=[];let mAss=0,mOpp=0,mNeu=0;
+      for(let j=0;j<bIdx.length;j++){const a=adj[j]-mu,r=bRole[j];
+        if(r===team)mine.push([bIdx[j],a]); else if(r==="black"){if(a>mAss)mAss=a;}
+        else if(r!=="neutral"){if(a>mOpp)mOpp=a;} else if(a>mNeu)mNeu=a;}
+      if(!mine.length)continue; mine.sort((a,b)=>b[1]-a[1]);
+      const g=(mine[0][1]+(mine[1]?mine[1][1]:0))-2.0*Math.max(mAss,0)-1.0*Math.max(mOpp,0)-0.3*Math.max(mNeu,0);
+      if(!best||g>best.g)best={g,c,mine};
+    }
+    if(!best)return null;
+    const tg=best.mine.filter(p=>p[1]>0.05).slice(0,3); if(!tg.length)tg.push(best.mine[0]);
+    return {word:clueWords[best.c],idx:best.c,number:tg.length,intended:tg.map(p=>words[p[0]])};
+  }
+  function geoRank(k, st){ if(st.clue.idx==null)return null;
+    const live=[]; for(let i=0;i<st.cards.length;i++) if(!st.cards[i].revealed) live.push(i);
+    return live.map(i=>[i,cosCD(k,st.clue.idx,st.cards[i].deck)]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]); }
+
+  // ---------- server engines ----------
+  async function api(path,body){const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});if(!r.ok)throw new Error("http");return r.json();}
+  function payloadRoles(st){return Object.fromEntries(st.cards.map(c=>[words[c.deck], c.color==="black"?"assassin":c.color==="neutral"?"neutral":c.color===st.turn?"my":"opp"]));}
+
+  // ---------- state ----------
+  const RED=9,BLUE=8;
+  let st=null, playing=false, timer=null, helperOn=false;
+  const A=geoKeys[0]||"human", B=geoKeys[1]||geoKeys[0]||"human";
+  const SEATS={blue:{spymaster:A,operative:B},red:{spymaster:B,operative:A}};   // cross-engine default
+
+  function newGame(){
+    const picks=[],taken=new Set();
+    while(picks.length<25){const r=Math.floor(Math.random()*nDeck);if(!taken.has(r)){taken.add(r);picks.push(r);}}
+    const colors=[].concat(Array(RED).fill("red"),Array(BLUE).fill("blue"),Array(7).fill("neutral"),["black"]);
+    for(let i=colors.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[colors[i],colors[j]]=[colors[j],colors[i]];}
+    st={cards:picks.map((d,i)=>({deck:d,color:colors[i],revealed:false})),turn:"red",role:"spymaster",
+        clue:null,opRank:null,opGuessed:0,remaining:{red:RED,blue:BLUE},winner:null,await:null,sel:{}};
+    clearLog(); pushLog({sys:`לוח חדש · אדום מתחיל (${RED}–${BLUE})`}); render();
+  }
+  function endTurn(){st.turn=st.turn==="red"?"blue":"red";st.role="spymaster";st.clue=null;st.opRank=null;st.opGuessed=0;st.await=null;}
+
+  // ---------- one guess (shared by engine & human operatives) ----------
+  function applyGuess(i){
+    const card=st.cards[i]; if(card.revealed) return "skip";
+    card.revealed=true; card.justGuessed=true; st.opGuessed++;
+    const team=st.turn, correct=card.color===team;
+    appendGuess(team, words[card.deck], correct);
+    if(card.color==="black"){st.winner=team==="red"?"blue":"red"; return "win";}
+    if(card.color==="red"||card.color==="blue"){st.remaining[card.color]--; if(st.remaining[card.color]<=0){st.winner=card.color; return "win";}}
+    if(!correct) return "end";
+    if(st.opGuessed>=st.clue.number) return "end";
+    return "continue";
+  }
+
+  // ---------- a single move; returns {waiting} if it's a human's turn ----------
+  async function step(){
+    if(!st||st.winner) return {};
+    const team=st.turn, eng=engById(SEATS[team][st.role]);
+    if(eng.kind==="human"){ st.await=st.role; render(); return {waiting:true}; }
+
+    if(st.role==="spymaster"){
+      let clue=null;
+      if(eng.kind==="geo") clue=geoSpymaster(eng.id,team,st);
+      else { try{const r=await api("/api/spymaster",{words:st.cards.map(c=>words[c.deck]),roles:payloadRoles(st),engine:eng.id});
+              if(!r.error)clue={word:r.clue,idx:idxOf(r.clue),number:r.count||(r.intended||[]).length||2,intended:r.intended||[]};}catch(e){}}
+      if(!clue){pushLog({sys:`${heTeam(team)} · ${eng.short} לא מצא רמז חוקי — מעביר תור`});endTurn();render();return {};}
+      st.clue=clue;st.role="operative";st.opRank=null;st.opGuessed=0;
+      pushLog({team,role:"spymaster",eng:eng.short,clue:clue.word,num:clue.number,intended:clue.intended});
+      render();return {};
+    }
+    // engine operative — one guess per step
+    if(!st.opRank){
+      if(eng.kind==="geo"){ st.opRank=geoRank(eng.id,st);
+        if(st.opRank==null && serverUp){ try{const r=await api("/api/operative",{words:st.cards.map(c=>words[c.deck]),clue:st.clue.word,engine:"enc:"+eng.id});
+            st.opRank=(r.ranking||[]).map(w=>st.cards.findIndex(c=>words[c.deck]===w)).filter(i=>i>=0&&!st.cards[i].revealed);}catch(e){} } }
+      else { try{const r=await api("/api/operative",{words:st.cards.map(c=>words[c.deck]),clue:st.clue.word,engine:eng.id});
+              st.opRank=(r.ranking||[]).map(w=>st.cards.findIndex(c=>words[c.deck]===w)).filter(i=>i>=0&&!st.cards[i].revealed);}catch(e){st.opRank=[];} }
+      if(!st.opRank||!st.opRank.length){pushLog({sys:`${heTeam(team)} · ${eng.short} לא יכול לקרוא את הרמז — מעביר תור`});endTurn();render();return {};}
+    }
+    if(st.opGuessed>=st.clue.number){endTurn();render();return {};}
+    const next=st.opRank.find(i=>!st.cards[i].revealed);
+    if(next==null){endTurn();render();return {};}
+    const r=applyGuess(next);
+    if(r==="win"){finish();render();return {done:true};}
+    if(r!=="continue") endTurn();
+    render(); return {};
+  }
+
+  function finish(){playing=false;clearTimeout(timer);if(st.winner)pushLog({win:st.winner});}
+  function loop(){ if(!playing||!st||st.winner||st.await) return;
+    step().then(res=>{ if(st)st.cards.forEach(c=>c.justGuessed=false);
+      if(res&&(res.waiting||res.done))return;
+      if(playing&&st&&!st.winner&&!st.await) timer=setTimeout(loop, reduce?140:780); }); }
+  function setPlaying(p){playing=p;document.getElementById("play").innerHTML=p?"❚❚ השהה":"▶ הרץ";if(p)loop();else clearTimeout(timer);}
+
+  // ---------- human actions ----------
+  function humanClue(){
+    if(!st||st.await!=="spymaster")return;
+    const inp=document.getElementById("hclue"), msg=document.getElementById("hmsg");
+    const w=(inp.value||"").trim().split(/\s+/)[0];
+    if(!w){msg.textContent="הקלד מילה";return;}
+    const bw=st.cards.filter(c=>!c.revealed).map(c=>words[c.deck]);
+    if(illegal(w,bw)){msg.textContent="רמז לא חוקי — מילה מהלוח או נטייה שלה";return;}
+    const num=Math.max(1,Math.min(9,+document.getElementById("hnum").value||2));
+    st.clue={word:w,idx:idxOf(w),number:num,intended:[]};
+    st.role="operative";st.await=null;st.opRank=null;st.opGuessed=0;
+    pushLog({team:st.turn,role:"spymaster",eng:"אתה",clue:w,num,intended:[]});
+    inp.value="";msg.textContent="";render(); if(playing)loop();
+  }
+  function humanGuess(i){
+    if(!st||st.await!=="operative"||st.winner||st.cards[i].revealed)return;
+    const r=applyGuess(i);
+    if(r==="win"){st.await=null;finish();render();return;}
+    if(r!=="continue"){st.await=null;endTurn();render();if(playing)loop();return;}
+    render();
+  }
+  function humanEnd(){ if(st&&st.await==="operative"){st.await=null;endTurn();render();if(playing)loop();} }
+
+  // ---------- spymaster clue-helper: mark connect/avoid, get best clue options ----------
+  function helperKey(){const s=document.getElementById("hhelper");return (s&&s.value)||geoKeys[0];}
+  function cycleSel(i){ if(!st||st.cards[i].revealed||!(st.await==="spymaster"||helperOn))return;
+    const cur=st.sel[i]; const nxt=cur==="connect"?"avoid":cur==="avoid"?null:"connect";
+    if(nxt)st.sel[i]=nxt; else delete st.sel[i]; render(); }
+  function bestCluesFor(k, connect, avoid, topN){
+    const live=[]; for(let i=0;i<st.cards.length;i++) if(!st.cards[i].revealed) live.push(i);
+    const bIdx=live.map(i=>st.cards[i].deck), bWords=bIdx.map(d=>words[d]);
+    const conDeck=connect.map(i=>st.cards[i].deck); if(!conDeck.length)return [];
+    const avoidSet=new Set(avoid), blackI=live.find(i=>st.cards[i].color==="black");
+    const K=24, cand=new Set();
+    for(const od of conDeck){const arr=[];for(let c=0;c<nClue;c++)arr.push([c,cosCD(k,c,od)]);arr.sort((a,b)=>b[1]-a[1]);for(let t=0;t<K;t++)cand.add(arr[t][0]);}
+    const res=[];
+    for(const c of cand){
+      if(illegal(clueWords[c],bWords))continue;
+      let mu=0;const m={}; for(let j=0;j<live.length;j++){const v=cosCD(k,c,bIdx[j]);m[live[j]]=v;mu+=v;} mu/=live.length;
+      let minCon=1e9,sumCon=0; for(const ci of connect){const a=m[ci]-mu; if(a<minCon)minCon=a; sumCon+=a;}
+      let pen=0;
+      for(const i of live){ if(connect.includes(i))continue; const a=Math.max(0,m[i]-mu), role=st.cards[i].color;
+        const w=role==="black"?2.0:avoidSet.has(i)?1.5:(role!=="neutral"&&role!==st.turn)?1.0:0.3; if(w*a>pen)pen=w*a; }
+      res.push({word:clueWords[c],idx:c,score:minCon-pen+0.001*sumCon,blackAdj:blackI!=null?(m[blackI]-mu):-1});
+    }
+    res.sort((a,b)=>b.score-a.score); return res.slice(0,topN);
+  }
+  function renderSuggest(){
+    const box=document.getElementById("hsugg"); if(!box)return;
+    const connect=Object.keys(st.sel).filter(k=>st.sel[k]==="connect").map(Number).filter(i=>!st.cards[i].revealed);
+    const avoid=Object.keys(st.sel).filter(k=>st.sel[k]==="avoid").map(Number).filter(i=>!st.cards[i].revealed);
+    if(!connect.length){box.innerHTML=`<span class="hint-sel">סמן קלפים: לחיצה = לחבר ✓, לחיצה נוספת = להימנע ✗. הצעות רמז יופיעו כאן.</span>`;return;}
+    const sug=bestCluesFor(helperKey(),connect,avoid,6);
+    box.innerHTML = sug.length ? sug.map(s=>`<span class="chip" data-w="${s.word}" data-i="${s.idx}">`+
+        `<span class="dot" style="background:${s.blackAdj<0.04?'var(--good)':s.blackAdj<0.12?'var(--amber)':'var(--red)'}"></span>${s.word}<span class="sc">${s.score.toFixed(2)}</span></span>`).join("")
+      : `<span class="hint-sel">אין הצעה חוקית לבחירה הזו — נסה צירוף אחר</span>`;
+    box.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>pickClue(ch.dataset.w,+ch.dataset.i,connect.length));
+  }
+  function pickClue(word, idx, number){
+    if(st.await!=="spymaster"){      // pure helper / not your turn — just capture into the input
+      const inp=document.getElementById("hclue"); if(inp)inp.value=word;
+      const ns=document.getElementById("hnum"); if(ns)ns.value=String(Math.max(1,Math.min(5,number)));
+      return;
+    }
+    const intended=Object.keys(st.sel).filter(k=>st.sel[k]==="connect").map(k=>words[st.cards[+k].deck]);
+    st.clue={word,idx,number,intended}; st.role="operative"; st.await=null; st.sel={}; st.opRank=null; st.opGuessed=0;
+    pushLog({team:st.turn,role:"spymaster",eng:"אתה",clue:word,num:number,intended});
+    render(); if(playing)loop();
+  }
+  function fillHelper(){const s=document.getElementById("hhelper"); if(!s)return;
+    s.innerHTML=geoKeys.map(k=>`<option value="${k}">${LABEL[k]||k}</option>`).join(""); s.onchange=render; }
+
+  // ---------- render ----------
+  const boardEl=document.getElementById("board"), logBody=document.getElementById("log-body");
+  function heTeam(t){return t==="red"?"אדום":"כחול";}
+  function heRole(r){return r==="spymaster"?"רב מרגלים":"מנחש";}
+  function render(){
+    if(!st)return;
+    boardEl.innerHTML="";
+    const opMode = st.await==="operative" && !st.winner;
+    const spyUI  = (st.await==="spymaster" || helperOn) && !st.winner;
+    st.cards.forEach((c,i)=>{
+      const d=document.createElement("div"), sel=st.sel&&st.sel[i], clickable=(opMode||spyUI)&&!c.revealed;
+      d.className=`card ${c.color} ${c.revealed?"revealed":"unrevealed"}${c.justGuessed?" guess":""}`+
+        (clickable?" clickable":"")+(spyUI&&sel==="connect"?" sel-connect":spyUI&&sel==="avoid"?" sel-avoid":"");
+      d.innerHTML=`<span class="w">${words[c.deck]}</span>`+
+        (sel&&spyUI?`<span class="badge" style="color:${sel==="connect"?"var(--good)":"var(--red)"}">${sel==="connect"?"✓":"✗"}</span>`:"")+
+        (c.revealed?`<span class="tick">${c.color==="black"?"":"●"}</span>`:"")+
+        (c.revealed&&c.color==="black"?`<span class="skull">☠</span>`:"");
+      if(opMode&&!c.revealed) d.onclick=()=>humanGuess(i);
+      else if(spyUI&&!c.revealed) d.onclick=()=>cycleSel(i);
+      boardEl.appendChild(d);
+    });
+    document.getElementById("s-blue").textContent=st.remaining.blue;
+    document.getElementById("s-red").textContent=st.remaining.red;
+    const cb=document.getElementById("cluebar");
+    if(st.winner){cb.className="cluebar";cb.innerHTML=`ניצחון ל${heTeam(st.winner)}`;}
+    else if(st.clue){cb.className="cluebar";cb.innerHTML=`${st.clue.word}<span class="num">${st.clue.number}</span>`;}
+    else{cb.className="cluebar idle";cb.textContent=`תור ${heTeam(st.turn)} · ${heRole(st.role)}`;}
+    // human bar
+    const hb=document.getElementById("humanbar");
+    if(opMode){ hb.hidden=false; hb.dataset.mode="op";
+      document.getElementById("hleft").textContent=`${heTeam(st.turn)} · נותרו ${st.clue.number-st.opGuessed} ניחושים — לחץ על קלף`;
+    } else if(spyUI){ hb.hidden=false; hb.dataset.mode="spy"; renderSuggest(); }
+    else hb.hidden=true;
+    // pills
+    ["blue","red"].forEach(t=>["spymaster","operative"].forEach(r=>{
+      const el=document.getElementById(`p-${t}-${r}`),eng=engById(SEATS[t][r]),active=st.turn===t&&st.role===r&&!st.winner;
+      el.className=`pill ${t}${active?" on":""}`;
+      el.innerHTML=`<span class="av">${eng.av||"◆"}</span><span class="nm">${eng.short}</span>`;
+    }));
+  }
+
+  // ---------- log ----------
+  function clearLog(){logBody.innerHTML="";}
+  function addEl(html){const t=document.createElement("template");t.innerHTML=html.trim();logBody.appendChild(t.content.firstChild);logBody.parentElement.scrollTop=logBody.parentElement.scrollHeight;}
+  function pushLog(m){
+    if(m.win){addEl(`<div class="winner" style="color:${m.win==="red"?"#e8909f":"#7fb2e3"}">🏁 ${heTeam(m.win)} ניצח/ה</div>`);return;}
+    if(m.sys!==undefined){addEl(`<div class="msg sys">${m.sys}</div>`);return;}
+    addEl(`<div class="msg ${m.team}"><div class="who">${heTeam(m.team)} · ${heRole(m.role)}<span class="eng">${m.eng}</span></div>`+
+          `<div class="clue">${m.clue}<span class="num">· ${m.num}</span></div>`+
+          ((m.intended&&m.intended.length)?`<div class="who" style="margin:6px 0 0">כוונה: ${m.intended.join(" · ")}</div>`:"")+
+          `<div class="guesses"></div></div>`);
+  }
+  function appendGuess(team,word,ok){const w=logBody.querySelectorAll(".guesses");const g=w[w.length-1];if(!g)return;
+    const s=document.createElement("span");s.className=`gw ${ok?"ok":"bad"}`;s.textContent=word+(ok?" ✓":" ✗");g.appendChild(s);
+    logBody.parentElement.scrollTop=logBody.parentElement.scrollHeight;}
+
+  // ---------- seats UI ----------
+  function fillSeats(){
+    document.querySelectorAll("select[data-seat]").forEach(sel=>{
+      const [t,r]=sel.dataset.seat.split(".");
+      sel.innerHTML=ENGINES.map(e=>`<option value="${e.id}"${SEATS[t][r]===e.id?" selected":""}>${e.label}</option>`).join("");
+      sel.onchange=()=>{SEATS[t][r]=sel.value; if(st&&st.await&&engById(SEATS[st.turn][st.role]).kind!=="human")st.await=null; render(); if(playing)loop();};
+    });
+  }
+  function hnumOptions(){document.getElementById("hnum").innerHTML=[1,2,3,4,5].map(n=>`<option value="${n}"${n===2?" selected":""}>${n}</option>`).join("");}
+
+  // ---------- health ----------
+  (async function(){
+    const info=document.getElementById("enginfo");
+    try{
+      const r=await fetch("/api/health"); if(!r.ok)throw 0; const h=await r.json(); serverUp=true;
+      (h.models||[]).forEach(m=>{const nm=m.label.replace(/\s*\(.*\)/,"");
+        ENGINES.push({id:"llm:"+m.id,kind:"server",label:"DictaLM "+nm,short:"DictaLM "+nm,av:"🧠"});
+        ENGINES.push({id:"hybrid:"+m.id,kind:"server",label:"גאומטריה→DictaLM "+nm+" · היברידי",short:"היברידי "+nm,av:"⚡"});});
+      (h.encoders||[]).filter(k=>!(k in GEO)).forEach(k=>ENGINES.push({id:"enc:"+k,kind:"server",label:(LABEL[k]||k)+" · שרת",short:LABEL[k]||k,av:"◆"}));
+      info.innerHTML=`<b>DictaLM מחובר.</b> כל מושב יכול להיות אתה / מנוע הטמעה / DictaLM. ברירת מחדל: צולב-מנועים (לא טריוויאלי).`;
+    }catch(e){
+      info.innerHTML=`רץ בדפדפן: <b>אתה</b>, fastText, EmbeddingGemma. אותו מנוע משני הצדדים = שיתוף-פעולה טריוויאלי. ל-<b>DictaLM</b> הריצו app.py.`;
+    }
+    fillSeats(); render();
+  })();
+
+  // ---------- wire ----------
+  document.getElementById("newgame").onclick=()=>{setPlaying(false);newGame();};
+  document.getElementById("play").onclick=()=>{if(!st)newGame();setPlaying(!playing);};
+  document.getElementById("step").onclick=()=>{if(!st)newGame();setPlaying(false);if(!st.await)step();};
+  document.getElementById("helper").onclick=()=>{ helperOn=!helperOn; const b=document.getElementById("helper");
+    b.classList.toggle("primary",helperOn); b.textContent=helperOn?"✕ סגור עוזר":"💡 עוזר רמזים";
+    if(helperOn) setPlaying(false); render(); };
+  document.getElementById("hgive").onclick=humanClue;
+  document.getElementById("hclue").addEventListener("keydown",e=>{if(e.key==="Enter")humanClue();});
+  document.getElementById("hend").onclick=humanEnd;
+
+  hnumOptions(); fillHelper(); newGame(); fillSeats();
+})();
+</script>
