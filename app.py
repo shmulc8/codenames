@@ -28,7 +28,7 @@ import threading
 import time
 
 import numpy as np
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, abort
 
 import morph
 import probe
@@ -137,6 +137,8 @@ _clue_emb: dict = {}
 
 def get_llm(mid):
     mid = mid or probe.LLM_FAST
+    if mid not in (probe.LLM_FAST, probe.LLM_BIG):    # never hand an arbitrary client string to mlx_lm.load
+        abort(400, f"unknown model {mid!r}")
     if mid not in _llms:
         app.logger.info("loading LLM %s ...", mid)
         _llms[mid] = probe.HebrewLLM(mid)
@@ -204,10 +206,21 @@ def _geo_reason(intended, board: probe.Board, read) -> str:
     return txt
 
 
+_VALID_ROLES = {"my", "opp", "neutral", "assassin"}
+
+
 def board_from(j) -> probe.Board:
-    words = list(j["words"])
+    words = list(j.get("words") or [])
+    if not words:
+        abort(400, "board has no words")
     roles = j.get("roles") or {w: "neutral" for w in words}
-    return probe.Board(words=words, role={w: roles.get(w, "neutral") for w in words})
+    role = {}
+    for w in words:
+        r = roles.get(w, "neutral")
+        if r not in _VALID_ROLES:              # reject unknown roles: a typo must not silently
+            abort(400, f"invalid role {r!r} for word {w!r}")   # hide a word from the safety terms
+        role[w] = r
+    return probe.Board(words=words, role=role)
 
 
 def _conf(sims: dict) -> dict:
@@ -395,9 +408,11 @@ def coach_spymaster():
     one to show first. The top-level fields mirror `options[picked]` for convenience."""
     j = request.get_json(force=True)
     board = board_from(j)
+    if not board.my:
+        abort(400, "board has no team (my) words")
     engine = "geometry" if EMBED_ONLY else (j.get("engine") or "geometry")
     mid = j.get("model")
-    focus = [w for w in (j.get("focus") or []) if w in board.words] or None  # optional target subset
+    focus = [w for w in (j.get("focus") or []) if w in board.my] or None  # optional target subset (team only)
     risk = j.get("risk") if j.get("risk") in RISK_PROFILES else "balanced"
     prof = RISK_PROFILES[risk]
     cand_kw = {k: prof[k] for k in _CAND_KEYS}    # generation knobs
@@ -445,6 +460,8 @@ def coach_spymaster():
             shortlist = [shortlist[i] for i in order]
             picked = 0
 
+    if not options:
+        return jsonify(error="לא נמצא רמז חוקי ללוח הזה", no_clue=True, options=[]), 200
     top = options[picked]
     return jsonify(
         engine=engine, options=options, picked=picked, shortlist=shortlist,
@@ -466,7 +483,7 @@ def coach_check():
     # (DictaBERT lemma), or shares a root (Wiktionary lexicon) with a board word it is transparent
     # to (fastText cosine). The optional DictaLM root-judge adds extra coverage on opt-in.
     illegal = probe.shares_lemma(clue, board, enc=get_enc(GEO_ENC))
-    if not illegal and j.get("use_llm"):
+    if not illegal and j.get("use_llm") and not EMBED_ONLY:   # embed-only deploy never touches the LLM
         illegal = bool(probe.llm_root_conflicts(get_llm(j.get("model")), [clue], board.words))
     read = _read_clue(board, clue)
     safe = 0                                   # team words from the top before any non-team word
