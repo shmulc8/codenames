@@ -11,3 +11,6 @@ hf_space/data/cc.he.300.*
 
 # OS
 .DS_Store
+
+# Personal Claude Code config & skills (not shared)
+.claude/
