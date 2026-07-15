@@ -49,12 +49,12 @@ SECOND_OPINION = os.environ.get("SECOND_OPINION", "1").lower() not in ("0", "fal
 # clues (and refuses more); bold reaches for more words and tolerates a tighter enemy.
 RISK_PROFILES = {
     # Scoring weights validated on bench_clue.py (real serving path + validated fasttext+qwen
-    # guesser); a param search did not beat them on held-out boards. The count-trim `keep`
-    # (keep_rel) was tightened for balanced (0.55→0.66) and bold (0.45→0.55): across two
-    # held-out seeds this drops the shaky last word, lifting safe-turn rate ~+0.10 and recovery
-    # ~+0.03 and cutting over-claim ~0.15, for a small coverage cost — the "weak third word" fix.
+    # guesser); a param search did not beat them on held-out boards, so they stand. The count-trim
+    # `keep` (keep_rel) sets the coverage↔safety point: lower claims more words but over-claims.
+    # Chosen on the held-out curve — balanced 0.60 keeps single-word clues to ~18% (0.66 gave ~25%)
+    # at ~2.2 words/clue; cautious stays tight (safety first), bold reaches furthest.
     "cautious": dict(m=2, lam_a=3.0, lam_opp=1.3, lam_neu=0.7, keep=0.68, safe_margin=0.05),
-    "balanced": dict(m=3, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.66, safe_margin=0.02),
+    "balanced": dict(m=3, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.60, safe_margin=0.02),
     "bold":     dict(m=4, lam_a=1.8, lam_opp=0.7, lam_neu=0.4, keep=0.55, safe_margin=0.0),
 }
 # Which keys parameterise candidate generation vs. the count-trim threshold. safe_margin is the
