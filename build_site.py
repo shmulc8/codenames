@@ -16,7 +16,7 @@ import numpy as np
 from probe import make_encoder, load_clue_vocab, DECK
 
 HERE = os.path.dirname(__file__)
-BAKE = ["fasttext", "embeddinggemma"]   # different geometries -> non-trivial play
+BAKE = ["blend_0.7_0.3", "embeddinggemma"]   # different geometries -> non-trivial play
 N_CLUE = 1500
 
 deck = list(DECK)

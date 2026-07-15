@@ -204,7 +204,8 @@ footer a{color:var(--mut)}
     <caption>12 לוחות · אותו אוצר רמזים (שמות עצם/תארים) · מנחש־שופט עצמאי. recovery וגם margin — גבוה יותר = טוב יותר.</caption>
     <thead><tr><th>אנקודר</th><th class="num">recovery</th><th class="num">margin (הפרדה)</th><th>סוג</th></tr></thead>
     <tbody>
-      <tr class="win"><td>fastText</td><td class="num">0.375</td><td class="num">0.194</td><td><span class="tag">וקטורים סטטיים</span></td></tr>
+      <tr class="win"><td>Blend (fastText+Numberbatch)</td><td class="num">0.444</td><td class="num">0.252</td><td><span class="tag">וקטורים מותכים ✓</span></td></tr>
+      <tr><td>fastText</td><td class="num">0.375</td><td class="num">0.194</td><td><span class="tag">וקטורים סטטיים</span></td></tr>
       <tr><td>EmbeddingGemma‑300m</td><td class="num">0.292</td><td class="num">0.131</td><td><span class="tag">SOTA‑small 2025</span></td></tr>
       <tr><td>Qwen3‑Embedding‑0.6B</td><td class="num">0.125</td><td class="num">0.112</td><td><span class="tag">סנטנס‑אמבדינג</span></td></tr>
     </tbody>
@@ -241,6 +242,14 @@ footer a{color:var(--mut)}
   <p>וקטורים בעברית נוטים להצטופף לפי תדירות ואורך, לא רק לפי משמעות — קונוס משותף שמעוות מרחקים.
     אנחנו מסירים את <em>k=3</em> הצירים הראשיים (all‑but‑the‑top, Mu &amp; Viswanath) לפני ההקרנה, וזה פותח
     את המפה חזרה כדי שתראה פיזור <strong>סמנטי</strong> ולא פיזור־תדירות.</p>
+  <h3>רב-משמעות (Polysemy) באמצעות הקשר-מדומה</h3>
+  <p>וקטורים סטטיים מוגבלים בגלל מילים רב-משמעיות — "עלה" הוא צמח, מחיר, או פועל, והגאומטריה הסטטית קורסת לוקטור ממוצע מדולל.
+    אבל גילינו שאפשר לפתור את זה <em>ללא LLM</em>: מזינים את מילות האשכול של הרמז **ביחד** כרצף טקסט קצר (בשיטת Bag-of-Words) לתוך מודל הקשר מקומי (כמו NeoDictaBERT).
+    מנגנון ה-Self-Attention של הטרנספורמר מבצע התרת משמעות (WSD) דינמית במקום:</p>
+  <ul>
+    <li>בהקשר הבוטני <code>"עלה עץ פרח ירוק"</code>, הוקטור של המילה <em>עלה</em> מתקרב ל-<em>עץ</em> (דמיון <strong>0.21</strong> לעומת 0.09 בהקשר פיננסי).</li>
+    <li>בהקשר הפיננסי <code>"עלה מחיר כסף חנות"</code>, הוקטור של <em>עלה</em> מתקרב ל-<em>כסף</em> (דמיון <strong>0.27</strong> לעומת 0.17 בהקשר בוטני).</li>
+  </ul>
 </section>
 
 <section id="map">

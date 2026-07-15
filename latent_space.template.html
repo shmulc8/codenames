@@ -187,10 +187,10 @@
   function idxOf(w){const i=clueWords.indexOf(w);return i>=0?i:null;}
 
   // ---------- engines ----------
-  const LABEL={fasttext:"fastText",embeddinggemma:"EmbeddingGemma",neodictabert:"NeoDictaBERT","qwen3-embed":"Qwen3"};
+  const LABEL={fasttext:"fastText","blend_0.5_0.5":"Blend 50/50","blend_0.7_0.3":"Blend",embeddinggemma:"EmbeddingGemma",neodictabert:"NeoDictaBERT","qwen3-embed":"Qwen3"};
   const geoKeys=Object.keys(GEO);
   let ENGINES=[{id:"human",kind:"human",label:"אתה (אנושי)",short:"אתה",av:"🧑"}]
-    .concat(geoKeys.map(k=>({id:k,kind:"geo",label:(LABEL[k]||k)+" · בדפדפן",short:LABEL[k]||k,av:k==="fasttext"?"▦":"◈"})));
+    .concat(geoKeys.map(k=>({id:k,kind:"geo",label:(LABEL[k]||k)+" · בדפדפן",short:LABEL[k]||k,av:k.startsWith("blend_")?"▦":"◈"})));
   let serverUp=false;
   const engById=id=>ENGINES.find(e=>e.id===id)||ENGINES[1]||ENGINES[0];
 
