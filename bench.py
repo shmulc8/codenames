@@ -90,6 +90,8 @@ def evaluate(clue, board, A, do_judge):
     }
 
 
+from exp_encoders import make_exp_encoder
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=15)
@@ -103,6 +105,7 @@ def main():
     ap.add_argument("--floor", type=float, default=0.24, help="cohesion floor for the --trim comparison")
     ap.add_argument("--keep", type=float, default=0.45, help="keep_rel for the --trim comparison (bold=0.45)")
     ap.add_argument("--gen-m", type=int, default=3, help="target size m for clue generation in --trim mode")
+    ap.add_argument("--spy-enc", default="fasttext", help="experimental or registered encoder key for the spymaster")
     args = ap.parse_args()
     do_judge = not args.no_judge and not args.trim         # trim comparison is geometry-only, no LLM judge
     mid = probe.LLM_BIG if args.model == "12b" else probe.LLM_FAST
@@ -114,8 +117,8 @@ def main():
     need_llm = do_judge or (not args.trim and any(c["engine"] in ("llm", "hybrid") for c in cfgs))
     need_geo = args.trim or any(c["engine"] != "llm" for c in cfgs)
 
-    print(f"loading … spymaster={SPY_ENC} guesser={GUESS_ENC} llm={args.model if need_llm else 'off'}")
-    enc = probe.make_encoder(SPY_ENC) if need_geo else None
+    print(f"loading … spymaster={args.spy_enc} guesser={GUESS_ENC} llm={args.model if need_llm else 'off'}")
+    enc = make_exp_encoder(args.spy_enc) if need_geo else None
     guess = probe.make_encoder(GUESS_ENC)
     llm = probe.HebrewLLM(mid) if need_llm else None
 

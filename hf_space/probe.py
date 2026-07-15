@@ -47,6 +47,9 @@ ENCODERS = {
     # (morphology/OOV); often competitive with contextual encoders for bare-word
     # association. Handles OOV via subwords.
     "fasttext":      dict(kind="fasttext", path=os.path.join(DATA, "cc.he.300.bin")),
+    # Concatenated L2-normalized blend of fastText and ConceptNet Numberbatch.
+    "blend_0.5_0.5": dict(kind="blend", w_ft=0.5, w_nb=0.5),
+    "blend_0.7_0.3": dict(kind="blend", w_ft=0.7, w_nb=0.3),
     # Hebrew-native, newest Dicta encoder (needs transformers<5).
     "neodictabert":  dict(kind="st", model_id="dicta-il/neodictabert-bilingual-embed"),
     # 2025 multilingual SOTA-small.
@@ -153,6 +156,9 @@ class CompressedFastTextEncoder:
 
 
 def make_encoder(key: str):
+    if key == "numberbatch" or key.startswith("blend_"):
+        from exp_encoders import make_exp_encoder
+        return make_exp_encoder(key)
     cfg = ENCODERS[key]
     if cfg["kind"] == "fasttext":
         # Deploy uses the compressed model when FASTTEXT_COMPRESSED points at one; local dev
@@ -369,13 +375,14 @@ def cohesion_keep(enc, words, floor: float = 0.24, pin=frozenset(), mode: str = 
 
 
 def served_count(read, keep_rel: float = 0.66, pin=frozenset(),
-                 enc=None, cohesion_floor: float | None = None, cohesion_mode: str = "any"):
+                 enc=None, cohesion_floor: float | None = None, cohesion_mode: str = "any",
+                 cliff: float = 0.5):
     """The words a clue should *claim* and light up, from a board reading.
 
     `read` = list of {word, role, sim} ordered by sim desc (an encoder's reading of the clue).
     Two stages:
       1. Walk the *safe run* (team words reached before any enemy word) and keep each next word
-         while it stays strong: above `keep_rel`× the top target AND no sharp cliff (< 0.5× the
+         while it stays strong: above `keep_rel`× the top target AND no sharp cliff (< cliff× the
          previous kept word). A pinned word is always kept. This adapts the count to how many
          words are genuinely clustered — a tight trio stays 3, "1 strong + noise tail" shrinks.
       2. Cohesion trim (when `enc` + `cohesion_floor` given): drop any kept word that doesn't
@@ -397,7 +404,7 @@ def served_count(read, keep_rel: float = 0.66, pin=frozenset(),
         s = simmap[w]
         if w in pin:
             kept.append(w); prev = s; continue
-        if s < top * keep_rel or s < prev * 0.5:
+        if s < top * keep_rel or s < prev * cliff:
             break
         kept.append(w); prev = s
     if enc is not None and cohesion_floor is not None and len(kept) > 1:
@@ -442,7 +449,14 @@ def encoder_spymaster(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas
         return np.clip(adj[:, mask].max(1), 0, None) if mask.any() else np.zeros(len(cand))
 
     adj_my = adj[:, is_my]
-    top_my = np.sort(adj_my, axis=1)[:, ::-1][:, :m].sum(1)
+    m = min(m, adj_my.shape[1])
+    sorted_my = np.sort(adj_my, axis=1)[:, ::-1]
+    if m >= 2:
+        top_my = sorted_my[:, :m].mean(1) + 1.0 * sorted_my[:, m - 1]
+    elif m == 1:
+        top_my = sorted_my[:, 0]
+    else:
+        top_my = np.full(len(cand), -99.0, dtype=np.float32)
     g = top_my - lam_a * tier_max(is_as) - lam_opp * tier_max(is_opp) - lam_neu * tier_max(is_neu)
     if vocab_freq is not None and lam_f:
         g = g + lam_f * np.asarray(vocab_freq, dtype=np.float32)[keep]
@@ -483,8 +497,19 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
     safe = adj_my > (enemy_ceiling[:, None] + safe_margin)     # beats every enemy word by margin
     if fixed:
         g_team = adj_my.sum(1)                                 # honour the user's chosen targets
-    else:                                                      # sum of the top-m *safe* team words
-        g_team = np.sort(np.where(safe, adj_my, 0.0), 1)[:, ::-1][:, :m].sum(1)
+    else:                                                      # mean + minimum of the top-k *safe* team words (k <= m)
+        safe_counts = safe.sum(1)
+        sorted_safe = np.sort(np.where(safe, adj_my, -9.0), 1)[:, ::-1]
+        g_team = np.zeros(len(cand), dtype=np.float32)
+        for k_val in range(1, m + 1):
+            mask = (safe_counts == k_val) if k_val < m else (safe_counts >= k_val)
+            if not mask.any():
+                continue
+            if k_val >= 2:
+                g_team[mask] = sorted_safe[mask, :k_val].mean(1) + 1.0 * sorted_safe[mask, k_val - 1]
+            else:
+                g_team[mask] = sorted_safe[mask, 0] - 0.5
+        g_team[safe_counts == 0] = -99.0
     g = g_team - lam_a * tmax(is_as) - lam_opp * tmax(is_opp) - lam_neu * tmax(is_neu)
     if vocab_freq is not None and lam_f:
         g = g + lam_f * np.asarray(vocab_freq, dtype=np.float32)[keep]

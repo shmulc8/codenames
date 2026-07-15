@@ -1,0 +1,76 @@
+# Clue blocklist — offensive Hebrew terms dropped from the clue vocabulary.
+# One term per line; '#' starts a comment. Matched against each vocab word AND its lemma
+# (exact match), so list common gender/number variants.
+#
+# Policy: unambiguous slurs / profanity only. Words with a strong *legitimate* meaning are
+# intentionally LEFT OUT so valid clues aren't lost — e.g. כוס (cup), תחת (under), זין (arm),
+# שחור (black), שמן (oil/fat). Add more below as needed.
+
+# --- racial / ethnic slurs ---
+כושי
+כושים
+כושית
+כושיות
+ערבוש
+ערבושים
+ערבושית
+פרענק
+פרענקים
+יהודון
+יהודונים
+
+# --- sexual / profanity ---
+זונה
+זונות
+שרמוטה
+שרמוטות
+זיון
+זיונים
+מזדיין
+מזדיינת
+שמוק
+שמוקים
+חרא
+חראות
+
+# --- ableist slurs ---
+מפגר
+מפגרת
+מפגרים
+מפגרות
+דביל
+דבילים
+דבילית
+
+# --- severe insults / criminal ---
+מניאק
+מניאקים
+המניאק
+חלאה
+פדופיל
+פדופילים
+אנס
+אנסים
+האנס
+מתרומם
+מתרוממים
+הבנזונה
+מהחרא
+
+# --- Nazi / fascist ---
+נאצי
+נאצים
+נאצית
+נאציות
+נאץ
+
+# --- Typos / non-words ---
+ולג
+
+# --- Insults / drugs ---
+אידיוט
+אידיוטי
+מטומטם
+קוקאין
+הרואין
+ההרואין

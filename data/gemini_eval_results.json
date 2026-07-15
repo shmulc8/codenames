@@ -1,0 +1,225 @@
+{
+  "summary": {
+    "provider": "openrouter",
+    "model": "google/gemini-2.5-flash",
+    "boards": 15,
+    "seed": 142,
+    "risk": "balanced",
+    "mean_claimed_words": 2.8,
+    "mean_safe_words": 2,
+    "mean_recovered_words": 1.867,
+    "target_recovery": 0.678,
+    "safe_turn_rate": 0.6,
+    "assassin_pick_rate": 0,
+    "complete_ranking_rate": 1
+  },
+  "rows": [
+    {
+      "clue": "טכנולוגיה",
+      "claimed": 3,
+      "intended": [
+        "תרבות",
+        "אפליקציה",
+        "עיצוב"
+      ],
+      "recovered": 1,
+      "safe_run": 0,
+      "safe_turn": false,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "שיט",
+      "claimed": 3,
+      "intended": [
+        "דייג",
+        "סקי",
+        "מגדלור"
+      ],
+      "recovered": 2,
+      "safe_run": 1,
+      "safe_turn": false,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "הגון",
+      "claimed": 3,
+      "intended": [
+        "חקלאי",
+        "חמור",
+        "מלך"
+      ],
+      "recovered": 1,
+      "safe_run": 0,
+      "safe_turn": false,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "אושר",
+      "claimed": 3,
+      "intended": [
+        "חיים",
+        "גורל",
+        "מלאך"
+      ],
+      "recovered": 3,
+      "safe_run": 4,
+      "safe_turn": true,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "סקרנות",
+      "claimed": 3,
+      "intended": [
+        "תשוקה",
+        "שאלה",
+        "תרבות"
+      ],
+      "recovered": 3,
+      "safe_run": 3,
+      "safe_turn": true,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "שוקולד",
+      "claimed": 2,
+      "intended": [
+        "סוכר",
+        "חומוס"
+      ],
+      "recovered": 1,
+      "safe_run": 3,
+      "safe_turn": true,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "קסדה",
+      "claimed": 3,
+      "intended": [
+        "מצלמה",
+        "מגפיים",
+        "רשת"
+      ],
+      "recovered": 1,
+      "safe_run": 3,
+      "safe_turn": true,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "גלידה",
+      "claimed": 3,
+      "intended": [
+        "שוקולד",
+        "פיצה",
+        "שלג"
+      ],
+      "recovered": 2,
+      "safe_run": 3,
+      "safe_turn": true,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "מזון",
+      "claimed": 2,
+      "intended": [
+        "חשמל",
+        "פיצה"
+      ],
+      "recovered": 1,
+      "safe_run": 2,
+      "safe_turn": true,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "חמאה",
+      "claimed": 3,
+      "intended": [
+        "סוכר",
+        "עוגה",
+        "אבוקדו"
+      ],
+      "recovered": 2,
+      "safe_run": 2,
+      "safe_turn": false,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "חצר",
+      "claimed": 2,
+      "intended": [
+        "בית",
+        "סוכה"
+      ],
+      "recovered": 2,
+      "safe_run": 2,
+      "safe_turn": true,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "כפתור",
+      "claimed": 4,
+      "intended": [
+        "עכבר",
+        "אדום",
+        "גלגל",
+        "עיפרון"
+      ],
+      "recovered": 2,
+      "safe_run": 1,
+      "safe_turn": false,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "בננה",
+      "claimed": 2,
+      "intended": [
+        "אננס",
+        "תפוז"
+      ],
+      "recovered": 2,
+      "safe_run": 2,
+      "safe_turn": true,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "מסוק",
+      "claimed": 3,
+      "intended": [
+        "טיסה",
+        "רקטה",
+        "בלון"
+      ],
+      "recovered": 3,
+      "safe_run": 3,
+      "safe_turn": true,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    },
+    {
+      "clue": "לימוד",
+      "claimed": 3,
+      "intended": [
+        "ספר",
+        "תרבות",
+        "רכיבה"
+      ],
+      "recovered": 2,
+      "safe_run": 1,
+      "safe_turn": false,
+      "assassin_in_picks": false,
+      "complete_ranking": true
+    }
+  ]
+}
