@@ -1,0 +1,1431 @@
+{
+  "guesser": "ensemble:fasttext+qwen3-embed",
+  "boards": 30,
+  "seed": 142,
+  "results": {
+    "cautious": {
+      "boards": 30,
+      "served_rate": 1.0,
+      "gained": 1.2333,
+      "gained_se": 0.1329,
+      "recovery": 0.6,
+      "recovery_se": 0.0652,
+      "safe_turn": 0.6667,
+      "safe_turn_se": 0.0875,
+      "assassin": 0.0333,
+      "assassin_se": 0.0333,
+      "over_claim": 0.7667,
+      "over_claim_se": 0.124,
+      "legal": 1.0,
+      "legal_se": 0.0,
+      "mean_count": 1.733
+    },
+    "balanced": {
+      "boards": 30,
+      "served_rate": 1.0,
+      "gained": 1.7,
+      "gained_se": 0.1369,
+      "recovery": 0.65,
+      "recovery_se": 0.0508,
+      "safe_turn": 0.5,
+      "safe_turn_se": 0.0928,
+      "assassin": 0.0,
+      "assassin_se": 0.0,
+      "over_claim": 0.9,
+      "over_claim_se": 0.13,
+      "legal": 1.0,
+      "legal_se": 0.0,
+      "mean_count": 2.4
+    },
+    "bold": {
+      "boards": 30,
+      "served_rate": 1.0,
+      "gained": 1.3333,
+      "gained_se": 0.1751,
+      "recovery": 0.6444,
+      "recovery_se": 0.0464,
+      "safe_turn": 0.4,
+      "safe_turn_se": 0.091,
+      "assassin": 0.0,
+      "assassin_se": 0.0,
+      "over_claim": 0.8333,
+      "over_claim_se": 0.1081,
+      "legal": 1.0,
+      "legal_se": 0.0,
+      "mean_count": 2.367
+    }
+  },
+  "rows": {
+    "cautious": [
+      {
+        "served": 1.0,
+        "clue": "אקו",
+        "count": 2,
+        "intended": [
+          "תוכי",
+          "קול"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "טעימה",
+        "count": 2,
+        "intended": [
+          "מסעדה",
+          "כוס"
+        ],
+        "gained": 0.0,
+        "recovery": 0.0,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מערב",
+        "count": 2,
+        "intended": [
+          "מרכז",
+          "מלך"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "קבלה",
+        "count": 1,
+        "intended": [
+          "ציון"
+        ],
+        "gained": 1.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "שפה",
+        "count": 1,
+        "intended": [
+          "תרבות"
+        ],
+        "gained": 1.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "קילו",
+        "count": 2,
+        "intended": [
+          "סוכר",
+          "חומוס"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "עניבה",
+        "count": 2,
+        "intended": [
+          "מגפיים",
+          "זברה"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "גבינה",
+        "count": 2,
+        "intended": [
+          "שוקולד",
+          "פיצה"
+        ],
+        "gained": 0.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "בשר",
+        "count": 2,
+        "intended": [
+          "פיצה",
+          "חשמל"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 1.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "אופניים",
+        "count": 1,
+        "intended": [
+          "כביש"
+        ],
+        "gained": 1.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "חצר",
+        "count": 2,
+        "intended": [
+          "בית",
+          "סוכה"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "כפתור",
+        "count": 2,
+        "intended": [
+          "עכבר",
+          "אדום"
+        ],
+        "gained": 0.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "ערפד",
+        "count": 2,
+        "intended": [
+          "מכשפה",
+          "חייל"
+        ],
+        "gained": 2.0,
+        "recovery": 0.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "ליין",
+        "count": 2,
+        "intended": [
+          "קפה",
+          "פארק"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "אנושות",
+        "count": 1,
+        "intended": [
+          "תרבות"
+        ],
+        "gained": 1.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "אגף",
+        "count": 2,
+        "intended": [
+          "מנהל",
+          "מוזיאון"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "כובע",
+        "count": 1,
+        "intended": [
+          "סוודר"
+        ],
+        "gained": 1.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "סקי",
+        "count": 2,
+        "intended": [
+          "אופנה",
+          "גרביים"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "קעקוע",
+        "count": 2,
+        "intended": [
+          "חזה",
+          "מרפק"
+        ],
+        "gained": 0.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "קצר",
+        "count": 2,
+        "intended": [
+          "שקט",
+          "יום"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "פרח",
+        "count": 2,
+        "intended": [
+          "בצל",
+          "ענף"
+        ],
+        "gained": 0.0,
+        "recovery": 0.0,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מאחר",
+        "count": 1,
+        "intended": [
+          "כיוון"
+        ],
+        "gained": 1.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "כתף",
+        "count": 1,
+        "intended": [
+          "גבה"
+        ],
+        "gained": 1.0,
+        "recovery": 0.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "נשיקה",
+        "count": 2,
+        "intended": [
+          "עוגה",
+          "אצבע"
+        ],
+        "gained": 1.0,
+        "recovery": 0.0,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "קופסה",
+        "count": 2,
+        "intended": [
+          "דלת",
+          "מגש"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "הקלטה",
+        "count": 2,
+        "intended": [
+          "טלוויזיה",
+          "לילה"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מטוגן",
+        "count": 2,
+        "intended": [
+          "ביצה",
+          "כבד"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "גיבור",
+        "count": 2,
+        "intended": [
+          "סיפור",
+          "דרקון"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "תאונה",
+        "count": 2,
+        "intended": [
+          "אופנוע",
+          "מוות"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "ירך",
+        "count": 1,
+        "intended": [
+          "מרפק"
+        ],
+        "gained": 1.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      }
+    ],
+    "balanced": [
+      {
+        "served": 1.0,
+        "clue": "טכנולוגיה",
+        "count": 3,
+        "intended": [
+          "תרבות",
+          "אפליקציה",
+          "עיצוב"
+        ],
+        "gained": 1.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "שיט",
+        "count": 3,
+        "intended": [
+          "דייג",
+          "סקי",
+          "מגדלור"
+        ],
+        "gained": 2.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "הגון",
+        "count": 3,
+        "intended": [
+          "חקלאי",
+          "חמור",
+          "מלך"
+        ],
+        "gained": 2.0,
+        "recovery": 0.3333333333333333,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "אושר",
+        "count": 3,
+        "intended": [
+          "חיים",
+          "גורל",
+          "מלאך"
+        ],
+        "gained": 2.0,
+        "recovery": 0.3333333333333333,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "שעועית",
+        "count": 2,
+        "intended": [
+          "קישוא",
+          "מחבת"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "שוקולד",
+        "count": 2,
+        "intended": [
+          "סוכר",
+          "חומוס"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "קסדה",
+        "count": 3,
+        "intended": [
+          "מצלמה",
+          "מגפיים",
+          "רשת"
+        ],
+        "gained": 1.0,
+        "recovery": 0.3333333333333333,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "גלידה",
+        "count": 3,
+        "intended": [
+          "שוקולד",
+          "פיצה",
+          "שלג"
+        ],
+        "gained": 3.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מזון",
+        "count": 2,
+        "intended": [
+          "חשמל",
+          "פיצה"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "חמאה",
+        "count": 3,
+        "intended": [
+          "סוכר",
+          "עוגה",
+          "אבוקדו"
+        ],
+        "gained": 2.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "חצר",
+        "count": 2,
+        "intended": [
+          "בית",
+          "סוכה"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "כפתור",
+        "count": 3,
+        "intended": [
+          "עכבר",
+          "אדום",
+          "גלגל"
+        ],
+        "gained": 0.0,
+        "recovery": 0.3333333333333333,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "בננה",
+        "count": 2,
+        "intended": [
+          "אננס",
+          "תפוז"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מסוק",
+        "count": 3,
+        "intended": [
+          "טיסה",
+          "רקטה",
+          "בלון"
+        ],
+        "gained": 1.0,
+        "recovery": 0.3333333333333333,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "לימוד",
+        "count": 3,
+        "intended": [
+          "ספר",
+          "תרבות",
+          "רכיבה"
+        ],
+        "gained": 2.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "אגף",
+        "count": 2,
+        "intended": [
+          "מנהל",
+          "מוזיאון"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "כובע",
+        "count": 2,
+        "intended": [
+          "סוודר",
+          "גשם"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מגזין",
+        "count": 3,
+        "intended": [
+          "אופנה",
+          "סופר",
+          "גלריה"
+        ],
+        "gained": 3.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "קרסול",
+        "count": 2,
+        "intended": [
+          "מרפק",
+          "צמיד"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מנוחה",
+        "count": 2,
+        "intended": [
+          "שקט",
+          "יום"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "חנות",
+        "count": 1,
+        "intended": [
+          "קניון"
+        ],
+        "gained": 1.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מאחר",
+        "count": 1,
+        "intended": [
+          "כיוון"
+        ],
+        "gained": 1.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מצח",
+        "count": 1,
+        "intended": [
+          "גבה"
+        ],
+        "gained": 1.0,
+        "recovery": 0.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "זין",
+        "count": 3,
+        "intended": [
+          "תרנגול",
+          "אצבע",
+          "דחפור"
+        ],
+        "gained": 2.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "לוחית",
+        "count": 3,
+        "intended": [
+          "דלת",
+          "מגש",
+          "פנס"
+        ],
+        "gained": 1.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "הקלטה",
+        "count": 3,
+        "intended": [
+          "טלוויזיה",
+          "לילה",
+          "שעה"
+        ],
+        "gained": 2.0,
+        "recovery": 0.3333333333333333,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "חמאה",
+        "count": 3,
+        "intended": [
+          "ביצה",
+          "דבש",
+          "מיץ"
+        ],
+        "gained": 3.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מלך",
+        "count": 2,
+        "intended": [
+          "נסיכה",
+          "דרקון"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "תאונה",
+        "count": 3,
+        "intended": [
+          "אופנוע",
+          "מוות",
+          "מנוע"
+        ],
+        "gained": 3.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "ירך",
+        "count": 1,
+        "intended": [
+          "מרפק"
+        ],
+        "gained": 1.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      }
+    ],
+    "bold": [
+      {
+        "served": 1.0,
+        "clue": "טכנולוגיה",
+        "count": 3,
+        "intended": [
+          "תרבות",
+          "אפליקציה",
+          "עיצוב"
+        ],
+        "gained": 1.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "טעימה",
+        "count": 3,
+        "intended": [
+          "מסעדה",
+          "כוס",
+          "פצצה"
+        ],
+        "gained": 0.0,
+        "recovery": 0.3333333333333333,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "רכב",
+        "count": 2,
+        "intended": [
+          "משאית",
+          "חקלאי"
+        ],
+        "gained": 0.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "ברוך",
+        "count": 2,
+        "intended": [
+          "ציון",
+          "חיים"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "סקרנות",
+        "count": 3,
+        "intended": [
+          "תשוקה",
+          "שאלה",
+          "תרבות"
+        ],
+        "gained": 1.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מפרץ",
+        "count": 2,
+        "intended": [
+          "חוף",
+          "אגם"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "פלאפון",
+        "count": 2,
+        "intended": [
+          "מצלמה",
+          "רשת"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "גלידה",
+        "count": 3,
+        "intended": [
+          "שוקולד",
+          "פיצה",
+          "שלג"
+        ],
+        "gained": 3.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "רכב",
+        "count": 2,
+        "intended": [
+          "חשמל",
+          "תמרור"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "שוקולד",
+        "count": 2,
+        "intended": [
+          "סוכר",
+          "עוגה"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "יסודי",
+        "count": 2,
+        "intended": [
+          "בית",
+          "שורש"
+        ],
+        "gained": 0.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מחשב",
+        "count": 2,
+        "intended": [
+          "אינטרנט",
+          "עכבר"
+        ],
+        "gained": 0.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "בננה",
+        "count": 3,
+        "intended": [
+          "אננס",
+          "תפוז",
+          "קרנף"
+        ],
+        "gained": 3.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מסוק",
+        "count": 3,
+        "intended": [
+          "טיסה",
+          "רקטה",
+          "בלון"
+        ],
+        "gained": 1.0,
+        "recovery": 0.3333333333333333,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "לימוד",
+        "count": 3,
+        "intended": [
+          "ספר",
+          "תרבות",
+          "רכיבה"
+        ],
+        "gained": 2.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "אגף",
+        "count": 2,
+        "intended": [
+          "מנהל",
+          "מוזיאון"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "עשן",
+        "count": 3,
+        "intended": [
+          "ערפל",
+          "שריפה",
+          "גשם"
+        ],
+        "gained": 0.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "שמלה",
+        "count": 2,
+        "intended": [
+          "אופנה",
+          "גרביים"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "ישבן",
+        "count": 2,
+        "intended": [
+          "חזה",
+          "מרפק"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "ערב",
+        "count": 3,
+        "intended": [
+          "יום",
+          "ריקוד",
+          "שקט"
+        ],
+        "gained": 1.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "התפתחות",
+        "count": 2,
+        "intended": [
+          "מהפכה",
+          "ענף"
+        ],
+        "gained": 0.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "נמל",
+        "count": 3,
+        "intended": [
+          "שדה",
+          "מבצר",
+          "ארמון"
+        ],
+        "gained": 2.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "נשימה",
+        "count": 2,
+        "intended": [
+          "ריאה",
+          "קצב"
+        ],
+        "gained": 2.0,
+        "recovery": 0.5,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "סטייק",
+        "count": 2,
+        "intended": [
+          "תרנגול",
+          "עוגה"
+        ],
+        "gained": 0.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מגירה",
+        "count": 2,
+        "intended": [
+          "דלת",
+          "מגש"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "חצות",
+        "count": 2,
+        "intended": [
+          "לילה",
+          "שעה"
+        ],
+        "gained": 1.0,
+        "recovery": 0.0,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 2.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "סוכר",
+        "count": 2,
+        "intended": [
+          "דבש",
+          "מיץ"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "אגדה",
+        "count": 3,
+        "intended": [
+          "סיפור",
+          "נסיכה",
+          "דרקון"
+        ],
+        "gained": 3.0,
+        "recovery": 0.6666666666666666,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "מכונית",
+        "count": 2,
+        "intended": [
+          "אופנוע",
+          "מנוע"
+        ],
+        "gained": 2.0,
+        "recovery": 1.0,
+        "safe_turn": 1.0,
+        "assassin": 0.0,
+        "over_claim": 0.0,
+        "legal": 1.0
+      },
+      {
+        "served": 1.0,
+        "clue": "חזיר",
+        "count": 2,
+        "intended": [
+          "בשר",
+          "עוף"
+        ],
+        "gained": 1.0,
+        "recovery": 0.5,
+        "safe_turn": 0.0,
+        "assassin": 0.0,
+        "over_claim": 1.0,
+        "legal": 1.0
+      }
+    ]
+  }
+}

@@ -48,13 +48,18 @@ SECOND_OPINION = os.environ.get("SECOND_OPINION", "1").lower() not in ("0", "fal
 # how hard to avoid enemy/neutral/assassin words (lam_*). Cautious only plays rock-solid
 # clues (and refuses more); bold reaches for more words and tolerates a tighter enemy.
 RISK_PROFILES = {
-    "cautious": dict(m=2, lam_a=3.0, lam_opp=1.5, lam_neu=0.5, keep=0.68, safe_margin=0.05),
-    "balanced": dict(m=3, lam_a=2.0, lam_opp=1.0, lam_neu=0.3, keep=0.55, safe_margin=0.02),
-    "bold":     dict(m=4, lam_a=1.5, lam_opp=0.7, lam_neu=0.2, keep=0.45, safe_margin=0.0),
+    # Scoring weights (m, lam_*, safe_margin) validated on bench_clue.py (real serve_clue path,
+    # validated fasttext+qwen guesser); a random search over these knobs did not beat them on
+    # held-out boards — it only inflated counts at a safety cost — so they stand. The count-trim
+    # `keep` (keep_rel) was tightened for balanced (0.55→0.66) and bold (0.45→0.55): across two
+    # held-out seeds this drops the shaky last word, lifting safe-turn rate ~+0.10 and recovery
+    # ~+0.03 and cutting over-claim ~0.15, for a small coverage cost — the "weak third word" fix.
+    "cautious": dict(m=2, lam_a=3.0, lam_opp=1.3, lam_neu=0.7, keep=0.68, safe_margin=0.05),
+    "balanced": dict(m=3, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.66, safe_margin=0.02),
+    "bold":     dict(m=4, lam_a=1.8, lam_opp=0.7, lam_neu=0.4, keep=0.55, safe_margin=0.0),
 }
-# Which keys parameterise candidate generation vs. the count-trim threshold. safe_margin is the
-# real risk dial: how far a team word must outrank every enemy word to count toward a clue.
 _CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu", "safe_margin")
+LAM_F = 0.14                # weight on the mid-frequency (DETECT-FREQ) prior in candidate scoring
 
 # Cohesion: a counted word must cohere (cosine >= COH_FLOOR) with the cluster's *head* (strongest)
 # word, not merely with the clue — so the number reflects a real cluster, not passengers riding
@@ -125,7 +130,7 @@ MODELS = [
     {"id": probe.LLM_BIG,  "label": "12B (איכותי)"},
 ]
 ENCODER_KEYS = list(probe.ENCODERS.keys())
-GEO_ENC = "fasttext"           # the principled Hebrew geometry (see project memory)
+GEO_ENC = "blend_0.7_0.3"     # Concatenated L2-normalized fastText + Numberbatch blend
 XENC = "neodictabert"          # cross-engine second opinion for the operative (no LLM)
 
 _llms: dict = {}
@@ -177,7 +182,7 @@ def geo_assets():
         # essentially any common, legal Hebrew noun/adjective is a candidate — not a small list.
         # The POS + frequency floor are quality guards (they keep junk/function words from
         # winning the geometry); legality (board word/shoresh) and the blocklist are the rest.
-        vocab, counts = probe.clue_vocab_band(20000, lo=300, hi=80000,
+        vocab, counts = probe.clue_vocab_band(20000, lo=1000, hi=80000,
                                               pos={"NOUN", "ADJ"}, source_n=30000)
         freq = probe.freq_scores(counts, lo=1500, hi=40000)
         block = _load_blocklist()                  # drop offensive terms from the clue pool
@@ -339,7 +344,8 @@ def space():
 # --------------------------------------------------------------------------- #
 
 def _analyze_clue(board: probe.Board, word: str, targets, count, score,
-                  focus, reason: str = "", keep_rel: float = 0.66) -> dict:
+                  focus, reason: str = "", keep_rel: float = 0.66,
+                  max_count: int | None = None) -> dict:
     """Full operative-eye analysis of one candidate clue: how the board reads, the *safe run*
     (team words a guesser reaches before any enemy), what it leaks, assassin proximity, a
     geometry rationale, and an honest no-clue verdict. Each entry in the spymaster `options`
@@ -347,7 +353,7 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
 
     `targets` are the words the candidate was optimised for (focus / best-m); leak & risk are
     judged against them. The *recommended* number and the lit-up words, though, are the full
-    safe run — so a clue chosen for 2 words that safely covers 5 is reported as 5."""
+    safe run, capped by `max_count` when a risk profile sets a maximum claim."""
     read = _read_clue(board, word)
     target_sims = [r["sim"] for r in read if r["word"] in targets]
     floor = min(target_sims) if target_sims else -1.0
@@ -383,22 +389,55 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
         note = (f"⚠ זהירות: '{e['word']}' ({ROLE_HE.get(e['role'], 'זרה')}) קרובה לרמז כמעט "
                 f"כמו המילים שלך — מנחש עלול לבחור בה. בטוח ל-{safe} בלבד.")
 
-    # what to recommend & light up: the safe run, trimmed to words that form a real cluster —
-    # strongly connected to the clue (relative keep + no cliff) AND cohering with each other
-    # (cohesion trim), so a passenger that rides along on the clue↔word similarity but doesn't
-    # belong (radio→milk) is dropped. Pinned targets always stay. See probe.served_count.
     focusset = set(focus or [])
     disp_intended = []
     if not no_clue:
+        encoder = get_enc(GEO_ENC)
+        cliff_factor = 0.4 if getattr(encoder, "model_id", "").startswith("blend_") else 0.5
+        coh_floor = 0.15 if getattr(encoder, "model_id", "").startswith("blend_") else COH_FLOOR
         disp_intended = probe.served_count(read, keep_rel=keep_rel, pin=focusset,
-                                           enc=get_enc(GEO_ENC), cohesion_floor=COH_FLOOR,
-                                           cohesion_mode=COH_MODE)
+                                           enc=encoder, cohesion_floor=coh_floor,
+                                           cohesion_mode=COH_MODE, cliff=cliff_factor)
+        if max_count is not None:
+            disp_intended = disp_intended[:max_count]
     disp_count = len(disp_intended)
     reason = reason or _geo_reason(disp_intended or targets, board, read)
     return {"word": word, "count": disp_count, "intended": disp_intended, "score": score,
             "reason": reason, "read": read, "leak": leak, "safe": safe,
             "assassin": {"word": aw, "rank": arank, "sim": asim},
             "no_clue": no_clue, "risky": risky, "note": note}
+
+
+def _risk_order(options: list[dict], risk: str) -> list[int]:
+    """Order analyzed geometry options by the risk *policy* (not just the scoring weight):
+    refuse-clues always sink last; bold maximises coverage (count) then safety; cautious and
+    balanced put safety first, then coverage. Returns option indices best-first."""
+    if risk == "bold":
+        key = lambda i: (1 if options[i]["no_clue"] else 0,
+                         -options[i]["count"], -options[i]["safe"], -options[i]["score"])
+    else:
+        key = lambda i: (1 if options[i]["no_clue"] else 0,
+                         1 if options[i]["risky"] else 0,
+                         -options[i]["safe"], -options[i]["count"], -options[i]["score"])
+    return sorted(range(len(options)), key=key)
+
+
+def serve_clue(board: probe.Board, risk: str = "balanced", focus=None, profile=None):
+    """The geometry engine's clue options for a board, ordered exactly as
+    /api/coach/spymaster serves them (best first). Pure — no request context — so the
+    endpoint, the benchmarks, and tests all measure the identical served clue.
+    `profile` overrides RISK_PROFILES[risk] (for tuning); `risk` still selects the ordering
+    policy. Returns (options, shortlist) where options[0] is the recommended clue."""
+    prof = profile or RISK_PROFILES[risk]
+    focus = [w for w in (focus or []) if w in board.my] or None
+    vocab, emb, lems, freq = geo_assets()
+    cands = probe.encoder_clue_candidates(
+        get_enc(GEO_ENC), board, vocab, emb, vocab_lemmas=lems, vocab_freq=freq,
+        lam_f=LAM_F, n=10, targets=focus, **{k: prof[k] for k in _CAND_KEYS})
+    options = [_analyze_clue(board, c["word"], c["intended"], c["count"], c["score"], focus,
+                             keep_rel=prof["keep"], max_count=prof["m"]) for c in cands]
+    order = _risk_order(options, risk)
+    return [options[i] for i in order], [cands[i] for i in order]
 
 
 @app.post("/api/coach/spymaster")
@@ -416,8 +455,8 @@ def coach_spymaster():
     focus = [w for w in (j.get("focus") or []) if w in board.my] or None  # optional target subset (team only)
     risk = j.get("risk") if j.get("risk") in RISK_PROFILES else "balanced"
     prof = RISK_PROFILES[risk]
-    cand_kw = {k: prof[k] for k in _CAND_KEYS}    # generation knobs
-    keep_rel = prof["keep"]                        # count-trim threshold (risk-tuned)
+    cand_kw = {k: prof[k] for k in _CAND_KEYS}
+    keep_rel = prof["keep"]
 
     shortlist, picked = [], 0
     if engine == "llm":
@@ -425,41 +464,23 @@ def coach_spymaster():
         if not clue or probe.llm_root_conflicts(get_llm(mid), [clue.word], board.words):
             return jsonify(error="DictaLM לא הצליח להחזיר רמז חוקי, נסה שוב או עבור לגאומטריה")
         options = [_analyze_clue(board, clue.word, clue.intended, clue.count, clue.margin,
-                                 focus, reason=clue.reason, keep_rel=keep_rel)]
-    else:
+                                 focus, reason=clue.reason, keep_rel=keep_rel, max_count=prof["m"])]
+    elif engine == "hybrid":       # geometry proposes a legal shortlist, DictaLM gates + picks first
         vocab, emb, lems, freq = geo_assets()
         cands = probe.encoder_clue_candidates(get_enc(GEO_ENC), board, vocab, emb,
-                                              vocab_lemmas=lems, vocab_freq=freq, lam_f=0.05,
+                                              vocab_lemmas=lems, vocab_freq=freq, lam_f=LAM_F,
                                               n=10, targets=focus, **cand_kw)
-        if engine == "hybrid":     # shoresh/derivative gate (DictaLM); geometry stays LLM-free
-            bad = probe.llm_root_conflicts(get_llm(mid), [c["word"] for c in cands], board.words)
-            cands = [c for c in cands if c["word"] not in bad] or cands   # keep >=1
+        bad = probe.llm_root_conflicts(get_llm(mid), [c["word"] for c in cands], board.words)
+        cands = [c for c in cands if c["word"] not in bad] or cands   # keep >=1
         shortlist = cands
-        if engine == "hybrid":     # geometry proposes a legal shortlist, DictaLM picks first
-            chosen = probe.llm_pick_clue(get_llm(mid), board, cands)
-            picked = next((i for i, c in enumerate(cands) if c["word"] == chosen.word), 0)
+        chosen = probe.llm_pick_clue(get_llm(mid), board, cands)
+        picked = next((i for i, c in enumerate(cands) if c["word"] == chosen.word), 0)
         options = [_analyze_clue(board, c["word"], c["intended"], c["count"], c["score"], focus,
-                                 keep_rel=keep_rel)
+                                 keep_rel=keep_rel, max_count=prof["m"])
                    for c in cands]
-        if engine == "geometry":
-            # order best→worst so the first clue shown is the strongest. Refusals always last,
-            # and a lonely 1-word clue (weak/trivial in Codenames) is pushed below any clue that
-            # genuinely covers 2+ words. Safety-first modes (cautious/balanced) then push risky
-            # clues down and lead with the longest safe run; bold leads with *coverage* (most
-            # words the clue claims) without burying a risky clue — matching what the dial promises.
-            if risk == "bold":
-                order = sorted(range(len(options)), key=lambda i: (
-                    1 if options[i]["no_clue"] else 0,
-                    -options[i]["count"], -options[i]["score"]))
-            else:
-                order = sorted(range(len(options)), key=lambda i: (
-                    1 if options[i]["no_clue"] else 0,
-                    1 if options[i]["risky"] else 0,
-                    1 if options[i]["count"] <= 1 else 0,
-                    -options[i]["safe"], -options[i]["score"]))
-            options = [options[i] for i in order]
-            shortlist = [shortlist[i] for i in order]
-            picked = 0
+    else:                          # geometry: the same ordered options serve_clue / the benchmark use
+        options, shortlist = serve_clue(board, risk, focus)
+        options, shortlist = options[:10], shortlist[:10]
 
     if not options:
         return jsonify(error="לא נמצא רמז חוקי ללוח הזה", no_clue=True, options=[]), 200
