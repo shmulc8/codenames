@@ -176,7 +176,7 @@ def _load_ambiguity_lexicon():
     return _ambiguity_lexicon
 
 
-def geo_assets(mode: str = "conservative"):
+def geo_assets(mode: str = "curated"):
     """(vocab, embedding, lemmas, freq_scores) for the geometry spymaster — a mid-frequency
     noun/adjective/etc. band of the clue vocabulary, embedded and FREQ-scored once. The vocab is
     lemmatised so legality catches prefixed forms (e.g. בסיר → סיר) that share a board lemma."""
@@ -342,9 +342,9 @@ def space():
     matrix to 2D with classical MDS (numpy only). Read-only; no engine state touched."""
     j = request.get_json(force=True)
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "conservative"
-    if vocab_mode not in ("conservative", "broad", "experimental"):
-        vocab_mode = "conservative"
+    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
+    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
+        vocab_mode = "curated"
     clue = (j.get("clue") or "").strip() or None
     whiten = j.get("whiten", True)
 
@@ -461,7 +461,7 @@ def _risk_order(options: list[dict], risk: str) -> list[int]:
     return sorted(range(len(options)), key=key)
 
 
-def serve_clue(board: probe.Board, risk: str = "balanced", focus=None, profile=None, vocab_mode: str = "conservative"):
+def serve_clue(board: probe.Board, risk: str = "balanced", focus=None, profile=None, vocab_mode: str = "curated"):
     """The geometry engine's clue options for a board, ordered exactly as
     /api/coach/spymaster serves them (best first). Pure — no request context — so the
     endpoint, the benchmarks, and tests all measure the identical served clue.
@@ -487,9 +487,9 @@ def coach_spymaster():
     one to show first. The top-level fields mirror `options[picked]` for convenience."""
     j = request.get_json(force=True)
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "conservative"
-    if vocab_mode not in ("conservative", "broad", "experimental"):
-        vocab_mode = "conservative"
+    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
+    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
+        vocab_mode = "curated"
     if not board.my:
         abort(400, "board has no team (my) words")
     engine = "geometry" if EMBED_ONLY else (j.get("engine") or "geometry")
@@ -542,9 +542,9 @@ def coach_check():
     the safe run is, the danger words, and assassin proximity. 'Test before you play.'"""
     j = request.get_json(force=True)
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "conservative"
-    if vocab_mode not in ("conservative", "broad", "experimental"):
-        vocab_mode = "conservative"
+    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
+    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
+        vocab_mode = "curated"
     clue = j["clue"].strip()
     # Legality (offline, no LLM): a clue is illegal if it is a board word / an inflection of one
     # (DictaBERT lemma), or shares a root (Wiktionary lexicon) with a board word it is transparent
@@ -571,9 +571,9 @@ def coach_operative():
     """Best guesses for a clue + count, with confidence and a geometry second opinion."""
     j = request.get_json(force=True)
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "conservative"
-    if vocab_mode not in ("conservative", "broad", "experimental"):
-        vocab_mode = "conservative"
+    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
+    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
+        vocab_mode = "curated"
     clue = j["clue"].strip()
     count = max(1, min(9, int(j.get("count") or 1)))
     engine = "geometry" if EMBED_ONLY else (j.get("engine") or "geometry")
@@ -637,7 +637,7 @@ if __name__ == "__main__":
     _init_feedback()
     if os.environ.get("WARMUP", "").lower() in ("1", "true", "yes"):
         app.logger.info("warming up geometry assets ...")
-        geo_assets("conservative")               # load fastText + embed the clue vocab before serving
+        geo_assets("curated")                    # load fastText + embed the clue vocab before serving
         import morph
         morph.lemmas(["מילה"])     # preload DictaBERT-lex (legality) so the first clue isn't slow
     host = os.environ.get("HOST", "127.0.0.1")
