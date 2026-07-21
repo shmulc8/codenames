@@ -2,9 +2,8 @@ import { useRef, useState } from 'react';
 
 import { postSpymaster } from '../../api/client';
 import { Button, RoleIcon, showToast } from '../../components';
-import { liveBoard, useAppStore } from '../../state/store';
+import { boardsMatch, liveBoard, useAppStore } from '../../state/store';
 import type {
-  BoardPayload,
   ClueOption,
   Risk,
   Role,
@@ -19,16 +18,6 @@ interface RequestSnapshot {
   focus?: string[];
   risk: Risk;
   target: TeamColor;
-}
-
-function boardsMatch(left: BoardPayload, right: BoardPayload): boolean {
-  return (
-    left.words.length === right.words.length &&
-    left.words.every(
-      (word, index) =>
-        word === right.words[index] && left.roles[word] === right.roles[word],
-    )
-  );
 }
 
 const targetLabels: Record<TeamColor, string> = {

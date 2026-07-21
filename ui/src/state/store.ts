@@ -122,6 +122,16 @@ export const liveBoard = (state: AppState): BoardPayload => {
   };
 };
 
+export const boardsMatch = (
+  left: BoardPayload,
+  right: BoardPayload,
+): boolean =>
+  left.words.length === right.words.length &&
+  left.words.every(
+    (word, index) =>
+      word === right.words[index] && left.roles[word] === right.roles[word],
+  );
+
 export const selectedColor = (state: AppState): TeamColor | null => {
   if (state.selected.length === 0) return null;
 
