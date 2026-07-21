@@ -15,6 +15,66 @@ async function setupFixtureBoard(page: Page): Promise<void> {
   await expect(page.getByTestId('target-color')).toBeVisible();
 }
 
+async function installClueResponseGate(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const originalFetch = window.fetch;
+    let releaseResponse!: () => void;
+    let markResponseReady!: () => void;
+    const responseGate = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+    const responseReady = new Promise<void>((resolve) => {
+      markResponseReady = resolve;
+    });
+
+    const testWindow = window as Window & {
+      __clueResponseGate?: {
+        release: () => void;
+        ready: Promise<void>;
+      };
+    };
+    testWindow.__clueResponseGate = {
+      release: releaseResponse,
+      ready: responseReady,
+    };
+
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      const requestUrl =
+        typeof args[0] === 'string'
+          ? args[0]
+          : args[0] instanceof URL
+            ? args[0].toString()
+            : args[0].url;
+
+      if (requestUrl.includes('/api/coach/spymaster')) {
+        markResponseReady();
+        await responseGate;
+      }
+
+      return response;
+    };
+  });
+}
+
+async function waitForClueResponse(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const testWindow = window as Window & {
+      __clueResponseGate?: { ready: Promise<void> };
+    };
+    await testWindow.__clueResponseGate?.ready;
+  });
+}
+
+async function releaseClueResponse(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const testWindow = window as Window & {
+      __clueResponseGate?: { release: () => void };
+    };
+    testWindow.__clueResponseGate?.release();
+  });
+}
+
 async function requestAutoClue(page: Page): Promise<void> {
   await page.getByTestId('btn-auto-cluster').click();
   await expect(page.getByTestId('clue-result')).toBeVisible();
@@ -29,13 +89,18 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
   await expect(page.getByTestId('btn-get-clue')).toBeDisabled();
   await expect(page.getByTestId('target-red')).toHaveAttribute('aria-pressed', 'true');
 
+  await installClueResponseGate(page);
   await page.getByTestId('btn-auto-cluster').click();
-
-  await expect(
-    page.getByTestId('btn-auto-cluster').getByTestId('loading-spinner'),
-  ).toBeVisible();
-  await expect(page.getByTestId('btn-auto-cluster')).toBeDisabled();
-  await expect(page.getByTestId('risk-balanced')).toBeDisabled();
+  try {
+    await waitForClueResponse(page);
+    await expect(
+      page.getByTestId('btn-auto-cluster').getByTestId('loading-spinner'),
+    ).toBeVisible();
+    await expect(page.getByTestId('btn-auto-cluster')).toBeDisabled();
+    await expect(page.getByTestId('risk-balanced')).toBeDisabled();
+  } finally {
+    await releaseClueResponse(page);
+  }
 
   await expect(page.getByTestId('clue-result')).toBeVisible();
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');
