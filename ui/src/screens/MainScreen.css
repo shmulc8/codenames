@@ -47,6 +47,26 @@
   margin-bottom: var(--space-1) !important;
 }
 
+.main-screen__header-end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.main-screen__methods {
+  color: var(--cn-text-muted);
+  font-size: 0.75rem;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+  white-space: nowrap;
+}
+
+.main-screen__methods:hover {
+  text-decoration: none;
+  filter: brightness(1.4);
+}
+
 .main-screen__workspace {
   flex: 1;
   display: grid;
