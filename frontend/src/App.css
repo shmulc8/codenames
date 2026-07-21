@@ -25,18 +25,39 @@
   padding: clamp(1.5rem, 6vw, 5rem);
 }
 
-.welcome-card {
-  width: min(100%, 42rem);
+.board-stage {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  width: min(100%, 58rem);
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
   background: var(--surface);
-  border-color: var(--line);
   box-shadow: 0 0.4rem 1.25rem var(--cardEdge);
 }
 
-.welcome-card .ant-typography {
+.board-stage .ant-typography {
   color: var(--ink);
 }
 
-.welcome-card .ant-typography-secondary {
+.board-stage .ant-typography-secondary {
+  color: var(--muted);
+}
+
+.board-stage-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.board-stage-heading .ant-typography {
+  margin: 0;
+}
+
+.board-note {
   color: var(--muted);
 }
 

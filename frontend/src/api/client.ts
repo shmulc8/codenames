@@ -15,14 +15,27 @@ import type {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, init)
-  const body: unknown = await response.json()
+  const text = await response.text()
+  let body: unknown
+
+  if (text.trim()) {
+    try {
+      body = JSON.parse(text)
+    } catch {
+      body = undefined
+    }
+  }
 
   if (!response.ok) {
     const message =
       typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string'
         ? body.error
-        : `Request failed (${response.status})`
+        : `API unreachable (HTTP ${response.status})`
     throw new Error(message)
+  }
+
+  if (body === undefined) {
+    throw new Error(`Invalid API response (HTTP ${response.status})`)
   }
 
   return body as T
