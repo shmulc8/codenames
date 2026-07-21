@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDeal } from '../../api/client';
 import { RoleIcon } from '../../components/RoleIcon';
@@ -44,6 +44,7 @@ export function PhotoSetup(): JSX.Element {
   const [validation, setValidation] = useState<string | null>(null);
   const [boardPreview, setBoardPreview] = useState<string | null>(null);
   const [keyPreview, setKeyPreview] = useState<string | null>(null);
+  const boardOcrAttempt = useRef(0);
 
   useEffect(() => {
     let active = true;
@@ -59,6 +60,7 @@ export function PhotoSetup(): JSX.Element {
       });
     return () => {
       active = false;
+      boardOcrAttempt.current += 1;
       unsubscribe();
     };
   }, []);
@@ -100,16 +102,19 @@ export function PhotoSetup(): JSX.Element {
   }
 
   async function handleBoardFile(file: File): Promise<void> {
+    const attempt = ++boardOcrAttempt.current;
     setMode('photo');
     setBoardPreview(filePreview(file));
     setOcrState('recognizing');
     setValidation(null);
     try {
       const recognized = await recognizeBoard(file);
+      if (attempt !== boardOcrAttempt.current) return;
       setWords(recognized.map((cell) => cell.word));
       setConfidences(recognized.map((cell) => cell.confidence));
       setOcrState('success');
     } catch (error) {
+      if (attempt !== boardOcrAttempt.current) return;
       setWords([...EMPTY_WORDS]);
       setConfidences(Array.from({ length: 25 }, () => 0));
       setOcrState('error');
@@ -369,6 +374,7 @@ export function PhotoSetup(): JSX.Element {
             type="button"
             className="btn btn-ghost photo-setup__skip"
             onClick={() => {
+              boardOcrAttempt.current += 1;
               setWords([...EMPTY_WORDS]);
               setConfidences([...EMPTY_CONFIDENCE]);
               setOcrState('ready');

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Browser, type Page } from '@playwright/test';
 
 import { fixtureBoard } from '../../src/mocks/fixtures/board';
 
@@ -12,6 +12,45 @@ async function cycleKeyCell(page: Page, index: number, times: number): Promise<v
   for (let click = 0; click < times; click += 1) {
     await page.getByTestId(`key-cell-${index}`).click();
   }
+}
+
+async function openPageWithDelayedOcrWorker(browser: Browser): Promise<{
+  page: Page;
+  releaseWorker: () => void;
+}> {
+  const context = await browser.newContext();
+  await context.addInitScript(() => {
+    const NativeWorker = window.Worker;
+    const testWindow = window as Window & { __ocrRecognizeResolutions: number };
+    testWindow.__ocrRecognizeResolutions = 0;
+    window.Worker = class extends NativeWorker {
+      constructor(scriptURL: string | URL, options?: WorkerOptions) {
+        super(scriptURL, options);
+        this.addEventListener('message', (event: MessageEvent<unknown>) => {
+          const message = event.data as { action?: string; status?: string };
+          if (message.action === 'recognize' && message.status === 'resolve') {
+            testWindow.__ocrRecognizeResolutions += 1;
+          }
+        });
+      }
+    };
+  });
+
+  let releaseWorker = () => {};
+  const workerGate = new Promise<void>((resolve) => {
+    releaseWorker = resolve;
+  });
+  let trainedDataRequestStarted = false;
+  await context.route('**/heb.traineddata.gz', async (route) => {
+    trainedDataRequestStarted = true;
+    await workerGate;
+    await route.continue();
+  });
+
+  const page = await context.newPage();
+  await page.goto('/');
+  await expect.poll(() => trainedDataRequestStarted).toBe(true);
+  return { page, releaseWorker };
 }
 
 test.describe('PhotoSetup', () => {
@@ -211,5 +250,33 @@ test.describe('PhotoSetup', () => {
       page.getByText(/מזהה את מילות הלוח|הזיהוי הושלם|הזיהוי לא זמין כרגע/),
     ).toBeVisible();
     await expect(page.getByTestId('ocr-grid')).toBeVisible();
+  });
+
+  test('manual skip preserves corrections when an in-flight OCR result arrives late', async ({ browser }) => {
+    const { page, releaseWorker } = await openPageWithDelayedOcrWorker(browser);
+    const onePixelPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    );
+
+    await page.getByTestId('photo-input-board').setInputFiles({
+      name: 'board.png',
+      mimeType: 'image/png',
+      buffer: onePixelPng,
+    });
+    await expect(page.getByText(/מזהה את מילות הלוח/)).toBeVisible();
+
+    await page.getByText('דלגו על צילום הלוח — הקלידו ידנית', { exact: true }).click();
+    await page.getByTestId('ocr-cell-0').fill('בדיקה');
+    releaseWorker();
+
+    await expect.poll(() => page.evaluate(() => (
+      window as Window & { __ocrRecognizeResolutions?: number }
+    ).__ocrRecognizeResolutions ?? 0), { timeout: 20_000 }).toBe(1);
+    await expect(page.getByTestId('ocr-cell-0')).toHaveValue('בדיקה');
+    await expect(page.getByText('מנוע הזיהוי מוכן', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('toast')).toHaveCount(0);
+
+    await page.context().close();
   });
 });
