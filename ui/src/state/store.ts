@@ -58,7 +58,7 @@ export interface AppState {
   setCheckedClue(word: string | null): void;
   setHoverWord(word: string | null): void;
   toggleLifecycle(word: string, chosenBy?: Role): void;
-  setClueResult(result: SpymasterResponse | null): void;
+  setClueResult(result: SpymasterResponse | null, stale?: boolean): void;
   setOptionIndex(index: number): void;
   useCurrentClue(): void;
   resetGame(): void;
@@ -123,6 +123,16 @@ export const liveBoard = (state: AppState): BoardPayload => {
     roles: Object.fromEntries(liveTiles.map((tile) => [tile.word, tile.role])),
   };
 };
+
+export const boardsMatch = (
+  left: BoardPayload,
+  right: BoardPayload,
+): boolean =>
+  left.words.length === right.words.length &&
+  left.words.every(
+    (word, index) =>
+      word === right.words[index] && left.roles[word] === right.roles[word],
+  );
 
 export const selectedColor = (state: AppState): TeamColor | null => {
   if (state.selected.length === 0) return null;
@@ -209,10 +219,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     let used = state.clue.used;
     let log = state.log;
 
-    if (isBeingChosen && used) {
+    if (used) {
+      const revealedAfter = isBeingChosen
+        ? used.revealedAfter.some((reveal) => reveal.word === word)
+          ? used.revealedAfter
+          : [...used.revealedAfter, { word, chosenBy }]
+        : used.revealedAfter.filter((reveal) => reveal.word !== word);
+
       used = {
         ...used,
-        revealedAfter: [...used.revealedAfter, { word, chosenBy }],
+        revealedAfter,
       };
       log = log.map((entry) => (entry.ts === used?.ts ? used : entry));
     }
@@ -233,13 +249,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  setClueResult: (current) =>
+  setClueResult: (current, stale = false) =>
     set((state) => {
       const picked = current?.picked ?? 0;
       const optionIndex =
         current && picked >= 0 && picked < current.options.length ? picked : 0;
 
-      return { clue: { ...state.clue, current, optionIndex, stale: false } };
+      return { clue: { ...state.clue, current, optionIndex, stale } };
     }),
 
   setOptionIndex: (optionIndex) =>

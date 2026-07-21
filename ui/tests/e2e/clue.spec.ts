@@ -15,6 +15,66 @@ async function setupFixtureBoard(page: Page): Promise<void> {
   await expect(page.getByTestId('target-color')).toBeVisible();
 }
 
+async function installClueResponseGate(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const originalFetch = window.fetch;
+    let releaseResponse!: () => void;
+    let markResponseReady!: () => void;
+    const responseGate = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+    const responseReady = new Promise<void>((resolve) => {
+      markResponseReady = resolve;
+    });
+
+    const testWindow = window as Window & {
+      __clueResponseGate?: {
+        release: () => void;
+        ready: Promise<void>;
+      };
+    };
+    testWindow.__clueResponseGate = {
+      release: releaseResponse,
+      ready: responseReady,
+    };
+
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      const requestUrl =
+        typeof args[0] === 'string'
+          ? args[0]
+          : args[0] instanceof URL
+            ? args[0].toString()
+            : args[0].url;
+
+      if (requestUrl.includes('/api/coach/spymaster')) {
+        markResponseReady();
+        await responseGate;
+      }
+
+      return response;
+    };
+  });
+}
+
+async function waitForClueResponse(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const testWindow = window as Window & {
+      __clueResponseGate?: { ready: Promise<void> };
+    };
+    await testWindow.__clueResponseGate?.ready;
+  });
+}
+
+async function releaseClueResponse(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const testWindow = window as Window & {
+      __clueResponseGate?: { release: () => void };
+    };
+    testWindow.__clueResponseGate?.release();
+  });
+}
+
 async function requestAutoClue(page: Page): Promise<void> {
   await page.getByTestId('btn-auto-cluster').click();
   await expect(page.getByTestId('clue-result')).toBeVisible();
@@ -34,13 +94,18 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
   await expect(page.getByTestId('btn-get-clue')).toBeDisabled();
   await expect(page.getByTestId('target-red')).toHaveAttribute('aria-pressed', 'true');
 
+  await installClueResponseGate(page);
   await page.getByTestId('btn-auto-cluster').click();
-
-  await expect(
-    page.getByTestId('btn-auto-cluster').getByTestId('loading-spinner'),
-  ).toBeVisible();
-  await expect(page.getByTestId('btn-auto-cluster')).toBeDisabled();
-  await expect(page.getByTestId('risk-balanced')).toBeDisabled();
+  try {
+    await waitForClueResponse(page);
+    await expect(
+      page.getByTestId('btn-auto-cluster').getByTestId('loading-spinner'),
+    ).toBeVisible();
+    await expect(page.getByTestId('btn-auto-cluster')).toBeDisabled();
+    await expect(page.getByTestId('risk-balanced')).toBeDisabled();
+  } finally {
+    await releaseClueResponse(page);
+  }
 
   await expect(page.getByTestId('clue-result')).toBeVisible();
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');
@@ -221,6 +286,60 @@ test('lifecycle changes display the stale-result overlay', async ({ page }) => {
   await expect(page.getByText('כדאי לחשב שוב לפני שמשתמשים בו.')).toBeVisible();
   await expect(page.getByText('חשבו שוב')).toBeVisible();
   await expect(page.getByTestId('btn-use-clue')).toBeDisabled();
+});
+
+test('a clue response is immediately stale when the live board changes in flight', async ({
+  page,
+}) => {
+  await setupFixtureBoard(page);
+  await installClueResponseGate(page);
+
+  await page.getByTestId('btn-auto-cluster').click();
+  try {
+    await waitForClueResponse(page);
+
+    const heldRequest = await page.evaluate(() => window.__lastSpymasterReq);
+    expect(heldRequest?.words).toContain(fixtureBoard.words[0]);
+
+    await page.getByTestId('btn-lifecycle-0').click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          if (!window.__store) {
+            throw new Error('The dev store hook was not installed');
+          }
+          return window.__store.getState().tiles[0]?.lifecycle;
+        }),
+      )
+      .toBe('chosen');
+  } finally {
+    await releaseClueResponse(page);
+  }
+
+  await expect(page.getByTestId('clue-word')).toHaveText('טבע');
+  await expect(
+    page.getByText('הלוח השתנה — הרמז חושב על לוח ישן'),
+  ).toBeVisible();
+  await expect(page.getByTestId('btn-use-clue')).toBeDisabled();
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        if (!window.__store) {
+          throw new Error('The dev store hook was not installed');
+        }
+        return window.__store.getState().clue.stale;
+      }),
+    )
+    .toBe(true);
+
+  await page.getByText('חשבו שוב').click();
+  await expect(
+    page.getByText('הלוח השתנה — הרמז חושב על לוח ישן'),
+  ).toHaveCount(0);
+  await expect(page.getByTestId('btn-use-clue')).toBeEnabled();
+
+  const regeneratedRequest = await page.evaluate(() => window.__lastSpymasterReq);
+  expect(regeneratedRequest?.words).not.toContain(fixtureBoard.words[0]);
 });
 
 test.describe('backend error handling', () => {

@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 
 import { postSpymaster } from '../../api/client';
 import { Button, RoleIcon, showToast } from '../../components';
-import { liveBoard, useAppStore } from '../../state/store';
+import { boardsMatch, liveBoard, useAppStore } from '../../state/store';
 import type {
   ClueOption,
   Risk,
@@ -140,12 +140,19 @@ export function CluePanel(): JSX.Element {
         liveFocus?.length ? liveFocus : undefined,
         snapshot.risk,
       );
-      setClueResult(result);
+      const boardChanged = !boardsMatch(
+        board,
+        liveBoard(useAppStore.getState()),
+      );
+      setClueResult(result, boardChanged);
 
       // "Find the best combination" is an engine-led flow: mirror the exact targets
       // of the option the engine chose on the board, so they can immediately inspect
       // or refine that combination. Focused requests preserve the user's selection.
-      if (kind === 'auto' || (kind === 'regenerate' && !snapshot.focus?.length)) {
+      if (
+        !boardChanged &&
+        (kind === 'auto' || (kind === 'regenerate' && !snapshot.focus?.length))
+      ) {
         const picked = result.picked ?? 0;
         const option = result.options[picked] ?? result.options[0];
         selectSuggested(option?.intended ?? [], snapshot.target);
