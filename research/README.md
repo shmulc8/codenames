@@ -43,5 +43,8 @@ the environment or an ignored local `.env` file.
 - `python data/build_clue_vocab_openai.py` — generate a curated, corpus-validated
   list with familiarity, ambiguity, and translation-risk flags. Set
   `CLUE_VOCAB_MODE=curated` to use it when the file exists.
+- `python data/merge_clue_vocab_model_ideas.py` — add single-token candidates
+  from the OpenAI association supplement as `review_required` ideas without
+  inventing ambiguity or translation metadata.
 
 Keep provider credentials in environment variables. Generated result snapshots are ignored by Git.

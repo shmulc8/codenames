@@ -159,6 +159,18 @@ def _load_ambiguity_lexicon():
             _ambiguity_lexicon = dict(_DEFAULT_AMBIGUITY)
             if isinstance(document, dict):
                 _ambiguity_lexicon.update(document.get("entries", {}))
+            curated_path = os.path.join(probe.DATA, "clue_vocab_openai.json")
+            if os.path.exists(curated_path):
+                with open(curated_path, encoding="utf-8") as f:
+                    curated = json.load(f)
+                for word, meta in curated.get("entries", {}).items():
+                    flags = meta.get("flags", [])
+                    if "ambiguous" in flags or "translation_sensitive" in flags:
+                        _ambiguity_lexicon[word] = {
+                            "ambiguity": float(meta.get("ambiguity") or 0.7),
+                            "senses": [],
+                            "flags": flags,
+                        }
         except (FileNotFoundError, OSError, json.JSONDecodeError):
             _ambiguity_lexicon = dict(_DEFAULT_AMBIGUITY)
     return _ambiguity_lexicon
@@ -396,7 +408,9 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
     if ambiguity_warning:
         risky = True
         senses = ", ".join(str(s) for s in ambiguity.get("senses", [])[:3])
-        note = f"⚠ רמז דו־משמעי: {word} — משמעויות אפשריות: {senses}"
+        flags = ", ".join(str(s) for s in ambiguity.get("flags", [])[:3])
+        detail = senses or flags or "multiple plausible readings"
+        note = f"⚠ רמז דו־משמעי/תלוי־תרגום: {word} — {detail}"
     if read and read[0]["role"] != "my":
         no_clue = True
         note = f"המילה הכי קרובה לרמז היא '{read[0]['word']}' — לא שלך. אין מילה שמקשרת את הצוות שלך בלי לסכן מילה זרה."
@@ -428,7 +442,8 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
     return {"word": word, "count": disp_count, "intended": disp_intended, "score": score,
             "reason": reason, "read": read, "leak": leak, "safe": safe,
             "assassin": {"word": aw, "rank": arank, "sim": asim},
-            "ambiguity": {"score": ambiguity_score, "senses": ambiguity.get("senses", [])},
+            "ambiguity": {"score": ambiguity_score, "senses": ambiguity.get("senses", []),
+                          "flags": ambiguity.get("flags", [])},
             "no_clue": no_clue, "risky": risky, "note": note}
 
 
