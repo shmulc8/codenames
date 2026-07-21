@@ -684,11 +684,23 @@ def _board_root_signals(board: "Board", lemmas=None):
             for w, lem in zip(board.words, lems)]
 
 
+def _normalize_root(r: str) -> str:
+    if len(r) == 3:
+        if r[-1] in ('ה', 'י', 'ו'):
+            return r[:-1]
+        if r[-1] == r[-2]:
+            return r[:-1]
+    return r
+
+
 def _shares_root(cand_roots, cand_sig, board_roots, board_sig) -> bool:
     """Shared-root test for one (clue, board word) pair: authoritative lexicon-set intersection
-    when both sides are covered, else the coarse root_sig conflict."""
+    when both sides are covered, else the coarse root_sig conflict.
+    Weak/geminate roots are normalized to prevent false negatives from lexicographical mismatches."""
     if cand_roots and board_roots:
-        return bool(cand_roots & board_roots)
+        cand_norm = {_normalize_root(r) for r in cand_roots}
+        board_norm = {_normalize_root(r) for r in board_roots}
+        return bool(cand_norm & board_norm)
     return _root_conflict(cand_sig, {board_sig} if len(board_sig) >= 2 else set())
 
 

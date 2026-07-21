@@ -26,6 +26,10 @@ CASES = [
     ("מלכה", "מלך", 0.4799, True, "queen vs king"),
     ("מכתב", "כתב", 0.5280, True, "letter vs wrote"),
     ("הוראה", "מורה", 0.5207, True, "instruction vs teacher — transparent, root ירה/הרה"),
+    ("עלה", "עלים", 0.5820, True, "leaf vs leaves, root עלה/עלל"),
+    ("עלה", "עלי", 0.5430, True, "leaf vs construct plural leaves, root עלה/עלל"),
+    ("פרח", "לפרוח", 0.5120, True, "flower vs to blossom, root פרח"),
+    ("פרח", "פרחים", 0.6210, True, "flower vs flowers, root פרח"),
     # different roots (letters may coincide) — MUST be legal
     ("מדע", "מדינה", 0.3473, False, "science vs state — different roots, high cosine"),
     ("עיתון", "ספר", 0.4019, False, "newspaper vs book — related meaning, different root"),
@@ -33,6 +37,7 @@ CASES = [
     ("אש", "ראש", 0.1083, False, "fire inside head — coincidental substring, OOV fallback"),
     ("אורות", "אש", 0.2082, False, "lights vs fire — different roots"),
     ("שמש", "ים", 0.1287, False, "sun vs sea — unrelated"),
+    ("פרחח", "פרח", 0.3500, False, "punk vs flower — different roots (quadriliteral vs triliteral), high cosine stays legal"),
     # opaque etymological cognate — shares a root but a player wouldn't see it: legal via θ gate
     ("מלחמה", "לחם", 0.2761, False, "war vs bread — shared root לחמ, but cosine below θ"),
 ]
@@ -51,6 +56,12 @@ def _illegal(a: str, b: str, cos: float) -> bool:
 def main() -> int:
     # the reported bug must resolve to a shared root
     assert morph.roots("מדע") & morph.roots("מדען"), "מדע/מדען must share a lexicon root (ידע)"
+    assert _shares_root("עלה", "עלים"), "עלה/עלים must share a root"
+    assert _shares_root("עלה", "עלי"), "עלה/עלי must share a root"
+    assert _shares_root("עלה", "העלה"), "עלה/העלה must share a root"
+    assert _shares_root("פרח", "פרחים"), "פרח/פרחים must share a root"
+    assert not _shares_root("פרח", "פרחח"), "פרח/פרחח must not share a root"
+    assert not _shares_root("פרחח", "פרח"), "פרחח/פרח must not share a root" 
 
     failures = []
     for clue, word, cos, expected, note in CASES:
