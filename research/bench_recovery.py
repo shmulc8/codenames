@@ -37,7 +37,7 @@ def main():
     parser.add_argument("--encoders", default="fasttext", help="comma-separated experimental or registered encoder keys")
     parser.add_argument("--boards", type=int, default=15, help="number of random boards to evaluate")
     parser.add_argument("--seed", type=int, default=42, help="random seed for board sampling")
-    parser.add_argument("--vocab", choices=["baseline", "extended"], default="baseline", help="vocabulary set to use")
+    parser.add_argument("--vocab", choices=["baseline", "extended", "conservative", "broad", "experimental"], default="baseline", help="vocabulary set to use")
     args = parser.parse_args()
 
     encoder_keys = [k.strip() for k in args.encoders.split(",") if k.strip()]
@@ -54,9 +54,15 @@ def main():
                 if w and not w.startswith("#"):
                     block.add(w)
 
-    if args.vocab == "baseline":
+    if args.vocab == "conservative":
+        raw_vocab, counts = clue_vocab_band(20000, mode="conservative")
+    elif args.vocab == "broad":
+        raw_vocab, counts = clue_vocab_band(20000, mode="broad")
+    elif args.vocab == "experimental":
+        raw_vocab, counts = clue_vocab_band(20000, mode="experimental")
+    elif args.vocab == "baseline":
         raw_vocab, counts = clue_vocab_band(20000, lo=300, hi=80000, pos={"NOUN", "ADJ"}, source_n=30000)
-    else:
+    else: # extended
         raw_vocab, counts = clue_vocab_band(20000, lo=100, hi=150000, pos={"NOUN", "ADJ", "PROPN"}, source_n=30000)
 
     vocab = [w for w in raw_vocab if w not in block]
