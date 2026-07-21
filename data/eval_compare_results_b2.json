@@ -1,0 +1,1041 @@
+{
+  "boards": [
+    {
+      "board_number": 1,
+      "seed": 43,
+      "red_words": [
+        "מבצר",
+        "מרתף",
+        "פה",
+        "שד",
+        "איגרוף",
+        "עוגה",
+        "כוכב",
+        "דלת",
+        "מזלג"
+      ],
+      "blue_words": [
+        "תוכי",
+        "כסף",
+        "מסיבה",
+        "נחש",
+        "יהלום",
+        "פוליטיקאי",
+        "כרית",
+        "חנות"
+      ],
+      "neutral_words": [
+        "פצצה",
+        "ממשלה",
+        "סקי",
+        "חוזה",
+        "מצח",
+        "מגנט",
+        "אויב"
+      ],
+      "assassin": "מיטה",
+      "teams": {
+        "red": {
+          "hints": [
+            {
+              "hint": "כריך",
+              "count": 2,
+              "intended": [
+                "עוגה",
+                "מזלג"
+              ],
+              "score": 0.36432355642318726
+            },
+            {
+              "hint": "טעים",
+              "count": 2,
+              "intended": [
+                "עוגה",
+                "מזלג"
+              ],
+              "score": 0.3324231803417206
+            },
+            {
+              "hint": "פוטבול",
+              "count": 2,
+              "intended": [
+                "איגרוף",
+                "כוכב"
+              ],
+              "score": 0.3291267156600952
+            }
+          ],
+          "original_eval_response": {
+            "status": "judged",
+            "hints": [
+              {
+                "hint": "כריך",
+                "active-team": "red",
+                "connected-words": [
+                  {
+                    "word": "פה",
+                    "strength": "strong",
+                    "reason": "A sandwich is eaten with the mouth."
+                  },
+                  {
+                    "word": "מזלג",
+                    "strength": "moderate",
+                    "reason": "A fork might be used to eat a sandwich."
+                  }
+                ],
+                "score": 0.7,
+                "reason": "The hint 'כריך' (sandwich) connects well with 'פה' and moderately with 'מזלג'. It does not strongly suggest any opponent or neutral words.",
+                "links-to-unrelated-words": [
+                  {
+                    "word": "חנות",
+                    "category": "blue",
+                    "strength": "weak",
+                    "reason": "Sandwiches can be bought in a store."
+                  }
+                ],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "weak",
+                  "neutral-risk": "none"
+                }
+              },
+              {
+                "hint": "טעים",
+                "active-team": "red",
+                "connected-words": [
+                  {
+                    "word": "פה",
+                    "strength": "strong",
+                    "reason": "Tasty things are eaten with the mouth."
+                  },
+                  {
+                    "word": "עוגה",
+                    "strength": "strong",
+                    "reason": "Cake is commonly considered tasty."
+                  }
+                ],
+                "score": 0.8,
+                "reason": "The hint 'טעים' (tasty) connects strongly with 'פה' and 'עוגה'. It does not strongly suggest any opponent or neutral words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              },
+              {
+                "hint": "פוטבול",
+                "active-team": "red",
+                "connected-words": [
+                  {
+                    "word": "איגרוף",
+                    "strength": "moderate",
+                    "reason": "Both football and boxing are sports."
+                  }
+                ],
+                "score": 0.5,
+                "reason": "The hint 'פוטבול' (football) connects moderately with 'איגרוף'. It does not strongly suggest any opponent or neutral words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              }
+            ],
+            "ranked-hints": [
+              {
+                "hint": "טעים",
+                "score": 0.8
+              },
+              {
+                "hint": "כריך",
+                "score": 0.7
+              },
+              {
+                "hint": "פוטבול",
+                "score": 0.5
+              }
+            ]
+          },
+          "v1_eval_response": {
+            "status": "multi-judged",
+            "results": [
+              {
+                "status": "judged",
+                "hint": "כריך",
+                "active-team": "red",
+                "count-claimed": 2,
+                "count-verified": 0,
+                "connected-active-words": [],
+                "missed-active-words": [
+                  {
+                    "word": "עוגה",
+                    "strength": "weak",
+                    "reason": "Both are food items, but 'עוגה' (cake) is not directly related to 'כריך' (sandwich)."
+                  },
+                  {
+                    "word": "מזלג",
+                    "strength": "weak",
+                    "reason": "A fork ('מזלג') is used to eat food, but not specifically sandwiches."
+                  }
+                ],
+                "links-to-unrelated-words": [
+                  {
+                    "word": "כרית",
+                    "category": "opponent",
+                    "strength": "moderate",
+                    "reason": "The word 'כריך' (sandwich) sounds similar to 'כרית' (pillow), which could lead to confusion."
+                  }
+                ],
+                "assassin-risk": "none",
+                "opponent-risk": "moderate",
+                "neutral-risk": "none",
+                "score": 0.3,
+                "reason": "The hint 'כריך' does not strongly connect to any active-team words and moderately suggests an opponent word due to phonetic similarity."
+              },
+              {
+                "status": "judged",
+                "hint": "טעים",
+                "active-team": "red",
+                "count-claimed": 2,
+                "count-verified": 1,
+                "connected-active-words": [
+                  {
+                    "word": "עוגה",
+                    "strength": "strong",
+                    "reason": "'עוגה' (cake) is commonly associated with being tasty ('טעים')."
+                  }
+                ],
+                "missed-active-words": [
+                  {
+                    "word": "מזלג",
+                    "strength": "weak",
+                    "reason": "A fork ('מזלג') is used to eat tasty food, but the connection is indirect."
+                  }
+                ],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.65,
+                "reason": "The hint 'טעים' strongly connects to 'עוגה' but does not reach the claimed count of 2."
+              },
+              {
+                "status": "judged",
+                "hint": "פוטבול",
+                "active-team": "red",
+                "count-claimed": 2,
+                "count-verified": 1,
+                "connected-active-words": [
+                  {
+                    "word": "איגרוף",
+                    "strength": "moderate",
+                    "reason": "Both 'איגרוף' (boxing) and 'פוטבול' (football) are sports."
+                  }
+                ],
+                "missed-active-words": [],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.7,
+                "reason": "The hint 'פוטבול' moderately connects to 'איגרוף' but does not reach the claimed count of 2."
+              }
+            ],
+            "ranking": [
+              {
+                "rank": 1,
+                "hint": "פוטבול",
+                "score": 0.7
+              },
+              {
+                "rank": 2,
+                "hint": "טעים",
+                "score": 0.65
+              },
+              {
+                "rank": 3,
+                "hint": "כריך",
+                "score": 0.3
+              }
+            ]
+          },
+          "per_hint_comparison": [
+            {
+              "hint": "כריך",
+              "count": 2,
+              "intended": [
+                "עוגה",
+                "מזלג"
+              ],
+              "original_score": 0.7,
+              "v1_score": 0.3,
+              "delta": -0.4
+            },
+            {
+              "hint": "טעים",
+              "count": 2,
+              "intended": [
+                "עוגה",
+                "מזלג"
+              ],
+              "original_score": 0.8,
+              "v1_score": 0.65,
+              "delta": -0.15
+            },
+            {
+              "hint": "פוטבול",
+              "count": 2,
+              "intended": [
+                "איגרוף",
+                "כוכב"
+              ],
+              "original_score": 0.5,
+              "v1_score": 0.7,
+              "delta": 0.2
+            }
+          ]
+        },
+        "blue": {
+          "hints": [
+            {
+              "hint": "תכשיט",
+              "count": 2,
+              "intended": [
+                "יהלום",
+                "כסף"
+              ],
+              "score": 0.45403188467025757
+            },
+            {
+              "hint": "סוחר",
+              "count": 2,
+              "intended": [
+                "חנות",
+                "כסף"
+              ],
+              "score": 0.37410417199134827
+            },
+            {
+              "hint": "עשיר",
+              "count": 2,
+              "intended": [
+                "פוליטיקאי",
+                "כסף"
+              ],
+              "score": 0.38125625252723694
+            }
+          ],
+          "original_eval_response": {
+            "status": "judged",
+            "hints": [
+              {
+                "hint": "תכשיט",
+                "active-team": "blue",
+                "connected-words": [
+                  {
+                    "word": "יהלום",
+                    "strength": "strong",
+                    "reason": "A diamond is a type of jewelry."
+                  },
+                  {
+                    "word": "כסף",
+                    "strength": "strong",
+                    "reason": "Silver is commonly used in jewelry."
+                  }
+                ],
+                "score": 0.85,
+                "reason": "The hint 'תכשיט' (jewelry) strongly connects to 'יהלום' (diamond) and 'כסף' (silver), both of which are commonly associated with jewelry. There are no strong connections to opponent, neutral, or assassin words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              },
+              {
+                "hint": "סוחר",
+                "active-team": "blue",
+                "connected-words": [
+                  {
+                    "word": "חנות",
+                    "strength": "strong",
+                    "reason": "A merchant typically operates or is associated with a store."
+                  },
+                  {
+                    "word": "כסף",
+                    "strength": "strong",
+                    "reason": "Merchants deal with money in their transactions."
+                  }
+                ],
+                "score": 0.8,
+                "reason": "The hint 'סוחר' (merchant) strongly connects to 'חנות' (store) and 'כסף' (money), both of which are directly related to the concept of a merchant. There are no strong connections to opponent, neutral, or assassin words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              },
+              {
+                "hint": "עשיר",
+                "active-team": "blue",
+                "connected-words": [
+                  {
+                    "word": "כסף",
+                    "strength": "strong",
+                    "reason": "Wealth is commonly associated with money."
+                  },
+                  {
+                    "word": "יהלום",
+                    "strength": "strong",
+                    "reason": "Diamonds are often associated with wealth and luxury."
+                  }
+                ],
+                "score": 0.85,
+                "reason": "The hint 'עשיר' (rich) strongly connects to 'כסף' (money) and 'יהלום' (diamond), both of which are symbols of wealth. There are no strong connections to opponent, neutral, or assassin words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              }
+            ]
+          },
+          "v1_eval_response": {
+            "status": "multi-judged",
+            "results": [
+              {
+                "status": "judged",
+                "hint": "תכשיט",
+                "active-team": "blue",
+                "count-claimed": 2,
+                "count-verified": 1,
+                "connected-active-words": [
+                  {
+                    "word": "יהלום",
+                    "strength": "strong",
+                    "reason": "יהלום is a type of תכשיט (jewel)."
+                  }
+                ],
+                "missed-active-words": [
+                  {
+                    "word": "כסף",
+                    "strength": "weak",
+                    "reason": "כסף can be used in jewelry, but the connection is not direct."
+                  }
+                ],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.65,
+                "reason": "Connects strongly to יהלום, but the connection to כסף is weak. Over-claimed count."
+              },
+              {
+                "status": "judged",
+                "hint": "סוחר",
+                "active-team": "blue",
+                "count-claimed": 2,
+                "count-verified": 2,
+                "connected-active-words": [
+                  {
+                    "word": "כסף",
+                    "strength": "moderate",
+                    "reason": "A סוחר (merchant) deals with כסף (money)."
+                  },
+                  {
+                    "word": "חנות",
+                    "strength": "moderate",
+                    "reason": "A סוחר often operates a חנות (store)."
+                  }
+                ],
+                "missed-active-words": [],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.8,
+                "reason": "Moderate connections to both כסף and חנות, matching the claimed count."
+              },
+              {
+                "status": "judged",
+                "hint": "עשיר",
+                "active-team": "blue",
+                "count-claimed": 2,
+                "count-verified": 2,
+                "connected-active-words": [
+                  {
+                    "word": "כסף",
+                    "strength": "strong",
+                    "reason": "עשיר (rich) is directly associated with כסף (money)."
+                  },
+                  {
+                    "word": "יהלום",
+                    "strength": "moderate",
+                    "reason": "עשיר people often own יהלום (diamonds)."
+                  }
+                ],
+                "missed-active-words": [],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.85,
+                "reason": "Strong connection to כסף and moderate to יהלום, matching the claimed count."
+              }
+            ],
+            "ranking": [
+              {
+                "rank": 1,
+                "hint": "עשיר",
+                "score": 0.85
+              },
+              {
+                "rank": 2,
+                "hint": "סוחר",
+                "score": 0.8
+              },
+              {
+                "rank": 3,
+                "hint": "תכשיט",
+                "score": 0.65
+              }
+            ]
+          },
+          "per_hint_comparison": [
+            {
+              "hint": "תכשיט",
+              "count": 2,
+              "intended": [
+                "יהלום",
+                "כסף"
+              ],
+              "original_score": 0.85,
+              "v1_score": 0.65,
+              "delta": -0.2
+            },
+            {
+              "hint": "סוחר",
+              "count": 2,
+              "intended": [
+                "חנות",
+                "כסף"
+              ],
+              "original_score": 0.8,
+              "v1_score": 0.8,
+              "delta": 0.0
+            },
+            {
+              "hint": "עשיר",
+              "count": 2,
+              "intended": [
+                "פוליטיקאי",
+                "כסף"
+              ],
+              "original_score": 0.85,
+              "v1_score": 0.85,
+              "delta": 0.0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "board_number": 2,
+      "seed": 44,
+      "red_words": [
+        "שינוי",
+        "מברשת",
+        "שולחן",
+        "ברד",
+        "חום",
+        "פרס",
+        "איגרוף",
+        "בנאי",
+        "כישלון"
+      ],
+      "blue_words": [
+        "שוד",
+        "מוות",
+        "ג'ירפה",
+        "קוד",
+        "לימון",
+        "ירושלים",
+        "מסעדה",
+        "קנגורו"
+      ],
+      "neutral_words": [
+        "עתיד",
+        "ענף",
+        "ריאה",
+        "צהוב",
+        "קולנוע",
+        "לילה",
+        "כיסא"
+      ],
+      "assassin": "שמיים",
+      "teams": {
+        "red": {
+          "hints": [
+            {
+              "hint": "מחוסר",
+              "count": 2,
+              "intended": [
+                "כישלון",
+                "שינוי"
+              ],
+              "score": 0.3947463035583496
+            },
+            {
+              "hint": "משבר",
+              "count": 2,
+              "intended": [
+                "שינוי",
+                "כישלון"
+              ],
+              "score": 0.5062885284423828
+            },
+            {
+              "hint": "טניס",
+              "count": 2,
+              "intended": [
+                "שולחן",
+                "איגרוף"
+              ],
+              "score": 0.4989977478981018
+            }
+          ],
+          "original_eval_response": {
+            "status": "judged",
+            "hint": "מחוסר",
+            "active-team": "red",
+            "connected-words": [
+              {
+                "word": "כישלון",
+                "strength": "strong",
+                "reason": "The word 'מחוסר' (lacking) can be associated with 'כישלון' (failure) as failure often implies a lack of success."
+              }
+            ],
+            "score": 0.5,
+            "reason": "The hint 'מחוסר' strongly connects to 'כישלון' but does not clearly connect to any other red words. It is a single-word connection with no significant risk.",
+            "links-to-unrelated-words": [
+              {
+                "word": "מוות",
+                "category": "blue",
+                "strength": "moderate",
+                "reason": "A lack of life could be associated with 'מוות' (death)."
+              }
+            ],
+            "risk-summary": {
+              "assassin-risk": "none",
+              "opponent-risk": "moderate",
+              "neutral-risk": "none"
+            }
+          },
+          "v1_eval_response": {
+            "status": "multi-judged",
+            "results": [
+              {
+                "status": "judged",
+                "hint": "מחוסר",
+                "active-team": "red",
+                "count-claimed": 2,
+                "count-verified": 1,
+                "connected-active-words": [
+                  {
+                    "word": "כישלון",
+                    "strength": "strong",
+                    "reason": "The word 'מחוסר' (lacking) naturally connects to 'כישלון' (failure) as both imply a lack of success or achievement."
+                  }
+                ],
+                "missed-active-words": [
+                  {
+                    "word": "שינוי",
+                    "strength": "weak",
+                    "reason": "While 'מחוסר' could imply a need for change, the connection is not strong enough."
+                  }
+                ],
+                "links-to-unrelated-words": [
+                  {
+                    "word": "מוות",
+                    "category": "opponent",
+                    "strength": "moderate",
+                    "reason": "'מחוסר' could be associated with 'מוות' (death) as both can imply a lack or absence, such as life."
+                  }
+                ],
+                "assassin-risk": "none",
+                "opponent-risk": "moderate",
+                "neutral-risk": "none",
+                "score": 0.5,
+                "reason": "The hint 'מחוסר' strongly connects to one active word but also moderately suggests an opponent word, reducing its effectiveness."
+              },
+              {
+                "status": "judged",
+                "hint": "משבר",
+                "active-team": "red",
+                "count-claimed": 2,
+                "count-verified": 2,
+                "connected-active-words": [
+                  {
+                    "word": "כישלון",
+                    "strength": "strong",
+                    "reason": "'משבר' (crisis) is strongly related to 'כישלון' (failure) as crises often involve failures."
+                  },
+                  {
+                    "word": "שינוי",
+                    "strength": "moderate",
+                    "reason": "'משבר' can lead to 'שינוי' (change) as crises often necessitate change."
+                  }
+                ],
+                "missed-active-words": [],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.85,
+                "reason": "The hint 'משבר' effectively connects to two active words with no risk, making it a strong choice."
+              },
+              {
+                "status": "judged",
+                "hint": "טניס",
+                "active-team": "red",
+                "count-claimed": 2,
+                "count-verified": 1,
+                "connected-active-words": [
+                  {
+                    "word": "שולחן",
+                    "strength": "moderate",
+                    "reason": "'טניס' (tennis) can be associated with 'שולחן' (table) through table tennis."
+                  }
+                ],
+                "missed-active-words": [
+                  {
+                    "word": "איגרוף",
+                    "strength": "weak",
+                    "reason": "Both 'טניס' and 'איגרוף' (boxing) are sports, but the connection is not strong."
+                  }
+                ],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.65,
+                "reason": "The hint 'טניס' moderately connects to one active word with no risk, but does not reach the claimed count."
+              }
+            ],
+            "ranking": [
+              {
+                "rank": 1,
+                "hint": "משבר",
+                "score": 0.85
+              },
+              {
+                "rank": 2,
+                "hint": "טניס",
+                "score": 0.65
+              },
+              {
+                "rank": 3,
+                "hint": "מחוסר",
+                "score": 0.5
+              }
+            ]
+          },
+          "per_hint_comparison": [
+            {
+              "hint": "מחוסר",
+              "count": 2,
+              "intended": [
+                "כישלון",
+                "שינוי"
+              ],
+              "original_score": 0.5,
+              "v1_score": 0.5,
+              "delta": 0.0
+            },
+            {
+              "hint": "משבר",
+              "count": 2,
+              "intended": [
+                "שינוי",
+                "כישלון"
+              ],
+              "original_score": null,
+              "v1_score": 0.85,
+              "delta": null
+            },
+            {
+              "hint": "טניס",
+              "count": 2,
+              "intended": [
+                "שולחן",
+                "איגרוף"
+              ],
+              "original_score": null,
+              "v1_score": 0.65,
+              "delta": null
+            }
+          ]
+        },
+        "blue": {
+          "hints": [
+            {
+              "hint": "התעללות",
+              "count": 2,
+              "intended": [
+                "שוד",
+                "מוות"
+              ],
+              "score": 0.4639803171157837
+            },
+            {
+              "hint": "רצח",
+              "count": 2,
+              "intended": [
+                "מוות",
+                "שוד"
+              ],
+              "score": 0.5207022428512573
+            },
+            {
+              "hint": "רציחות",
+              "count": 2,
+              "intended": [
+                "מוות",
+                "שוד"
+              ],
+              "score": 0.4693947434425354
+            }
+          ],
+          "original_eval_response": {
+            "status": "judged",
+            "hints": [
+              {
+                "hint": "התעללות",
+                "active-team": "blue",
+                "connected-words": [
+                  {
+                    "word": "שוד",
+                    "strength": "strong",
+                    "reason": "Abuse can be associated with criminal activities like robbery."
+                  },
+                  {
+                    "word": "מוות",
+                    "strength": "strong",
+                    "reason": "Abuse can lead to severe consequences, including death."
+                  }
+                ],
+                "score": 0.85,
+                "reason": "The hint 'התעללות' (abuse) strongly connects to 'שוד' (robbery) and 'מוות' (death), both of which can be associated with abusive situations. There are no strong connections to opponent, neutral, or assassin words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              },
+              {
+                "hint": "רצח",
+                "active-team": "blue",
+                "connected-words": [
+                  {
+                    "word": "מוות",
+                    "strength": "strong",
+                    "reason": "Murder directly involves death."
+                  }
+                ],
+                "score": 0.5,
+                "reason": "The hint 'רצח' (murder) strongly connects to 'מוות' (death), but it does not clearly connect to another blue word. It is a specific hint that does not suggest opponent or neutral words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              },
+              {
+                "hint": "רציחות",
+                "active-team": "blue",
+                "connected-words": [
+                  {
+                    "word": "מוות",
+                    "strength": "strong",
+                    "reason": "Murders directly involve death."
+                  }
+                ],
+                "score": 0.5,
+                "reason": "The hint 'רציחות' (murders) strongly connects to 'מוות' (death), but it does not clearly connect to another blue word. It is a specific hint that does not suggest opponent or neutral words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              }
+            ],
+            "ranked-hints": [
+              {
+                "hint": "התעללות",
+                "score": 0.85
+              },
+              {
+                "hint": "רצח",
+                "score": 0.5
+              },
+              {
+                "hint": "רציחות",
+                "score": 0.5
+              }
+            ]
+          },
+          "v1_eval_response": {
+            "status": "multi-judged",
+            "results": [
+              {
+                "status": "judged",
+                "hint": "התעללות",
+                "active-team": "blue",
+                "count-claimed": 2,
+                "count-verified": 1,
+                "connected-active-words": [
+                  {
+                    "word": "מוות",
+                    "strength": "moderate",
+                    "reason": "Abuse can lead to death, making a connection plausible."
+                  }
+                ],
+                "missed-active-words": [
+                  {
+                    "word": "שוד",
+                    "strength": "weak",
+                    "reason": "Abuse and robbery are both crimes, but the connection is indirect."
+                  }
+                ],
+                "links-to-unrelated-words": [
+                  {
+                    "word": "כישלון",
+                    "category": "opponent",
+                    "strength": "moderate",
+                    "reason": "Abuse can be seen as a failure in behavior or morality."
+                  }
+                ],
+                "assassin-risk": "none",
+                "opponent-risk": "moderate",
+                "neutral-risk": "none",
+                "score": 0.4,
+                "reason": "Connects moderately to one active word but also suggests an opponent word. Over-claimed count."
+              },
+              {
+                "status": "judged",
+                "hint": "רצח",
+                "active-team": "blue",
+                "count-claimed": 2,
+                "count-verified": 2,
+                "connected-active-words": [
+                  {
+                    "word": "מוות",
+                    "strength": "strong",
+                    "reason": "Murder directly results in death."
+                  },
+                  {
+                    "word": "שוד",
+                    "strength": "moderate",
+                    "reason": "Robbery can be associated with murder in criminal contexts."
+                  }
+                ],
+                "missed-active-words": [],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.85,
+                "reason": "Strongly connects to two active words with no risk."
+              },
+              {
+                "status": "judged",
+                "hint": "רציחות",
+                "active-team": "blue",
+                "count-claimed": 2,
+                "count-verified": 2,
+                "connected-active-words": [
+                  {
+                    "word": "מוות",
+                    "strength": "strong",
+                    "reason": "Murders directly result in death."
+                  },
+                  {
+                    "word": "שוד",
+                    "strength": "moderate",
+                    "reason": "Robbery can be associated with murders in criminal contexts."
+                  }
+                ],
+                "missed-active-words": [],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.85,
+                "reason": "Strongly connects to two active words with no risk."
+              }
+            ],
+            "ranking": [
+              {
+                "rank": 1,
+                "hint": "רצח",
+                "score": 0.85
+              },
+              {
+                "rank": 2,
+                "hint": "רציחות",
+                "score": 0.85
+              },
+              {
+                "rank": 3,
+                "hint": "התעללות",
+                "score": 0.4
+              }
+            ]
+          },
+          "per_hint_comparison": [
+            {
+              "hint": "התעללות",
+              "count": 2,
+              "intended": [
+                "שוד",
+                "מוות"
+              ],
+              "original_score": 0.85,
+              "v1_score": 0.4,
+              "delta": -0.45
+            },
+            {
+              "hint": "רצח",
+              "count": 2,
+              "intended": [
+                "מוות",
+                "שוד"
+              ],
+              "original_score": 0.5,
+              "v1_score": 0.85,
+              "delta": 0.35
+            },
+            {
+              "hint": "רציחות",
+              "count": 2,
+              "intended": [
+                "מוות",
+                "שוד"
+              ],
+              "original_score": 0.5,
+              "v1_score": 0.85,
+              "delta": 0.35
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,526 @@
+{
+  "boards": [
+    {
+      "board_number": 1,
+      "seed": 42,
+      "red_words": [
+        "עגלה",
+        "שריפה",
+        "קיפוד",
+        "גמל",
+        "סוודר",
+        "מלך",
+        "דג",
+        "מגש",
+        "מסע"
+      ],
+      "blue_words": [
+        "מוח",
+        "מרפסת",
+        "בטן",
+        "מטוס",
+        "חג",
+        "כריש",
+        "ריצה",
+        "גן"
+      ],
+      "neutral_words": [
+        "עקרב",
+        "פארק",
+        "משקפיים",
+        "דף",
+        "עין",
+        "מעיל",
+        "אבטיח"
+      ],
+      "assassin": "כדור",
+      "teams": {
+        "red": {
+          "hints": [
+            {
+              "hint": "מרד",
+              "count": 3,
+              "intended": [
+                "מסע",
+                "מלך",
+                "שריפה"
+              ],
+              "score": 0.3669244050979614
+            },
+            {
+              "hint": "משא",
+              "count": 2,
+              "intended": [
+                "מסע",
+                "עגלה"
+              ],
+              "score": 0.3682730197906494
+            },
+            {
+              "hint": "נסיך",
+              "count": 1,
+              "intended": [
+                "מלך"
+              ],
+              "score": 0.4730493426322937
+            }
+          ],
+          "original_eval_response": {
+            "status": "judged",
+            "hints": [
+              {
+                "hint": "מרד",
+                "active-team": "red",
+                "connected-words": [
+                  {
+                    "word": "מלך",
+                    "strength": "strong",
+                    "reason": "Rebellion often involves overthrowing a king or ruler."
+                  }
+                ],
+                "score": 0.5,
+                "reason": "The hint 'מרד' (rebellion) strongly connects to 'מלך' (king), but does not clearly connect to other red words. It does not suggest any opponent or neutral words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              },
+              {
+                "hint": "משא",
+                "active-team": "red",
+                "connected-words": [
+                  {
+                    "word": "עגלה",
+                    "strength": "strong",
+                    "reason": "A cart is often used to carry loads."
+                  },
+                  {
+                    "word": "גמל",
+                    "strength": "strong",
+                    "reason": "Camels are known as beasts of burden, used to carry loads."
+                  }
+                ],
+                "score": 0.8,
+                "reason": "The hint 'משא' (load) strongly connects to 'עגלה' (cart) and 'גמל' (camel), both of which are associated with carrying loads. It does not suggest any opponent or neutral words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              },
+              {
+                "hint": "נסיך",
+                "active-team": "red",
+                "connected-words": [
+                  {
+                    "word": "מלך",
+                    "strength": "strong",
+                    "reason": "A prince is often the son of a king."
+                  }
+                ],
+                "score": 0.5,
+                "reason": "The hint 'נסיך' (prince) strongly connects to 'מלך' (king), but does not clearly connect to other red words. It does not suggest any opponent or neutral words.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              }
+            ]
+          },
+          "v1_eval_response": {
+            "status": "multi-judged",
+            "results": [
+              {
+                "status": "judged",
+                "hint": "מרד",
+                "active-team": "red",
+                "count-claimed": 3,
+                "count-verified": 0,
+                "connected-active-words": [],
+                "missed-active-words": [
+                  {
+                    "word": "מלך",
+                    "strength": "weak",
+                    "reason": "A king might be involved in a rebellion, but the connection is not strong."
+                  }
+                ],
+                "links-to-unrelated-words": [
+                  {
+                    "word": "מטוס",
+                    "category": "opponent",
+                    "strength": "weak",
+                    "reason": "Rebellion might involve planes, but it's not a strong connection."
+                  }
+                ],
+                "assassin-risk": "none",
+                "opponent-risk": "weak",
+                "neutral-risk": "none",
+                "score": 0.2,
+                "reason": "The hint 'מרד' does not clearly connect to any active-team words. It weakly connects to 'מלך' and has a weak link to an opponent word 'מטוס'."
+              },
+              {
+                "status": "judged",
+                "hint": "משא",
+                "active-team": "red",
+                "count-claimed": 2,
+                "count-verified": 2,
+                "connected-active-words": [
+                  {
+                    "word": "עגלה",
+                    "strength": "strong",
+                    "reason": "A cart is commonly associated with carrying loads."
+                  },
+                  {
+                    "word": "גמל",
+                    "strength": "strong",
+                    "reason": "Camels are known for carrying loads."
+                  }
+                ],
+                "missed-active-words": [],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.9,
+                "reason": "The hint 'משא' clearly connects to two active-team words 'עגלה' and 'גמל' with no risk."
+              },
+              {
+                "status": "judged",
+                "hint": "נסיך",
+                "active-team": "red",
+                "count-claimed": 1,
+                "count-verified": 1,
+                "connected-active-words": [
+                  {
+                    "word": "מלך",
+                    "strength": "strong",
+                    "reason": "A prince is directly related to a king."
+                  }
+                ],
+                "missed-active-words": [],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.7,
+                "reason": "The hint 'נסיך' clearly connects to one active-team word 'מלך' with no risk."
+              }
+            ],
+            "ranking": [
+              {
+                "rank": 1,
+                "hint": "משא",
+                "score": 0.9
+              },
+              {
+                "rank": 2,
+                "hint": "נסיך",
+                "score": 0.7
+              },
+              {
+                "rank": 3,
+                "hint": "מרד",
+                "score": 0.2
+              }
+            ]
+          },
+          "per_hint_comparison": [
+            {
+              "hint": "מרד",
+              "count": 3,
+              "intended": [
+                "מסע",
+                "מלך",
+                "שריפה"
+              ],
+              "original_score": 0.5,
+              "v1_score": 0.2,
+              "delta": -0.3
+            },
+            {
+              "hint": "משא",
+              "count": 2,
+              "intended": [
+                "מסע",
+                "עגלה"
+              ],
+              "original_score": 0.8,
+              "v1_score": 0.9,
+              "delta": 0.1
+            },
+            {
+              "hint": "נסיך",
+              "count": 1,
+              "intended": [
+                "מלך"
+              ],
+              "original_score": 0.5,
+              "v1_score": 0.7,
+              "delta": 0.2
+            }
+          ]
+        },
+        "blue": {
+          "hints": [
+            {
+              "hint": "שריר",
+              "count": 3,
+              "intended": [
+                "מוח",
+                "בטן",
+                "כריש"
+              ],
+              "score": 0.30110061168670654
+            },
+            {
+              "hint": "חזה",
+              "count": 1,
+              "intended": [
+                "בטן"
+              ],
+              "score": 0.32500219345092773
+            },
+            {
+              "hint": "מעי",
+              "count": 2,
+              "intended": [
+                "בטן",
+                "מוח"
+              ],
+              "score": 0.3586551547050476
+            }
+          ],
+          "original_eval_response": {
+            "status": "judged",
+            "hints": [
+              {
+                "hint": "שריר",
+                "active-team": "blue",
+                "connected-words": [
+                  {
+                    "word": "מוח",
+                    "strength": "moderate",
+                    "reason": "Muscles are controlled by the brain, making a plausible connection."
+                  },
+                  {
+                    "word": "בטן",
+                    "strength": "strong",
+                    "reason": "Muscles are commonly associated with the abdomen."
+                  },
+                  {
+                    "word": "ריצה",
+                    "strength": "strong",
+                    "reason": "Running involves muscle use."
+                  }
+                ],
+                "score": 0.8,
+                "reason": "The hint 'שריר' connects well with 'בטן' and 'ריצה', and moderately with 'מוח'. There are no strong connections to opponent or neutral words.",
+                "links-to-unrelated-words": [
+                  {
+                    "word": "כדור",
+                    "category": "assassin",
+                    "strength": "weak",
+                    "reason": "Muscles can be involved in sports, which might involve a ball, but this is a weak connection."
+                  }
+                ],
+                "risk-summary": {
+                  "assassin-risk": "weak",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              },
+              {
+                "hint": "חזה",
+                "active-team": "blue",
+                "connected-words": [
+                  {
+                    "word": "בטן",
+                    "strength": "moderate",
+                    "reason": "The chest is anatomically close to the abdomen."
+                  }
+                ],
+                "score": 0.5,
+                "reason": "The hint 'חזה' connects moderately with 'בטן'. It is a single-word connection with no strong risks.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              },
+              {
+                "hint": "מעי",
+                "active-team": "blue",
+                "connected-words": [
+                  {
+                    "word": "בטן",
+                    "strength": "strong",
+                    "reason": "The intestines are located in the abdomen."
+                  }
+                ],
+                "score": 0.5,
+                "reason": "The hint 'מעי' connects strongly with 'בטן'. It is a single-word connection with no strong risks.",
+                "links-to-unrelated-words": [],
+                "risk-summary": {
+                  "assassin-risk": "none",
+                  "opponent-risk": "none",
+                  "neutral-risk": "none"
+                }
+              }
+            ]
+          },
+          "v1_eval_response": {
+            "status": "multi-judged",
+            "results": [
+              {
+                "status": "judged",
+                "hint": "שריר",
+                "active-team": "blue",
+                "count-claimed": 3,
+                "count-verified": 2,
+                "connected-active-words": [
+                  {
+                    "word": "בטן",
+                    "strength": "strong",
+                    "reason": "Muscles are commonly associated with the abdomen."
+                  },
+                  {
+                    "word": "ריצה",
+                    "strength": "strong",
+                    "reason": "Running involves muscle activity."
+                  }
+                ],
+                "missed-active-words": [
+                  {
+                    "word": "מוח",
+                    "strength": "weak",
+                    "reason": "While the brain controls muscles, the connection is indirect."
+                  }
+                ],
+                "links-to-unrelated-words": [
+                  {
+                    "word": "כדור",
+                    "category": "assassin",
+                    "strength": "weak",
+                    "reason": "Muscle can be associated with sports, which involve balls."
+                  }
+                ],
+                "assassin-risk": "weak",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.75,
+                "reason": "Connects two active words strongly, weak connection to assassin, over-claimed count."
+              },
+              {
+                "status": "judged",
+                "hint": "חזה",
+                "active-team": "blue",
+                "count-claimed": 1,
+                "count-verified": 1,
+                "connected-active-words": [
+                  {
+                    "word": "בטן",
+                    "strength": "moderate",
+                    "reason": "Chest and abdomen are both parts of the torso."
+                  }
+                ],
+                "missed-active-words": [],
+                "links-to-unrelated-words": [
+                  {
+                    "word": "כדור",
+                    "category": "assassin",
+                    "strength": "weak",
+                    "reason": "Chest can be associated with sports, which involve balls."
+                  }
+                ],
+                "assassin-risk": "weak",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.7,
+                "reason": "Connects one active word moderately, weak connection to assassin."
+              },
+              {
+                "status": "judged",
+                "hint": "מעי",
+                "active-team": "blue",
+                "count-claimed": 2,
+                "count-verified": 1,
+                "connected-active-words": [
+                  {
+                    "word": "בטן",
+                    "strength": "strong",
+                    "reason": "The intestines are located in the abdomen."
+                  }
+                ],
+                "missed-active-words": [],
+                "links-to-unrelated-words": [],
+                "assassin-risk": "none",
+                "opponent-risk": "none",
+                "neutral-risk": "none",
+                "score": 0.65,
+                "reason": "Connects one active word strongly, no risk, over-claimed count."
+              }
+            ],
+            "ranking": [
+              {
+                "rank": 1,
+                "hint": "שריר",
+                "score": 0.75
+              },
+              {
+                "rank": 2,
+                "hint": "חזה",
+                "score": 0.7
+              },
+              {
+                "rank": 3,
+                "hint": "מעי",
+                "score": 0.65
+              }
+            ]
+          },
+          "per_hint_comparison": [
+            {
+              "hint": "שריר",
+              "count": 3,
+              "intended": [
+                "מוח",
+                "בטן",
+                "כריש"
+              ],
+              "original_score": 0.8,
+              "v1_score": 0.75,
+              "delta": -0.05
+            },
+            {
+              "hint": "חזה",
+              "count": 1,
+              "intended": [
+                "בטן"
+              ],
+              "original_score": 0.5,
+              "v1_score": 0.7,
+              "delta": 0.2
+            },
+            {
+              "hint": "מעי",
+              "count": 2,
+              "intended": [
+                "בטן",
+                "מוח"
+              ],
+              "original_score": 0.5,
+              "v1_score": 0.65,
+              "delta": 0.15
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
