@@ -29,7 +29,7 @@ pre-built clue vocabularies) is already included.
 ## 3. Run
 
 ```bash
-python app.py                  # serves http://127.0.0.1:7860
+make serve                     # serves http://127.0.0.1:7860
 ```
 
 - **`/`** — the co-pilot (`copilot.html`): spymaster *and* guesser, both seats.
@@ -45,3 +45,4 @@ python app.py                  # serves http://127.0.0.1:7860
   `mlx-lm`; it is not required and the geometry engine matches/beats it here.
 - `transformers` is pinned `<5` — NeoDictaBERT returns NaN embeddings on 5.x.
 - The probe notebook (`notebooks/probe.ipynb`) reproduces the encoder↔LLM alignment bench.
+- `make test` runs the fast legality regression; `make build-site` rebuilds the static map.

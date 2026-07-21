@@ -129,13 +129,15 @@ def root_sig(word: str) -> str:
 
 _ROOT_LEXICON_PATH = os.path.join(os.path.dirname(__file__), "data", "word2root.json")
 _NIQQUD = re.compile(r"[֑-ׇ]")   # cantillation + niqqud range
+_PUNCT = re.compile(r"[׳׳'\"“”‘’`]")
+_FINAL_FORMS = str.maketrans("ךםןףץ", "כמנפצ")
 
 
 def _norm_lookup(word: str) -> str:
     """Normalise a surface word to the lexicon's key form: NFC, niqqud stripped, maqaf/hyphen
     removed. Final letters are left intact (correct standalone spelling), matching the keys."""
     w = _NIQQUD.sub("", unicodedata.normalize("NFC", word)).strip()
-    return w.replace("־", "").replace("-", "")
+    return _PUNCT.sub("", w).replace("־", "").replace("-", "")
 
 
 @functools.lru_cache(maxsize=1)
@@ -152,4 +154,11 @@ def _root_lexicon() -> dict:
 def roots(word: str) -> set[str]:
     """Triliteral root(s) of a surface Hebrew word per the vendored Wiktionary lexicon.
     Returns an empty set for out-of-lexicon words — the caller then falls back to root_sig."""
-    return set(_root_lexicon().get(_norm_lookup(word), ()))
+    key = _norm_lookup(word)
+    lexicon = _root_lexicon()
+    # Exact spelling is authoritative. The final-letter variant is a conservative
+    # recall fallback for text copied with inconsistent Hebrew orthography.
+    roots_found = set(lexicon.get(key, ()))
+    if not roots_found:
+        roots_found.update(lexicon.get(key.translate(_FINAL_FORMS), ()))
+    return roots_found

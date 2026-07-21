@@ -15,7 +15,7 @@ export FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin
 ## 1. Legality regression (fast, model-free — run this on every change)
 
 ```bash
-python test_legality.py
+python tests/test_legality.py
 ```
 
 Locks in the shared-root + transparency-gate behaviour (the `מדע`/`מדען` bug, the opaque

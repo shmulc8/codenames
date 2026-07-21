@@ -22,3 +22,7 @@ hf_space/data/cc.he.300.*
 /bench_results.json
 /data/gemini*_eval_results.json
 /data/optuna_results.json
+# Local credentials
+.env
+.env.*
+!.env.example

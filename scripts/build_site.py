@@ -6,6 +6,7 @@ geometry, operative in another) — a same-engine pairing is trivial cooperation
 not a real test. Locally, app.py adds DictaLM + the remaining encoders."""
 
 import os
+import sys
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
@@ -13,9 +14,12 @@ import json
 import base64
 import numpy as np
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+
 from probe import make_encoder, load_clue_vocab, DECK
 
-HERE = os.path.dirname(__file__)
+HERE = ROOT
 BAKE = ["blend_0.7_0.3", "embeddinggemma"]   # different geometries -> non-trivial play
 N_CLUE = 1500
 

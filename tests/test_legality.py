@@ -5,8 +5,13 @@ fastText cosines measured during calibration, so it runs in well under a second 
 both the root resolution and the θ=0.30 boundary. The end-to-end generator check (no illegal
 clue is ever served) lives in the manual run_flow harness.
 
-Run: python test_legality.py
+Run: python tests/test_legality.py
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 import morph
 import probe
 
@@ -51,6 +56,9 @@ def _illegal(a: str, b: str, cos: float) -> bool:
 def main() -> int:
     # the reported bug must resolve to a shared root
     assert morph.roots("מדע") & morph.roots("מדען"), "מדע/מדען must share a lexicon root (ידע)"
+    # Surface normalization must survive niqqud, maqaf, and Hebrew quote marks.
+    assert morph.roots("מַדְעָן") == morph.roots("מדען"), "niqqud normalization regressed"
+    assert morph.roots("מדען־") == morph.roots("מדען"), "maqaf normalization regressed"
 
     failures = []
     for clue, word, cos, expected, note in CASES:

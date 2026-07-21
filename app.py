@@ -11,7 +11,7 @@ The bot-vs-bot research game is still reachable at `/game`.
 
 Default engine is **geometry** — pure fastText embeddings + DictaBERT legality, no
 generative LLM in the loop (lighter, instant, fully offline). The clue word comes from
-a mid-frequency noun/adjective band of the vocabulary, and the rationale is derived from
+a broad noun/adjective/proper-noun frequency band of the vocabulary, and the rationale is derived from
 the geometry itself. DictaLM is optional (engines `hybrid`/`llm`) and loads lazily only
 when selected. Encoders and the clue vocabulary load lazily on first use.
 """
@@ -139,6 +139,12 @@ _clue_vocab = None
 _clue_freq = None
 _clue_lemmas = None
 _clue_emb: dict = {}
+_ambiguity_lexicon = None
+
+_DEFAULT_AMBIGUITY = {
+    "עלה": {"ambiguity": 0.95, "senses": ["leaf", "rose/ascended"]},
+    "פרח": {"ambiguity": 0.95, "senses": ["flower", "flourished/youth"]},
+}
 
 
 def get_llm(mid):
@@ -172,19 +178,44 @@ def _load_blocklist():
     return block
 
 
+def _load_ambiguity_lexicon():
+    """Load static ambiguity warnings; never call an external model while serving."""
+    global _ambiguity_lexicon
+    if _ambiguity_lexicon is None:
+        path = os.path.join(probe.DATA, "ambiguity_he_openai.json")
+        try:
+            with open(path, encoding="utf-8") as f:
+                document = json.load(f)
+            _ambiguity_lexicon = dict(_DEFAULT_AMBIGUITY)
+            if isinstance(document, dict):
+                _ambiguity_lexicon.update(document.get("entries", {}))
+        except (FileNotFoundError, OSError, json.JSONDecodeError):
+            _ambiguity_lexicon = dict(_DEFAULT_AMBIGUITY)
+    return _ambiguity_lexicon
+
+
 def geo_assets():
-    """(vocab, embedding, lemmas, freq_scores) for the geometry spymaster — a mid-frequency
-    noun/adjective band of the clue vocabulary, embedded and FREQ-scored once. The vocab is
+    """(vocab, embedding, lemmas, freq_scores) for the geometry spymaster — a broad
+    noun/adjective/proper-noun frequency band of the clue vocabulary, embedded and FREQ-scored once. The vocab is
     lemmatised so legality catches prefixed forms (e.g. בסיר → סיר) that share a board lemma."""
     global _clue_vocab, _clue_freq, _clue_lemmas
     if _clue_vocab is None:
-        # The full mid-frequency noun/adjective band (count >= 300, top-30k frequency source):
-        # essentially any common, legal Hebrew noun/adjective is a candidate — not a small list.
+        # The broad noun/adjective/proper-noun band (top-30k frequency source):
+        # essentially any common, legal content word is a candidate — not a small list.
         # The POS + frequency floor are quality guards (they keep junk/function words from
         # winning the geometry); legality (board word/shoresh) and the blocklist are the rest.
-        vocab, counts = probe.clue_vocab_band(20000, lo=1000, hi=80000,
-                                              pos={"NOUN", "ADJ"}, source_n=30000)
-        freq = probe.freq_scores(counts, lo=1500, hi=40000)
+        # Broad is now the default serving vocabulary: proper nouns and a wider
+        # frequency band expose more association opportunities. Set
+        # CLUE_VOCAB_MODE=baseline for the previous conservative pool.
+        broad = os.environ.get("CLUE_VOCAB_MODE", "broad").lower() == "broad"
+        vocab, counts = probe.clue_vocab_band(
+            30000 if broad else 20000,
+            lo=100 if broad else 1000,
+            hi=150000 if broad else 80000,
+            pos={"NOUN", "ADJ", "PROPN"} if broad else {"NOUN", "ADJ"},
+            source_n=30000)
+        freq = probe.freq_scores(counts, lo=300 if broad else 1500,
+                                 hi=80000 if broad else 40000)
         block = _load_blocklist()                  # drop offensive terms from the clue pool
         # content_master entries are already lemmas → use directly: correct shared-root
         # legality, and no re-lemmatising thousands of words at startup.
@@ -192,8 +223,8 @@ def geo_assets():
         _clue_vocab = [vocab[i] for i in keep]
         _clue_lemmas = list(_clue_vocab)
         _clue_freq = freq[keep]
-        app.logger.info("clue vocab: %d noun/adj band words (%d blocklisted)",
-                        len(_clue_vocab), len(vocab) - len(keep))
+        app.logger.info("clue vocab: %d %s words (%d blocklisted)",
+                        len(_clue_vocab), "broad" if broad else "baseline", len(vocab) - len(keep))
     if GEO_ENC not in _clue_emb:
         _clue_emb[GEO_ENC] = get_enc(GEO_ENC).embed(_clue_vocab)
     return _clue_vocab, _clue_emb[GEO_ENC], _clue_lemmas, _clue_freq
@@ -374,6 +405,13 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
     # Honest verdict: refuse outright (no_clue) when nothing safe connects the team, or
     # flag a clue as risky (leaky) when an enemy word ranks among/above your targets.
     no_clue, risky, note = False, False, ""
+    ambiguity = _load_ambiguity_lexicon().get(word, {})
+    ambiguity_score = float(ambiguity.get("ambiguity", 0.0) or 0.0)
+    ambiguity_warning = ambiguity_score >= 0.7
+    if ambiguity_warning:
+        risky = True
+        senses = ", ".join(str(s) for s in ambiguity.get("senses", [])[:3])
+        note = f"⚠ רמז דו־משמעי: {word} — משמעויות אפשריות: {senses}"
     if read and read[0]["role"] != "my":
         no_clue = True
         note = f"המילה הכי קרובה לרמז היא '{read[0]['word']}' — לא שלך. אין מילה שמקשרת את הצוות שלך בלי לסכן מילה זרה."
@@ -405,6 +443,7 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
     return {"word": word, "count": disp_count, "intended": disp_intended, "score": score,
             "reason": reason, "read": read, "leak": leak, "safe": safe,
             "assassin": {"word": aw, "rank": arank, "sim": asim},
+            "ambiguity": {"score": ambiguity_score, "senses": ambiguity.get("senses", [])},
             "no_clue": no_clue, "risky": risky, "note": note}
 
 

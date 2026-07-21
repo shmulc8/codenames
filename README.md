@@ -61,19 +61,24 @@ HF_HUB_OFFLINE=1 .venv/bin/python app.py      # http://127.0.0.1:7860
 ```
 Shuffle a board, switch grouping (your team / free pick), read live geometry clue
 suggestions, and have **DictaLM** play spymaster or guesser. A static, shareable build
-(`codenames_latent_space.html`, no LLM) is produced by `build_site.py`.
+(`codenames_latent_space.html`, no LLM) is produced by `scripts/build_site.py`.
 
 ## Files
 
 - `docs/engine-improvement-plan.md` — measured roadmap for improving the engine.
 - `probe.py` — engine: encoders (incl. fastText), MLX LLM wrapper, board sampling, tiered spymaster, guesser, metrics, rule enforcement.
 - `deck_he.py` — the 573-word שם-קוד deck loader.
+- `tests/` — fast regression tests for legality and scoring invariants.
 - `notebooks/probe.ipynb` — the minimal probe driver.
 - `research/` — offline benchmarks, tuning, and external-evaluator runners; see `research/README.md`.
-- `latent_space.template.html` + `build_site.py` — the interactive map (template + data baker).
+- `latent_space.template.html` + `scripts/build_site.py` — the interactive map (template + data baker).
 - `codenames_latent_space.html` — self-contained built site (also the shared Artifact).
 - `app.py` — local Flask server serving the map + DictaLM spymaster/guesser endpoints.
-- `data/` — fastText `cc.he.300.bin`, Hebrew frequency list, deck JSON.
+- `data/` — runtime assets, derived vocabularies, and source-data build scripts.
+- `hf_space/` — standalone Hugging Face Space bundle; copy changes here only when promoting a deployment.
+
+For common local commands, run `make help`. The source engine stays at the repository root
+because the Hugging Face bundle is intentionally flat and imports the same modules directly.
 
 Generated benchmark snapshots are intentionally ignored; rerun the matching evaluator when a fresh result is needed.
 
