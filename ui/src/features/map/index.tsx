@@ -31,7 +31,7 @@ const roleLabels: Record<Role, string> = {
 };
 
 const roleShapes: Record<Role, string> = {
-  red: '◆',
+  red: '●',
   blue: '●',
   neutral: '−',
   assassin: '☠',

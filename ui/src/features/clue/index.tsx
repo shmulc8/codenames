@@ -310,6 +310,26 @@ export function CluePanel(): JSX.Element {
                   <p className="clue-panel__eyebrow">הרמז המוצע</p>
                   <div className="clue-result__title-row">
                     <h3 data-testid="clue-word">{option.word}</h3>
+                    <button
+                      type="button"
+                      className="clue-result__use-button"
+                      data-testid="btn-use-clue"
+                      aria-label={
+                        isCurrentOptionUsed
+                          ? 'הרמז סומן לשימוש'
+                          : 'סמנו שאשתמש ברמז הזה'
+                      }
+                      aria-pressed={isCurrentOptionUsed}
+                      title={
+                        isCurrentOptionUsed
+                          ? 'הרמז סומן לשימוש'
+                          : 'אני משתמש ברמז הזה'
+                      }
+                      disabled={isCurrentOptionUsed || clue.stale}
+                      onClick={useCurrentClue}
+                    >
+                      <span aria-hidden="true">{isCurrentOptionUsed ? '♥' : '♡'}</span>
+                    </button>
                     <span className="clue-result__count" data-testid="clue-count">
                       מספר: {option.count}
                     </span>
@@ -354,20 +374,11 @@ export function CluePanel(): JSX.Element {
 
               <RankedRead option={option} />
 
-              <div className="clue-use">
-                <Button
-                  data-testid="btn-use-clue"
-                  disabled={isCurrentOptionUsed || clue.stale}
-                  onClick={useCurrentClue}
-                >
-                  {isCurrentOptionUsed ? 'הרמז סומן לשימוש' : 'אני משתמש ברמז הזה'}
-                </Button>
-                {isCurrentOptionUsed ? (
-                  <span className="clue-use__confirmation" role="status">
-                    ✓ נשמר — תוצאות החשיפות יתווספו לרמז הזה
-                  </span>
-                ) : null}
-              </div>
+              {isCurrentOptionUsed ? (
+                <span className="sr-only" role="status">
+                  הרמז סומן לשימוש
+                </span>
+              ) : null}
             </>
           ) : null}
 

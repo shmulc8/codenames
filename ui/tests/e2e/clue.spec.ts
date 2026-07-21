@@ -120,6 +120,7 @@ test('target switch clears selection and blue-target requests use my/opp wire ro
   await expect(page.getByText('נבחרו: 1 קלפים בצבע אדום')).toBeVisible();
   await page.getByTestId('target-blue').focus();
   await expect(page.getByTestId('target-blue')).toBeFocused();
+  await expect(page.getByTestId('target-blue')).toHaveCSS('outline-offset', '-3px');
   await page.getByTestId('target-blue').press('Enter');
   await expect(page.getByTestId('target-blue')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByText('לא נבחרו קלפים — אפשר לתת למנוע לבחור צירוף.')).toBeVisible();
@@ -149,8 +150,10 @@ test('using a clue records its target in the store log and confirms usage', asyn
   await requestAutoClue(page);
 
   await page.getByTestId('btn-use-clue').click();
-  await expect(page.getByTestId('btn-use-clue')).toHaveText('הרמז סומן לשימוש');
-  await expect(page.getByText(/נשמר — תוצאות החשיפות יתווספו לרמז הזה/)).toBeVisible();
+  await expect(page.getByTestId('btn-use-clue')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('btn-use-clue')).toHaveAccessibleName(
+    'הרמז סומן לשימוש',
+  );
 
   const result = await page.evaluate(() => {
     if (!window.__store) throw new Error('The dev store hook was not installed');

@@ -31,6 +31,31 @@ function filePreview(file: File): string {
   return URL.createObjectURL(file);
 }
 
+function SetupModeIcon({ name }: { name: 'camera' | 'cube' | 'keyboard' }): JSX.Element {
+  if (name === 'keyboard') {
+    return (
+      <svg className="photo-setup__mode-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="6" width="18" height="12" rx="2" />
+        <path d="M7 10h.01M10.5 10h.01M14 10h.01M17.5 10h.01M7 13h.01M10.5 13h.01M14 13h3.5M8 16h8" />
+      </svg>
+    );
+  }
+  if (name === 'camera') {
+    return (
+      <svg className="photo-setup__mode-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 8.5h3l1.5-2h7l1.5 2h3a1 1 0 0 1 1 1v8.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1Z" />
+        <circle cx="12" cy="13.5" r="3.5" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="photo-setup__mode-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+      <path d="m4 7.5 8 4.5 8-4.5M12 12v9" />
+    </svg>
+  );
+}
+
 export function PhotoSetup(): JSX.Element {
   const setBoard = useAppStore((state) => state.setBoard);
   const [mode, setMode] = useState<InputMode>('manual');
@@ -41,6 +66,7 @@ export function PhotoSetup(): JSX.Element {
   const [ocrProgress, setOcrProgress] = useState(0);
   const [keyBusy, setKeyBusy] = useState(false);
   const [demoBusy, setDemoBusy] = useState(false);
+  const [randomLoaded, setRandomLoaded] = useState(false);
   const [validation, setValidation] = useState<string | null>(null);
   const [boardPreview, setBoardPreview] = useState<string | null>(null);
   const [keyPreview, setKeyPreview] = useState<string | null>(null);
@@ -92,7 +118,12 @@ export function PhotoSetup(): JSX.Element {
     setDemoBusy(true);
     try {
       const deal = await getDeal();
-      setBoard(deal.words, deal.roles);
+      setMode('manual');
+      setWords([...deal.words]);
+      setRoles(deal.words.map((word) => deal.roles[word] ?? 'neutral'));
+      setConfidences([...EMPTY_CONFIDENCE]);
+      setValidation(null);
+      setRandomLoaded(true);
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי',
@@ -219,7 +250,8 @@ export function PhotoSetup(): JSX.Element {
             aria-pressed={mode === 'manual'}
             onClick={() => setMode('manual')}
           >
-            הזנה ידנית
+            <SetupModeIcon name="keyboard" />
+            <span>הזנה ידנית</span>
           </button>
           <button
             type="button"
@@ -227,7 +259,8 @@ export function PhotoSetup(): JSX.Element {
             aria-pressed={mode === 'photo'}
             onClick={() => setMode('photo')}
           >
-            מתמונה
+            <SetupModeIcon name="camera" />
+            <span>מתמונה</span>
           </button>
           <button
             type="button"
@@ -235,7 +268,8 @@ export function PhotoSetup(): JSX.Element {
             disabled={demoBusy}
             onClick={() => void loadDemo()}
           >
-            {demoBusy ? 'טוען לוח…' : 'אקראי'}
+            <SetupModeIcon name="cube" />
+            <span>{demoBusy ? 'טוען לוח…' : randomLoaded ? 'הגרילו שוב' : 'אקראי'}</span>
           </button>
         </div>
       </header>
@@ -279,9 +313,11 @@ export function PhotoSetup(): JSX.Element {
               >
                 <span className="sr-only">מילה {index + 1}</span>
                 <span className="photo-setup__word-hole" aria-hidden="true" />
-                <span className="photo-setup__word-mirror" aria-hidden="true">
-                  {word || `מילה ${index + 1}`}
-                </span>
+                {word ? (
+                  <span className="photo-setup__word-mirror" aria-hidden="true">
+                    {word}
+                  </span>
+                ) : null}
                 <input
                   data-testid={`ocr-cell-${index}`}
                   value={word}

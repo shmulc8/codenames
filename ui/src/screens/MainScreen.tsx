@@ -25,7 +25,7 @@ export function MainScreen(): JSX.Element {
       <header className="main-screen__header">
         <div>
           <p className="main-screen__eyebrow">שם קוד · מנתח לוח</p>
-          <h1>קודנהיימס קופיילוט</h1>
+          <h1>שם קוד קופיילוט</h1>
         </div>
         <p className="main-screen__status">הרמזים מותאמים ללוח שנמצא מולכם</p>
       </header>
