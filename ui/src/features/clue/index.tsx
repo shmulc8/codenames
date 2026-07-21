@@ -261,31 +261,34 @@ export function CluePanel(): JSX.Element {
         </fieldset>
 
         <div className="clue-actions">
-          <Button
-            className="clue-actions__button"
-            data-testid="btn-get-clue"
-            disabled={selected.length === 0 || Boolean(loading)}
-            loading={loading === 'focused'}
-            onClick={() =>
-              void requestClue('focused', {
-                focus: [...selected],
-                risk,
-                target,
-              })
-            }
-          >
-            קבל רמז לקלפים שבחרתי
-          </Button>
-          <Button
-            className="clue-actions__button"
-            data-testid="btn-auto-cluster"
-            disabled={Boolean(loading)}
-            loading={loading === 'auto'}
-            variant="secondary"
-            onClick={() => void requestClue('auto', { risk, target })}
-          >
-            מצא לי את הצירוף הכי טוב
-          </Button>
+          {selected.length > 0 ? (
+            <Button
+              className="clue-actions__button"
+              data-testid="btn-get-clue"
+              disabled={Boolean(loading)}
+              loading={loading === 'focused'}
+              onClick={() =>
+                void requestClue('focused', {
+                  focus: [...selected],
+                  risk,
+                  target,
+                })
+              }
+            >
+              קבל רמז לקלפים שבחרתי
+            </Button>
+          ) : (
+            <Button
+              className="clue-actions__button"
+              data-testid="btn-auto-cluster"
+              disabled={Boolean(loading)}
+              loading={loading === 'auto'}
+              variant="secondary"
+              onClick={() => void requestClue('auto', { risk, target })}
+            >
+              מצא לי את הצירוף הכי טוב
+            </Button>
+          )}
         </div>
       </section>
 

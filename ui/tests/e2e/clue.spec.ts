@@ -86,12 +86,8 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
 }) => {
   await setupFixtureBoard(page);
 
-  const focusedAction = await page.getByTestId('btn-get-clue').boundingBox();
-  const automaticAction = await page.getByTestId('btn-auto-cluster').boundingBox();
-  expect(focusedAction).not.toBeNull();
-  expect(automaticAction).not.toBeNull();
-  expect(focusedAction!.y).toBeLessThan(automaticAction!.y);
-  await expect(page.getByTestId('btn-get-clue')).toBeDisabled();
+  await expect(page.getByTestId('btn-get-clue')).toHaveCount(0);
+  await expect(page.getByTestId('btn-auto-cluster')).toBeEnabled();
   await expect(page.getByTestId('target-red')).toHaveAttribute('aria-pressed', 'true');
 
   await installClueResponseGate(page);
