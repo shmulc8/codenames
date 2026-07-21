@@ -1,0 +1,525 @@
+{
+  "source": "openai_generated",
+  "model": "gpt-4o-mini",
+  "generated_at": "2026-07-21T16:31:20.042953+00:00",
+  "entries": {
+    "פרח": {
+      "ambiguity": 0.9,
+      "senses": [
+        "flower",
+        "to blossom"
+      ]
+    },
+    "כותרת": {
+      "ambiguity": 0.8,
+      "senses": [
+        "title",
+        "heading"
+      ]
+    },
+    "קרן": {
+      "ambiguity": 0.85,
+      "senses": [
+        "horn",
+        "beam (of light)"
+      ]
+    },
+    "ראש": {
+      "ambiguity": 0.8,
+      "senses": [
+        "head",
+        "leader"
+      ]
+    },
+    "שער": {
+      "ambiguity": 0.75,
+      "senses": [
+        "gate",
+        "hair"
+      ]
+    },
+    "קנה": {
+      "ambiguity": 0.9,
+      "senses": [
+        "reed",
+        "to acquire"
+      ]
+    },
+    "עין": {
+      "ambiguity": 0.85,
+      "senses": [
+        "eye",
+        "spring (of water)"
+      ]
+    },
+    "כף": {
+      "ambiguity": 0.7,
+      "senses": [
+        "spoon",
+        "palm (of hand)"
+      ]
+    },
+    "מטבע": {
+      "ambiguity": 0.8,
+      "senses": [
+        "coin",
+        "currency"
+      ]
+    },
+    "מחנה": {
+      "ambiguity": 0.75,
+      "senses": [
+        "camp",
+        "group (of people)"
+      ]
+    },
+    "שפה": {
+      "ambiguity": 0.7,
+      "senses": [
+        "language",
+        "lip"
+      ]
+    },
+    "פעמון": {
+      "ambiguity": 0.8,
+      "senses": [
+        "bell",
+        "toll (of a bell)"
+      ]
+    },
+    "תיק": {
+      "ambiguity": 0.75,
+      "senses": [
+        "bag",
+        "case (legal)"
+      ]
+    },
+    "שחקן": {
+      "ambiguity": 0.85,
+      "senses": [
+        "actor",
+        "player (in a game)"
+      ]
+    },
+    "גבעה": {
+      "ambiguity": 0.7,
+      "senses": [
+        "hill",
+        "mound"
+      ]
+    },
+    "ברווז": {
+      "ambiguity": 0.8,
+      "senses": [
+        "duck",
+        "to waddle"
+      ]
+    },
+    "קול": {
+      "ambiguity": 0.9,
+      "senses": [
+        "voice",
+        "sound"
+      ]
+    },
+    "מפתח": {
+      "ambiguity": 0.85,
+      "senses": [
+        "key",
+        "to open"
+      ]
+    },
+    "תמונה": {
+      "ambiguity": 0.75,
+      "senses": [
+        "picture",
+        "image"
+      ]
+    },
+    "עץ": {
+      "ambiguity": 0.8,
+      "senses": [
+        "tree",
+        "wood"
+      ]
+    },
+    "דלת": {
+      "ambiguity": 0.7,
+      "senses": [
+        "door",
+        "entry"
+      ]
+    },
+    "עלה": {
+      "ambiguity": 0.95,
+      "senses": [
+        "leaf",
+        "rose/ascended"
+      ]
+    },
+    "שולחן": {
+      "ambiguity": 0.8,
+      "senses": [
+        "table",
+        "desk"
+      ]
+    },
+    "חיים": {
+      "ambiguity": 0.9,
+      "senses": [
+        "life",
+        "lives (plural)"
+      ]
+    },
+    "כיסא": {
+      "ambiguity": 0.75,
+      "senses": [
+        "chair",
+        "seat"
+      ]
+    },
+    "שמש": {
+      "ambiguity": 0.85,
+      "senses": [
+        "sun",
+        "umbrella"
+      ]
+    },
+    "גשר": {
+      "ambiguity": 0.7,
+      "senses": [
+        "bridge",
+        "to connect"
+      ]
+    },
+    "יד": {
+      "ambiguity": 0.8,
+      "senses": [
+        "hand",
+        "arm"
+      ]
+    },
+    "רגל": {
+      "ambiguity": 0.9,
+      "senses": [
+        "leg",
+        "foot"
+      ]
+    },
+    "תפוח": {
+      "ambiguity": 0.75,
+      "senses": [
+        "apple",
+        "a type of fruit (general)"
+      ]
+    },
+    "עוגה": {
+      "ambiguity": 0.8,
+      "senses": [
+        "cake",
+        "a type of dessert"
+      ]
+    },
+    "חנות": {
+      "ambiguity": 0.75,
+      "senses": [
+        "store",
+        "shop"
+      ]
+    },
+    "סוס": {
+      "ambiguity": 0.7,
+      "senses": [
+        "horse",
+        "to ride"
+      ]
+    },
+    "שיר": {
+      "ambiguity": 0.9,
+      "senses": [
+        "song",
+        "to sing"
+      ]
+    },
+    "פרי": {
+      "ambiguity": 0.75,
+      "senses": [
+        "fruit",
+        "to bear fruit"
+      ]
+    },
+    "מוזיקה": {
+      "ambiguity": 0.7,
+      "senses": [
+        "music",
+        "musical"
+      ]
+    },
+    "חוף": {
+      "ambiguity": 0.85,
+      "senses": [
+        "beach",
+        "shoreline"
+      ]
+    },
+    "אור": {
+      "ambiguity": 0.8,
+      "senses": [
+        "light",
+        "day"
+      ]
+    },
+    "לילה": {
+      "ambiguity": 0.7,
+      "senses": [
+        "night",
+        "darkness"
+      ]
+    },
+    "ברזל": {
+      "ambiguity": 0.75,
+      "senses": [
+        "iron",
+        "metal"
+      ]
+    },
+    "דיבור": {
+      "ambiguity": 0.7,
+      "senses": [
+        "speech",
+        "talk"
+      ]
+    },
+    "גינה": {
+      "ambiguity": 0.75,
+      "senses": [
+        "garden",
+        "yard"
+      ]
+    },
+    "זמן": {
+      "ambiguity": 0.85,
+      "senses": [
+        "time",
+        "period"
+      ]
+    },
+    "אבן": {
+      "ambiguity": 0.8,
+      "senses": [
+        "stone",
+        "rock"
+      ]
+    },
+    "מכתב": {
+      "ambiguity": 0.75,
+      "senses": [
+        "letter",
+        "message"
+      ]
+    },
+    "כוח": {
+      "ambiguity": 0.8,
+      "senses": [
+        "power",
+        "strength"
+      ]
+    },
+    "צבע": {
+      "ambiguity": 0.85,
+      "senses": [
+        "color",
+        "paint"
+      ]
+    },
+    "רוח": {
+      "ambiguity": 0.8,
+      "senses": [
+        "wind",
+        "spirit"
+      ]
+    },
+    "שבוע": {
+      "ambiguity": 0.8,
+      "senses": [
+        "week",
+        "seven"
+      ]
+    },
+    "סוף": {
+      "ambiguity": 0.9,
+      "senses": [
+        "end",
+        "bottom"
+      ]
+    },
+    "מנעול": {
+      "ambiguity": 0.75,
+      "senses": [
+        "lock",
+        "keyhole"
+      ]
+    },
+    "ספר": {
+      "ambiguity": 0.88,
+      "senses": [
+        "book",
+        "to count"
+      ]
+    },
+    "טלפון": {
+      "ambiguity": 0.7,
+      "senses": [
+        "telephone",
+        "call"
+      ]
+    },
+    "שוק": {
+      "ambiguity": 0.82,
+      "senses": [
+        "market",
+        "to shake"
+      ]
+    },
+    "קרב": {
+      "ambiguity": 0.85,
+      "senses": [
+        "battle",
+        "to approach"
+      ]
+    },
+    "שפתיים": {
+      "ambiguity": 0.75,
+      "senses": [
+        "lips",
+        "edges"
+      ]
+    },
+    "דבר": {
+      "ambiguity": 0.88,
+      "senses": [
+        "thing",
+        "to speak"
+      ]
+    },
+    "חול": {
+      "ambiguity": 0.8,
+      "senses": [
+        "sand",
+        "time"
+      ]
+    },
+    "שן": {
+      "ambiguity": 0.85,
+      "senses": [
+        "tooth",
+        "gear"
+      ]
+    },
+    "זנב": {
+      "ambiguity": 0.8,
+      "senses": [
+        "tail",
+        "to be left behind"
+      ]
+    },
+    "גן": {
+      "ambiguity": 0.7,
+      "senses": [
+        "garden",
+        "kindergarten"
+      ]
+    },
+    "תפיסה": {
+      "ambiguity": 0.75,
+      "senses": [
+        "perception",
+        "grasp/understanding"
+      ]
+    },
+    "מילה": {
+      "ambiguity": 0.65,
+      "senses": [
+        "word",
+        "promise"
+      ]
+    },
+    "משקה": {
+      "ambiguity": 0.7,
+      "senses": [
+        "drink",
+        "to water (plants)"
+      ]
+    },
+    "גז": {
+      "ambiguity": 0.7,
+      "senses": [
+        "gas",
+        "to accelerate"
+      ]
+    },
+    "כובע": {
+      "ambiguity": 0.7,
+      "senses": [
+        "hat",
+        "cap"
+      ]
+    },
+    "שוליים": {
+      "ambiguity": 0.85,
+      "senses": [
+        "margins",
+        "fringes"
+      ]
+    },
+    "דגל": {
+      "ambiguity": 0.8,
+      "senses": [
+        "flag",
+        "banner"
+      ]
+    },
+    "מצב": {
+      "ambiguity": 0.8,
+      "senses": [
+        "situation",
+        "state"
+      ]
+    },
+    "תא": {
+      "ambiguity": 0.7,
+      "senses": [
+        "cell",
+        "booth"
+      ]
+    },
+    "נשק": {
+      "ambiguity": 0.85,
+      "senses": [
+        "weapon",
+        "kiss"
+      ]
+    },
+    "מנוף": {
+      "ambiguity": 0.75,
+      "senses": [
+        "crane",
+        "lever"
+      ]
+    },
+    "מילון": {
+      "ambiguity": 0.7,
+      "senses": [
+        "dictionary",
+        "lexicon"
+      ]
+    },
+    "משקל": {
+      "ambiguity": 0.75,
+      "senses": [
+        "weight",
+        "measure"
+      ]
+    }
+  }
+}

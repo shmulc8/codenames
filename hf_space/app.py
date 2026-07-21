@@ -11,7 +11,7 @@ The bot-vs-bot research game is still reachable at `/game`.
 
 Default engine is **geometry** — pure fastText embeddings + DictaBERT legality, no
 generative LLM in the loop (lighter, instant, fully offline). The clue word comes from
-a mid-frequency noun/adjective band of the vocabulary, and the rationale is derived from
+a broad noun/adjective/proper-noun frequency band of the vocabulary, and the rationale is derived from
 the geometry itself. DictaLM is optional (engines `hybrid`/`llm`) and loads lazily only
 when selected. Encoders and the clue vocabulary load lazily on first use.
 """
@@ -51,18 +51,18 @@ SECOND_OPINION = os.environ.get("SECOND_OPINION", "1").lower() not in ("0", "fal
 # how hard to avoid enemy/neutral/assassin words (lam_*). Cautious only plays rock-solid
 # clues (and refuses more); bold reaches for more words and tolerates a tighter enemy.
 RISK_PROFILES = {
-    # Scoring weights validated on bench_clue.py (real serving path + validated fasttext+qwen
-    # guesser); a param search did not beat them on held-out boards, so they stand. The count-trim
-    # `keep` (keep_rel) sets the coverage↔safety point: lower claims more words but over-claims.
-    # Chosen on the held-out curve — balanced 0.60 keeps single-word clues to ~18% (0.66 gave ~25%)
-    # at ~2.2 words/clue; cautious stays tight (safety first), bold reaches furthest.
+    # Scoring weights (m, lam_*, safe_margin) validated on bench_clue.py (real serve_clue path,
+    # validated fasttext+qwen guesser); a random search over these knobs did not beat them on
+    # held-out boards, so they stand. The count-trim `keep` (keep_rel) sets the coverage↔safety
+    # point: lower claims more words but over-claims and risks a wrong guess. Chosen on the
+    # held-out coverage/safety curve — balanced 0.60 keeps single-word clues to ~18% (0.66 gave
+    # ~25%) at ~2.2 words/clue; cautious stays tight (safety first), bold reaches furthest.
     "cautious": dict(m=2, lam_a=3.0, lam_opp=1.3, lam_neu=0.7, keep=0.68, safe_margin=0.05),
     "balanced": dict(m=3, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.60, safe_margin=0.02),
     "bold":     dict(m=4, lam_a=1.8, lam_opp=0.7, lam_neu=0.4, keep=0.55, safe_margin=0.0),
 }
-# Which keys parameterise candidate generation vs. the count-trim threshold. safe_margin is the
-# real risk dial: how far a team word must outrank every enemy word to count toward a clue.
 _CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu", "safe_margin")
+LAM_F = 0.14                # weight on the mid-frequency (DETECT-FREQ) prior in candidate scoring
 # Listener-competition (RSA-style) danger term: penalise clues by the softmax share a literal
 # guesser would put on the assassin/opponent words (see probe._listener_danger). One global pair
 # across risk profiles; SOFT_TAU is the softmax temperature. LAM_SOFT=0 restores hinge-only scoring.
@@ -148,6 +148,13 @@ _clue_freq: dict[str, np.ndarray] = {}
 _clue_lemmas: dict[str, list[str]] = {}
 _clue_emb: dict[str, dict[str, np.ndarray]] = {} # mode -> encoder -> embedding
 
+_ambiguity_lexicon = None
+
+_DEFAULT_AMBIGUITY = {
+    "עלה": {"ambiguity": 0.95, "senses": ["leaf", "rose/ascended"]},
+    "פרח": {"ambiguity": 0.95, "senses": ["flower", "flourished/youth"]},
+}
+
 
 def get_llm(mid):
     mid = mid or probe.LLM_FAST
@@ -166,38 +173,66 @@ def get_enc(key):
     return _encs[key]
 
 
-def _load_blocklist():
-    """Offensive Hebrew terms (one per line, '#' comments) excluded from the clue vocabulary."""
-    block = set()
-    try:
-        with open(os.path.join(probe.DATA, "blocklist_he.txt"), encoding="utf-8") as f:
-            for line in f:
-                w = line.strip()
-                if w and not w.startswith("#"):
-                    block.add(w)
-    except FileNotFoundError:
-        pass
-    return block
+def _load_ambiguity_lexicon():
+    """Load static ambiguity warnings; never call an external model while serving."""
+    global _ambiguity_lexicon
+    if _ambiguity_lexicon is None:
+        path = os.path.join(probe.DATA, "ambiguity_he_openai.json")
+        try:
+            with open(path, encoding="utf-8") as f:
+                document = json.load(f)
+            _ambiguity_lexicon = dict(_DEFAULT_AMBIGUITY)
+            if isinstance(document, dict):
+                _ambiguity_lexicon.update(document.get("entries", {}))
+            curated_path = os.path.join(probe.DATA, "clue_vocab_openai.json")
+            if os.path.exists(curated_path):
+                with open(curated_path, encoding="utf-8") as f:
+                    curated = json.load(f)
+                for word, meta in curated.get("entries", {}).items():
+                    flags = meta.get("flags", [])
+                    if "ambiguous" in flags or "translation_sensitive" in flags:
+                        _ambiguity_lexicon[word] = {
+                            "ambiguity": float(meta.get("ambiguity") or 0.7),
+                            "senses": [],
+                            "flags": flags,
+                        }
+        except (FileNotFoundError, OSError, json.JSONDecodeError):
+            _ambiguity_lexicon = dict(_DEFAULT_AMBIGUITY)
+    return _ambiguity_lexicon
 
 
-def geo_assets(mode: str = "conservative"):
+def geo_assets(mode: str = "curated"):
     """(vocab, embedding, lemmas, freq_scores) for the geometry spymaster — a mid-frequency
     noun/adjective/etc. band of the clue vocabulary, embedded and FREQ-scored once. The vocab is
     lemmatised so legality catches prefixed forms (e.g. בסיר → סיר) that share a board lemma."""
     global _clue_vocab, _clue_freq, _clue_lemmas, _clue_emb
     if mode not in _clue_vocab:
-        # Load filtered vocab according to the mode directly from probe.clue_vocab_band
-        vocab, counts = probe.clue_vocab_band(20000, mode=mode)
-        
-        # Calculate freq scores using adjusted floors for the mode
-        if mode == "conservative":
-            freq = probe.freq_scores(counts, lo=1500, hi=40000)
-        elif mode == "broad":
-            freq = probe.freq_scores(counts, lo=500, hi=50000)
-        elif mode == "experimental":
-            freq = probe.freq_scores(counts, lo=200, hi=75000)
+        # Load filtered vocab according to the mode
+        if mode == "curated":
+            curated_vocab = os.path.join(probe.DATA, "clue_vocab_openai.json")
+            if os.path.exists(curated_vocab):
+                with open(curated_vocab, encoding="utf-8") as f:
+                    saved = json.load(f)
+                rows = [[word, meta["count"], meta["pos"]] for word, meta in saved["entries"].items()]
+                vocab = [row[0] for row in rows]
+                counts = np.asarray([row[1] for row in rows], dtype=np.float32)
+                freq = probe.freq_scores(counts, lo=500, hi=50000)
+            else:
+                # Fallback to broad if curated file is missing
+                vocab, counts = probe.clue_vocab_band(20000, mode="broad")
+                freq = probe.freq_scores(counts, lo=500, hi=50000)
         else:
-            freq = probe.freq_scores(counts, lo=1000, hi=80000)
+            vocab, counts = probe.clue_vocab_band(20000, mode=mode)
+            
+            # Calculate freq scores using adjusted floors for the mode
+            if mode == "conservative":
+                freq = probe.freq_scores(counts, lo=1500, hi=40000)
+            elif mode == "broad":
+                freq = probe.freq_scores(counts, lo=500, hi=50000)
+            elif mode == "experimental":
+                freq = probe.freq_scores(counts, lo=200, hi=75000)
+            else:
+                freq = probe.freq_scores(counts, lo=1000, hi=80000)
             
         _clue_vocab[mode] = vocab
         _clue_lemmas[mode] = list(vocab)
@@ -332,9 +367,9 @@ def space():
     matrix to 2D with classical MDS (numpy only). Read-only; no engine state touched."""
     j = request.get_json(force=True)
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "conservative"
-    if vocab_mode not in ("conservative", "broad", "experimental"):
-        vocab_mode = "conservative"
+    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
+    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
+        vocab_mode = "curated"
     clue = (j.get("clue") or "").strip() or None
     whiten = j.get("whiten", True)
 
@@ -392,6 +427,15 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
     # Honest verdict: refuse outright (no_clue) when nothing safe connects the team, or
     # flag a clue as risky (leaky) when an enemy word ranks among/above your targets.
     no_clue, risky, note = False, False, ""
+    ambiguity = _load_ambiguity_lexicon().get(word, {})
+    ambiguity_score = float(ambiguity.get("ambiguity", 0.0) or 0.0)
+    ambiguity_warning = ambiguity_score >= 0.7
+    if ambiguity_warning:
+        risky = True
+        senses = ", ".join(str(s) for s in ambiguity.get("senses", [])[:3])
+        flags = ", ".join(str(s) for s in ambiguity.get("flags", [])[:3])
+        detail = senses or flags or "multiple plausible readings"
+        note = f"⚠ רמז דו־משמעי/תלוי־תרגום: {word} — {detail}"
     if read and read[0]["role"] != "my":
         no_clue = True
         note = f"המילה הכי קרובה לרמז היא '{read[0]['word']}' — לא שלך. אין מילה שמקשרת את הצוות שלך בלי לסכן מילה זרה."
@@ -407,10 +451,6 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
         note = (f"⚠ זהירות: '{e['word']}' ({ROLE_HE.get(e['role'], 'זרה')}) קרובה לרמז כמעט "
                 f"כמו המילים שלך — מנחש עלול לבחור בה. בטוח ל-{safe} בלבד.")
 
-    # what to recommend & light up: the safe run, trimmed to words that form a real cluster —
-    # strongly connected to the clue (relative keep + no cliff) AND cohering with each other
-    # (cohesion trim), so a passenger that rides along on the clue↔word similarity but doesn't
-    # belong (radio→milk) is dropped. Pinned targets always stay. See probe.served_count.
     focusset = set(focus or [])
     disp_intended = []
     if not no_clue:
@@ -427,7 +467,42 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
     return {"word": word, "count": disp_count, "intended": disp_intended, "score": score,
             "reason": reason, "read": read, "leak": leak, "safe": safe,
             "assassin": {"word": aw, "rank": arank, "sim": asim},
+            "ambiguity": {"score": ambiguity_score, "senses": ambiguity.get("senses", []),
+                          "flags": ambiguity.get("flags", [])},
             "no_clue": no_clue, "risky": risky, "note": note}
+
+
+def _risk_order(options: list[dict], risk: str) -> list[int]:
+    """Order analyzed geometry options by the risk *policy* (not just the scoring weight):
+    refuse-clues always sink last; bold maximises coverage (count) then safety; cautious and
+    balanced put safety first, then coverage. Returns option indices best-first."""
+    if risk == "bold":
+        key = lambda i: (1 if options[i]["no_clue"] else 0,
+                         -options[i]["count"], -options[i]["safe"], -options[i]["score"])
+    else:
+        key = lambda i: (1 if options[i]["no_clue"] else 0,
+                         1 if options[i]["risky"] else 0,
+                         -options[i]["safe"], -options[i]["count"], -options[i]["score"])
+    return sorted(range(len(options)), key=key)
+
+
+def serve_clue(board: probe.Board, risk: str = "balanced", focus=None, profile=None, vocab_mode: str = "curated"):
+    """The geometry engine's clue options for a board, ordered exactly as
+    /api/coach/spymaster serves them (best first). Pure — no request context — so the
+    endpoint, the benchmarks, and tests all measure the identical served clue.
+    `profile` overrides RISK_PROFILES[risk] (for tuning); `risk` still selects the ordering
+    policy. Returns (options, shortlist) where options[0] is the recommended clue."""
+    prof = profile or RISK_PROFILES[risk]
+    focus = [w for w in (focus or []) if w in board.my] or None
+    vocab, emb, lems, freq = geo_assets(vocab_mode)
+    cands = probe.encoder_clue_candidates(
+        get_enc(GEO_ENC), board, vocab, emb, vocab_lemmas=lems, vocab_freq=freq,
+        lam_f=LAM_F, lam_soft=LAM_SOFT, soft_tau=SOFT_TAU,
+        n=10, targets=focus, **{k: prof[k] for k in _CAND_KEYS})
+    options = [_analyze_clue(board, c["word"], c["intended"], c["count"], c["score"], focus,
+                             keep_rel=prof["keep"], max_count=prof["m"]) for c in cands]
+    order = _risk_order(options, risk)
+    return [options[i] for i in order], [cands[i] for i in order]
 
 
 @app.post("/api/coach/spymaster")
@@ -438,9 +513,9 @@ def coach_spymaster():
     one to show first. The top-level fields mirror `options[picked]` for convenience."""
     j = request.get_json(force=True)
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "conservative"
-    if vocab_mode not in ("conservative", "broad", "experimental"):
-        vocab_mode = "conservative"
+    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
+    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
+        vocab_mode = "curated"
     if not board.my:
         abort(400, "board has no team (my) words")
     engine = "geometry" if EMBED_ONLY else (j.get("engine") or "geometry")
@@ -448,8 +523,8 @@ def coach_spymaster():
     focus = [w for w in (j.get("focus") or []) if w in board.my] or None  # optional target subset (team only)
     risk = j.get("risk") if j.get("risk") in RISK_PROFILES else "balanced"
     prof = RISK_PROFILES[risk]
-    cand_kw = {k: prof[k] for k in _CAND_KEYS}    # generation knobs
-    keep_rel = prof["keep"]                        # count-trim threshold (risk-tuned)
+    cand_kw = {k: prof[k] for k in _CAND_KEYS}
+    keep_rel = prof["keep"]
 
     shortlist, picked = [], 0
     if engine == "llm":
@@ -457,56 +532,24 @@ def coach_spymaster():
         if not clue or probe.llm_root_conflicts(get_llm(mid), [clue.word], board.words):
             return jsonify(error="DictaLM לא הצליח להחזיר רמז חוקי, נסה שוב או עבור לגאומטריה")
         options = [_analyze_clue(board, clue.word, clue.intended, clue.count, clue.margin,
-                                 focus, reason=clue.reason, keep_rel=keep_rel,
-                                 max_count=prof["m"])]
-    else:
+                                 focus, reason=clue.reason, keep_rel=keep_rel, max_count=prof["m"])]
+    elif engine == "hybrid":       # geometry proposes a legal shortlist, DictaLM gates + picks first
         vocab, emb, lems, freq = geo_assets(vocab_mode)
         cands = probe.encoder_clue_candidates(get_enc(GEO_ENC), board, vocab, emb,
-                                              vocab_lemmas=lems, vocab_freq=freq, lam_f=0.14,
+                                              vocab_lemmas=lems, vocab_freq=freq, lam_f=LAM_F,
                                               lam_soft=LAM_SOFT, soft_tau=SOFT_TAU,
                                               n=10, targets=focus, **cand_kw)
-        if risk == "bold":
-            # A bold player should not be offered less coverage merely because the bolder
-            # scoring surface missed a strong balanced cluster. Merge that independent
-            # shortlist, then let the bold ordering choose coverage first.
-            balanced = RISK_PROFILES["balanced"]
-            balanced_kw = {key: balanced[key] for key in _CAND_KEYS}
-            fallback = probe.encoder_clue_candidates(
-                get_enc(GEO_ENC), board, vocab, emb, vocab_lemmas=lems,
-                vocab_freq=freq, lam_f=0.14, lam_soft=LAM_SOFT, soft_tau=SOFT_TAU,
-                n=10, targets=focus, **balanced_kw)
-            seen = {candidate["word"] for candidate in cands}
-            cands.extend(candidate for candidate in fallback if candidate["word"] not in seen)
-        if engine == "hybrid":     # shoresh/derivative gate (DictaLM); geometry stays LLM-free
-            bad = probe.llm_root_conflicts(get_llm(mid), [c["word"] for c in cands], board.words)
-            cands = [c for c in cands if c["word"] not in bad] or cands   # keep >=1
+        bad = probe.llm_root_conflicts(get_llm(mid), [c["word"] for c in cands], board.words)
+        cands = [c for c in cands if c["word"] not in bad] or cands   # keep >=1
         shortlist = cands
-        if engine == "hybrid":     # geometry proposes a legal shortlist, DictaLM picks first
-            chosen = probe.llm_pick_clue(get_llm(mid), board, cands)
-            picked = next((i for i, c in enumerate(cands) if c["word"] == chosen.word), 0)
+        chosen = probe.llm_pick_clue(get_llm(mid), board, cands)
+        picked = next((i for i, c in enumerate(cands) if c["word"] == chosen.word), 0)
         options = [_analyze_clue(board, c["word"], c["intended"], c["count"], c["score"], focus,
                                  keep_rel=keep_rel, max_count=prof["m"])
                    for c in cands]
-        if engine == "geometry":
-            # The risk dial is policy, not just a scoring weight: cautious maximises safety;
-            # balanced maximises safe coverage; bold maximises coverage while retaining refusals.
-            if risk == "bold":
-                order = sorted(range(len(options)), key=lambda i: (
-                    1 if options[i]["no_clue"] else 0,
-                    -options[i]["count"], -options[i]["safe"], -options[i]["score"]))
-            elif risk == "balanced":
-                order = sorted(range(len(options)), key=lambda i: (
-                    1 if options[i]["no_clue"] else 0,
-                    1 if options[i]["risky"] else 0,
-                    -options[i]["safe"], -options[i]["count"], -options[i]["score"]))
-            else:
-                order = sorted(range(len(options)), key=lambda i: (
-                    1 if options[i]["no_clue"] else 0,
-                    1 if options[i]["risky"] else 0,
-                    -options[i]["safe"], -options[i]["count"], -options[i]["score"]))
-            options = [options[i] for i in order][:10]
-            shortlist = [shortlist[i] for i in order][:10]
-            picked = 0
+    else:                          # geometry: the same ordered options serve_clue / the benchmark use
+        options, shortlist = serve_clue(board, risk, focus, vocab_mode=vocab_mode)
+        options, shortlist = options[:10], shortlist[:10]
 
     if not options:
         return jsonify(error="לא נמצא רמז חוקי ללוח הזה", no_clue=True, options=[]), 200
@@ -526,9 +569,9 @@ def coach_check():
     the safe run is, the danger words, and assassin proximity. 'Test before you play.'"""
     j = request.get_json(force=True)
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "conservative"
-    if vocab_mode not in ("conservative", "broad", "experimental"):
-        vocab_mode = "conservative"
+    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
+    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
+        vocab_mode = "curated"
     clue = j["clue"].strip()
     # Legality (offline, no LLM): a clue is illegal if it is a board word / an inflection of one
     # (DictaBERT lemma), or shares a root (Wiktionary lexicon) with a board word it is transparent
@@ -555,9 +598,9 @@ def coach_operative():
     """Best guesses for a clue + count, with confidence and a geometry second opinion."""
     j = request.get_json(force=True)
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "conservative"
-    if vocab_mode not in ("conservative", "broad", "experimental"):
-        vocab_mode = "conservative"
+    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
+    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
+        vocab_mode = "curated"
     clue = j["clue"].strip()
     count = max(1, min(9, int(j.get("count") or 1)))
     engine = "geometry" if EMBED_ONLY else (j.get("engine") or "geometry")
@@ -621,7 +664,7 @@ if __name__ == "__main__":
     _init_feedback()
     if os.environ.get("WARMUP", "").lower() in ("1", "true", "yes"):
         app.logger.info("warming up geometry assets ...")
-        geo_assets("conservative")               # load fastText + embed the clue vocab before serving
+        geo_assets("curated")                    # load fastText + embed the clue vocab before serving
         import morph
         morph.lemmas(["מילה"])     # preload DictaBERT-lex (legality) so the first clue isn't slow
     host = os.environ.get("HOST", "127.0.0.1")
