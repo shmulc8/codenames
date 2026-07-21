@@ -4,6 +4,7 @@ import { postSpymaster } from '../../api/client';
 import { Button, RoleIcon, showToast } from '../../components';
 import { liveBoard, useAppStore } from '../../state/store';
 import type {
+  BoardPayload,
   ClueOption,
   Risk,
   Role,
@@ -18,6 +19,16 @@ interface RequestSnapshot {
   focus?: string[];
   risk: Risk;
   target: TeamColor;
+}
+
+function boardsMatch(left: BoardPayload, right: BoardPayload): boolean {
+  return (
+    left.words.length === right.words.length &&
+    left.words.every(
+      (word, index) =>
+        word === right.words[index] && left.roles[word] === right.roles[word],
+    )
+  );
 }
 
 const targetLabels: Record<TeamColor, string> = {
@@ -139,7 +150,11 @@ export function CluePanel(): JSX.Element {
         liveFocus?.length ? liveFocus : undefined,
         snapshot.risk,
       );
-      setClueResult(result);
+      const boardChanged = !boardsMatch(
+        board,
+        liveBoard(useAppStore.getState()),
+      );
+      setClueResult(result, boardChanged);
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'לא הצלחנו לקבל רמז',

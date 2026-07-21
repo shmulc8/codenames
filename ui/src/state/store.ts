@@ -57,7 +57,7 @@ export interface AppState {
   setCheckedClue(word: string | null): void;
   setHoverWord(word: string | null): void;
   toggleLifecycle(word: string, chosenBy?: Role): void;
-  setClueResult(result: SpymasterResponse | null): void;
+  setClueResult(result: SpymasterResponse | null, stale?: boolean): void;
   setOptionIndex(index: number): void;
   useCurrentClue(): void;
   resetGame(): void;
@@ -223,9 +223,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  setClueResult: (current) =>
+  setClueResult: (current, stale = false) =>
     set((state) => ({
-      clue: { ...state.clue, current, optionIndex: 0, stale: false },
+      clue: { ...state.clue, current, optionIndex: 0, stale },
     })),
 
   setOptionIndex: (optionIndex) =>

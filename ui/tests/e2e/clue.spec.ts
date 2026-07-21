@@ -256,6 +256,60 @@ test('lifecycle changes display the stale-result overlay', async ({ page }) => {
   await expect(page.getByTestId('btn-use-clue')).toBeDisabled();
 });
 
+test('a clue response is immediately stale when the live board changes in flight', async ({
+  page,
+}) => {
+  await setupFixtureBoard(page);
+  await installClueResponseGate(page);
+
+  await page.getByTestId('btn-auto-cluster').click();
+  try {
+    await waitForClueResponse(page);
+
+    const heldRequest = await page.evaluate(() => window.__lastSpymasterReq);
+    expect(heldRequest?.words).toContain(fixtureBoard.words[0]);
+
+    await page.getByTestId('btn-lifecycle-0').click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          if (!window.__store) {
+            throw new Error('The dev store hook was not installed');
+          }
+          return window.__store.getState().tiles[0]?.lifecycle;
+        }),
+      )
+      .toBe('chosen');
+  } finally {
+    await releaseClueResponse(page);
+  }
+
+  await expect(page.getByTestId('clue-word')).toHaveText('טבע');
+  await expect(
+    page.getByText('הלוח השתנה — הרמז חושב על לוח ישן'),
+  ).toBeVisible();
+  await expect(page.getByTestId('btn-use-clue')).toBeDisabled();
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        if (!window.__store) {
+          throw new Error('The dev store hook was not installed');
+        }
+        return window.__store.getState().clue.stale;
+      }),
+    )
+    .toBe(true);
+
+  await page.getByText('חשבו שוב').click();
+  await expect(
+    page.getByText('הלוח השתנה — הרמז חושב על לוח ישן'),
+  ).toHaveCount(0);
+  await expect(page.getByTestId('btn-use-clue')).toBeEnabled();
+
+  const regeneratedRequest = await page.evaluate(() => window.__lastSpymasterReq);
+  expect(regeneratedRequest?.words).not.toContain(fixtureBoard.words[0]);
+});
+
 test.describe('backend error handling', () => {
   test.use({ serviceWorkers: 'block' });
 
