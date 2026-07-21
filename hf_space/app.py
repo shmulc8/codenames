@@ -5,7 +5,7 @@ assistant coaches it — best clue when you're רב המרגלים, best guesses
 the מנחש — and *shows its reasoning* (the geometry shortlist, which candidate
 DictaLM picked and why, the operative-eye reading of the clue, danger flags).
 
-    HF_HUB_OFFLINE=1 .venv/bin/python app.py     # http://127.0.0.1:7860
+    .venv/bin/python app.py                      # http://127.0.0.1:7860
 
 The bot-vs-bot research game is still reachable at `/game`.
 
@@ -17,7 +17,10 @@ when selected. Encoders and the clue vocabulary load lazily on first use.
 """
 
 import os
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
+# Force the hub online: feedback persistence (the CommitScheduler) pushes via huggingface_hub,
+# which HF_HUB_OFFLINE=1 would gag. Models never need the hub at runtime — they load from the
+# local cache (local_files_only=True in morph), so nothing here reaches out except feedback.
+os.environ["HF_HUB_OFFLINE"] = "0"
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 import hashlib

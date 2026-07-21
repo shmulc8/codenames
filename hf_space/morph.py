@@ -43,8 +43,9 @@ def _load():
         with _lock:
             if _model is None:
                 from transformers import AutoModel, AutoTokenizer
-                _tok = AutoTokenizer.from_pretrained(_LEX_ID)
-                _model = AutoModel.from_pretrained(_LEX_ID, trust_remote_code=True).eval()
+                _tok = AutoTokenizer.from_pretrained(_LEX_ID, local_files_only=True)
+                _model = AutoModel.from_pretrained(_LEX_ID, trust_remote_code=True,
+                                                   local_files_only=True).eval()
     return _tok, _model
 
 
@@ -54,8 +55,9 @@ def _load_morph():
         with _lock:
             if _mmodel is None:
                 from transformers import AutoModel, AutoTokenizer
-                _mtok = AutoTokenizer.from_pretrained(_MORPH_ID)
-                _mmodel = AutoModel.from_pretrained(_MORPH_ID, trust_remote_code=True).eval()
+                _mtok = AutoTokenizer.from_pretrained(_MORPH_ID, local_files_only=True)
+                _mmodel = AutoModel.from_pretrained(_MORPH_ID, trust_remote_code=True,
+                                                    local_files_only=True).eval()
     return _mtok, _mmodel
 
 
