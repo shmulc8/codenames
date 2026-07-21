@@ -77,8 +77,8 @@
 .main-screen__primary {
   min-width: 0;
   padding: clamp(var(--space-4), 2vw, var(--space-8));
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-6);
   background: var(--cn-board-void);
 }

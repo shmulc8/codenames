@@ -76,7 +76,7 @@
   --cn-red-text:      #ecc9c9;
   --cn-red-tint:      rgba(196,106,106,.18);
   --cn-red-grad:      linear-gradient(165deg,#a75050,#7c3a3a);
-  --cn-red-shape:     "◆";       /* ph-fill ph-diamond */
+  --cn-red-shape:     "●";       /* circle */
 
   --cn-blue-ring:     #4d7fb3;
   --cn-blue-dot:      #5b8fc7;

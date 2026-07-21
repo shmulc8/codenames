@@ -83,6 +83,14 @@
   opacity: 0.5;
 }
 
+.clue-target__option:focus-visible,
+.clue-risk__option:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--color-accent-300);
+  outline-offset: -3px;
+}
+
 .clue-selection {
   display: grid;
   gap: var(--space-3);
@@ -158,8 +166,8 @@
 }
 
 .clue-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
 }
 
@@ -222,6 +230,31 @@
   font-weight: 500;
   line-height: 1;
 }
+
+.clue-result__use-button {
+  width: 2.1rem;
+  height: 2.1rem;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-accent-700);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-accent-300);
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.clue-result__use-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+.clue-result__use-button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  color: var(--color-accent-200);
+}
+.clue-result__use-button:disabled { cursor: default; opacity: .65; }
+.clue-result__use-button:focus-visible { outline: 2px solid var(--color-accent-300); outline-offset: 2px; }
 
 .clue-result__count {
   padding: var(--space-1) var(--space-3);
@@ -352,20 +385,6 @@
   text-align: end;
 }
 
-.clue-use {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-divider);
-}
-
-.clue-use__confirmation {
-  color: var(--cn-ok);
-  font-size: 0.72rem;
-}
-
 .clue-carousel {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -379,6 +398,13 @@
 
 .clue-carousel > :last-child {
   justify-self: end;
+}
+
+.clue-carousel__chevron {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .clue-stale {
@@ -415,9 +441,6 @@
     flex-direction: column;
   }
 
-  .clue-actions {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

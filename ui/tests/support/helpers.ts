@@ -3,6 +3,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 export async function setupDemoBoard(page: Page): Promise<void> {
   await page.goto('/');
   await page.getByTestId('btn-skip-demo').click();
+  await page.getByTestId('btn-confirm-board').click();
   await expect(page.getByTestId('board-grid')).toBeVisible();
 }
 
@@ -15,4 +16,3 @@ export async function expectToast(page: Page, message?: string | RegExp): Promis
   await expect(toast).toBeVisible();
   if (message !== undefined) await expect(toast).toContainText(message);
 }
-
