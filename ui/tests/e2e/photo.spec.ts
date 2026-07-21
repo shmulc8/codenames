@@ -343,6 +343,34 @@ test.describe('PhotoSetup', () => {
     await page.context().close();
   });
 
+  test('direct word editing cancels an in-flight OCR result', async ({ browser }) => {
+    const { page, releaseWorker } = await openPageWithDelayedOcrWorker(browser);
+    const onePixelPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    );
+
+    await page.getByTestId('photo-input-board').setInputFiles({
+      name: 'board.png',
+      mimeType: 'image/png',
+      buffer: onePixelPng,
+    });
+    await expect(page.getByText(/מזהה את מילות הלוח/)).toBeVisible();
+
+    await page.getByTestId('ocr-cell-0').fill('בדיקה');
+    await expect(page.getByText('מנוע הזיהוי מוכן', { exact: true })).toBeVisible();
+    releaseWorker();
+
+    await expect.poll(() => page.evaluate(() => (
+      window as Window & { __ocrRecognizeResolutions?: number }
+    ).__ocrRecognizeResolutions ?? 0), { timeout: 20_000 }).toBe(1);
+    await expect(page.getByTestId('ocr-cell-0')).toHaveValue('בדיקה');
+    await expect(page.getByText('מנוע הזיהוי מוכן', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('toast')).toHaveCount(0);
+
+    await page.context().close();
+  });
+
   test('manual key assignment survives a late key-card classification', async ({ browser }) => {
     const page = await openPageWithDelayedKeyImage(browser);
     const redKeyCard = Buffer.from(

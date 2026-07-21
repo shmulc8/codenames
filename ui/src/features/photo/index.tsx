@@ -203,6 +203,24 @@ export function PhotoSetup(): JSX.Element {
     setRoles((current) => rotateRolesClockwise(current));
   }
 
+  function updateWord(index: number, value: string): void {
+    if (ocrState === 'recognizing') {
+      boardOcrAttempt.current += 1;
+      setOcrState('ready');
+    }
+    setWords((current) => {
+      const next = [...current];
+      next[index] = value;
+      return next;
+    });
+    setConfidences((current) => {
+      const next = [...current];
+      next[index] = 100;
+      return next;
+    });
+    setValidation(null);
+  }
+
   function focusNextWord(index: number): void {
     const nextInput = document.querySelector<HTMLInputElement>(
       `[data-testid="ocr-cell-${index + 1}"]`,
@@ -335,17 +353,7 @@ export function PhotoSetup(): JSX.Element {
                   aria-label={`מילה ${index + 1}, תפקיד ${roleLabel[roles[index]]}`}
                   aria-describedby="words-help"
                   aria-invalid={validation !== null && word.trim().length === 0}
-                  onChange={(event) => {
-                    const next = [...words];
-                    next[index] = event.target.value;
-                    setWords(next);
-                    setConfidences((current) => {
-                      const confidence = [...current];
-                      confidence[index] = 100;
-                      return confidence;
-                    });
-                    setValidation(null);
-                  }}
+                  onChange={(event) => updateWord(index, event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') {
                       event.preventDefault();
