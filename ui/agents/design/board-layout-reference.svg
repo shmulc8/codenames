@@ -1,0 +1,172 @@
+<svg viewBox="0 0 1952 1652" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
+<rect width="1952" height="1652" fill="#f2f1ee"></rect>
+<text x="70" y="70" font-size="40" font-weight="bold" fill="#1a1a1a">Codenames board — schematic reference (from real-board-reference.jpeg)</text>
+<text x="70" y="110" font-size="24" fill="#555">Cream tiles = in-play word cards · Tinted tiles = revealed agents (blue team / red team / beige bystander)</text>
+<rect x="46" y="126" width="1860" height="1410" rx="26" fill="#15161a"></rect>
+<rect x="62" y="142" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="70" y="150" width="340" height="250" rx="14" fill="#1f4e79"></rect>
+<rect x="70" y="150" width="340" height="125.0" rx="14" fill="#2e6ca8" opacity="0.55"></rect>
+<circle cx="240.0" cy="255.0" r="46" fill="#bcd6f0" opacity="0.9"></circle>
+<rect x="182.0" y="305.0" width="116" height="80" rx="24" fill="#bcd6f0" opacity="0.9"></rect>
+<rect x="70" y="354" width="340" height="46" fill="#000000" opacity="0.45"></rect>
+<text x="240.0" y="385" font-size="26" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">BLUE TEAM</text>
+<text x="240.0" y="172" font-size="17" fill="#ffffff" text-anchor="middle" opacity="0.85">man, boxing pose / barred window</text>
+<rect x="430" y="142" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="438" y="150" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="608.0" cy="176" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="608.0" y="242" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 608.0 232)">TICK</text>
+<rect x="466" y="310" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="608.0" y="353" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">TICK</text>
+<rect x="798" y="142" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="806" y="150" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="976.0" cy="176" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="976.0" y="242" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 976.0 232)">IVORY</text>
+<rect x="834" y="310" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="976.0" y="353" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">IVORY</text>
+<rect x="1166" y="142" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="1174" y="150" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="1344.0" cy="176" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="1344.0" y="242" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 1344.0 232)">BERLIN</text>
+<rect x="1202" y="310" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="1344.0" y="353" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">BERLIN</text>
+<rect x="1534" y="142" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="1542" y="150" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="1712.0" cy="176" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="1712.0" y="242" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 1712.0 232)">PHOENIX</text>
+<rect x="1570" y="310" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="1712.0" y="353" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">PHOENIX</text>
+<rect x="62" y="420" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="70" y="428" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="240.0" cy="454" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="240.0" y="520" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 240.0 510)">SLUG</text>
+<rect x="98" y="588" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="240.0" y="631" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">SLUG</text>
+<rect x="430" y="420" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="438" y="428" width="340" height="250" rx="14" fill="#1f4e79"></rect>
+<rect x="438" y="428" width="340" height="125.0" rx="14" fill="#2e6ca8" opacity="0.55"></rect>
+<circle cx="608.0" cy="533.0" r="46" fill="#bcd6f0" opacity="0.9"></circle>
+<rect x="550.0" y="583.0" width="116" height="80" rx="24" fill="#bcd6f0" opacity="0.9"></rect>
+<rect x="438" y="632" width="340" height="46" fill="#000000" opacity="0.45"></rect>
+<text x="608.0" y="663" font-size="26" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">BLUE TEAM</text>
+<text x="608.0" y="450" font-size="17" fill="#ffffff" text-anchor="middle" opacity="0.85">white-hair woman, red glasses</text>
+<rect x="798" y="420" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="806" y="428" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="976.0" cy="454" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="976.0" y="520" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 976.0 510)">LINK</text>
+<rect x="834" y="588" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="976.0" y="631" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">LINK</text>
+<rect x="1166" y="420" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="1174" y="428" width="340" height="250" rx="14" fill="#8a2b16"></rect>
+<rect x="1174" y="428" width="340" height="125.0" rx="14" fill="#c84a1e" opacity="0.55"></rect>
+<circle cx="1344.0" cy="533.0" r="46" fill="#f2c9a0" opacity="0.9"></circle>
+<rect x="1286.0" y="583.0" width="116" height="80" rx="24" fill="#f2c9a0" opacity="0.9"></rect>
+<rect x="1174" y="632" width="340" height="46" fill="#000000" opacity="0.45"></rect>
+<text x="1344.0" y="663" font-size="26" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">RED TEAM</text>
+<text x="1344.0" y="450" font-size="17" fill="#ffffff" text-anchor="middle" opacity="0.85">bald man, sunglasses</text>
+<rect x="1534" y="420" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="1542" y="428" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="1712.0" cy="454" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="1712.0" y="520" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 1712.0 510)">GAME</text>
+<rect x="1570" y="588" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="1712.0" y="631" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">GAME</text>
+<rect x="62" y="698" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="70" y="706" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="240.0" cy="732" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="240.0" y="798" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 240.0 788)">HOTEL</text>
+<rect x="98" y="866" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="240.0" y="909" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">HOTEL</text>
+<rect x="430" y="698" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="438" y="706" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="608.0" cy="732" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="608.0" y="798" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 608.0 788)">IRON</text>
+<rect x="466" y="866" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="608.0" y="909" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">IRON</text>
+<rect x="798" y="698" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="806" y="706" width="340" height="250" rx="14" fill="#8a7f60"></rect>
+<rect x="806" y="706" width="340" height="125.0" rx="14" fill="#b3a882" opacity="0.55"></rect>
+<circle cx="976.0" cy="811.0" r="46" fill="#efe6cf" opacity="0.9"></circle>
+<rect x="918.0" y="861.0" width="116" height="80" rx="24" fill="#efe6cf" opacity="0.9"></rect>
+<rect x="806" y="910" width="340" height="46" fill="#000000" opacity="0.45"></rect>
+<text x="976.0" y="941" font-size="26" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">BYSTANDER</text>
+<text x="976.0" y="728" font-size="17" fill="#ffffff" text-anchor="middle" opacity="0.85">shocked man / fence</text>
+<rect x="1166" y="698" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="1174" y="706" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="1344.0" cy="732" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="1344.0" y="798" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 1344.0 788)">HAND</text>
+<rect x="1202" y="866" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="1344.0" y="909" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">HAND</text>
+<rect x="1534" y="698" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="1542" y="706" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="1712.0" cy="732" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="1712.0" y="798" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 1712.0 788)">FLY</text>
+<rect x="1570" y="866" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="1712.0" y="909" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">FLY</text>
+<rect x="62" y="976" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="70" y="984" width="340" height="250" rx="14" fill="#8a7f60"></rect>
+<rect x="70" y="984" width="340" height="125.0" rx="14" fill="#b3a882" opacity="0.55"></rect>
+<circle cx="240.0" cy="1089.0" r="46" fill="#efe6cf" opacity="0.9"></circle>
+<rect x="182.0" y="1139.0" width="116" height="80" rx="24" fill="#efe6cf" opacity="0.9"></rect>
+<rect x="70" y="1188" width="340" height="46" fill="#000000" opacity="0.45"></rect>
+<text x="240.0" y="1219" font-size="26" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">BYSTANDER</text>
+<text x="240.0" y="1006" font-size="17" fill="#ffffff" text-anchor="middle" opacity="0.85">worried woman / fence</text>
+<rect x="430" y="976" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="438" y="984" width="340" height="250" rx="14" fill="#8a2b16"></rect>
+<rect x="438" y="984" width="340" height="125.0" rx="14" fill="#c84a1e" opacity="0.55"></rect>
+<circle cx="608.0" cy="1089.0" r="46" fill="#f2c9a0" opacity="0.9"></circle>
+<rect x="550.0" y="1139.0" width="116" height="80" rx="24" fill="#f2c9a0" opacity="0.9"></rect>
+<rect x="438" y="1188" width="340" height="46" fill="#000000" opacity="0.45"></rect>
+<text x="608.0" y="1219" font-size="26" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">RED TEAM</text>
+<text x="608.0" y="1006" font-size="17" fill="#ffffff" text-anchor="middle" opacity="0.85">dark-hair woman in red</text>
+<rect x="798" y="976" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="806" y="984" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="976.0" cy="1010" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="976.0" y="1076" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 976.0 1066)">LINE</text>
+<rect x="834" y="1144" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="976.0" y="1187" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">LINE</text>
+<rect x="1166" y="976" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="1174" y="984" width="340" height="250" rx="14" fill="#1f4e79"></rect>
+<rect x="1174" y="984" width="340" height="125.0" rx="14" fill="#2e6ca8" opacity="0.55"></rect>
+<circle cx="1344.0" cy="1089.0" r="46" fill="#bcd6f0" opacity="0.9"></circle>
+<rect x="1286.0" y="1139.0" width="116" height="80" rx="24" fill="#bcd6f0" opacity="0.9"></rect>
+<rect x="1174" y="1188" width="340" height="46" fill="#000000" opacity="0.45"></rect>
+<text x="1344.0" y="1219" font-size="26" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">BLUE TEAM</text>
+<text x="1344.0" y="1006" font-size="17" fill="#ffffff" text-anchor="middle" opacity="0.85">man / barred window</text>
+<rect x="1534" y="976" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="1542" y="984" width="340" height="250" rx="14" fill="#8a2b16"></rect>
+<rect x="1542" y="984" width="340" height="125.0" rx="14" fill="#c84a1e" opacity="0.55"></rect>
+<circle cx="1712.0" cy="1089.0" r="46" fill="#f2c9a0" opacity="0.9"></circle>
+<rect x="1654.0" y="1139.0" width="116" height="80" rx="24" fill="#f2c9a0" opacity="0.9"></rect>
+<rect x="1542" y="1188" width="340" height="46" fill="#000000" opacity="0.45"></rect>
+<text x="1712.0" y="1219" font-size="26" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">RED TEAM</text>
+<text x="1712.0" y="1006" font-size="17" fill="#ffffff" text-anchor="middle" opacity="0.85">bald man, sunglasses</text>
+<rect x="62" y="1254" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="70" y="1262" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="240.0" cy="1288" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="240.0" y="1354" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 240.0 1344)">KNIGHT</text>
+<rect x="98" y="1422" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="240.0" y="1465" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">KNIGHT</text>
+<rect x="430" y="1254" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="438" y="1262" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="608.0" cy="1288" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="608.0" y="1354" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 608.0 1344)">APPLE</text>
+<rect x="466" y="1422" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="608.0" y="1465" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">APPLE</text>
+<rect x="798" y="1254" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="806" y="1262" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="976.0" cy="1288" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="976.0" y="1354" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 976.0 1344)">PASS</text>
+<rect x="834" y="1422" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="976.0" y="1465" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">PASS</text>
+<rect x="1166" y="1254" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="1174" y="1262" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="1344.0" cy="1288" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="1344.0" y="1354" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 1344.0 1344)">WALL</text>
+<rect x="1202" y="1422" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="1344.0" y="1465" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">WALL</text>
+<rect x="1534" y="1254" width="356" height="266" rx="16" fill="#0c0d10"></rect>
+<rect x="1542" y="1262" width="340" height="250" rx="14" fill="#e9dcc0" stroke="#d4c39a" stroke-width="2"></rect>
+<circle cx="1712.0" cy="1288" r="8" fill="none" stroke="#c3b48c" stroke-width="3"></circle>
+<text x="1712.0" y="1354" font-size="34" fill="#cbb98f" text-anchor="middle" transform="rotate(180 1712.0 1344)">CAT</text>
+<rect x="1570" y="1422" width="284" height="62" rx="6" fill="#ffffff" stroke="#e3e3e3"></rect>
+<text x="1712.0" y="1465" font-size="38" font-weight="bold" fill="#161616" text-anchor="middle" letter-spacing="2">CAT</text>
+</svg>

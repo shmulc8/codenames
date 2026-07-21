@@ -1,0 +1,206 @@
+import { useEffect, useRef, useState } from 'react';
+
+import { RoleIcon } from '../../components/RoleIcon';
+import { useAppStore } from '../../state/store';
+import { showToast } from '../../state/toast';
+import type { Role } from '../../types/api';
+import './board.css';
+
+const roleLabel: Record<Role, string> = {
+  red: 'אדום',
+  blue: 'כחול',
+  neutral: 'ניטרלי',
+  assassin: 'מתנקש',
+};
+
+const legendRoles: Role[] = ['red', 'blue', 'neutral', 'assassin'];
+
+export function BoardGrid(): JSX.Element {
+  const tiles = useAppStore((state) => state.tiles);
+  const selected = useAppStore((state) => state.selected);
+  const hoverWord = useAppStore((state) => state.hoverWord);
+  const toggleSelected = useAppStore((state) => state.toggleSelected);
+  const toggleLifecycle = useAppStore((state) => state.toggleLifecycle);
+  const setHoverWord = useAppStore((state) => state.setHoverWord);
+  const resetGame = useAppStore((state) => state.resetGame);
+  const [legendOpen, setLegendOpen] = useState(false);
+  const legendRef = useRef<HTMLDivElement | null>(null);
+
+  const remaining = tiles.reduce(
+    (counts, tile) => {
+      if (tile.lifecycle === 'inPlay' && (tile.role === 'red' || tile.role === 'blue')) {
+        counts[tile.role] += 1;
+      }
+      return counts;
+    },
+    { red: 0, blue: 0 },
+  );
+  const assassinRevealed = tiles.some(
+    (tile) => tile.role === 'assassin' && tile.lifecycle === 'chosen',
+  );
+
+  useEffect(() => {
+    if (!legendOpen) return undefined;
+    const closeLegend = (event: MouseEvent): void => {
+      if (!legendRef.current?.contains(event.target as Node)) setLegendOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setLegendOpen(false);
+    };
+    document.addEventListener('pointerdown', closeLegend);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeLegend);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [legendOpen]);
+
+  function selectTile(index: number): void {
+    const tile = tiles[index];
+    if (!tile || tile.lifecycle !== 'inPlay') return;
+    toggleSelected(tile.word);
+    if (tile.role === 'neutral' || tile.role === 'assassin') {
+      showToast('אפשר לבחור רק קלפים של קבוצה');
+    }
+  }
+
+  function requestReset(): void {
+    if (window.confirm('לפתוח לוח חדש? כל הסימונים והרמזים יימחקו.')) {
+      resetGame();
+    }
+  }
+
+  return (
+    <section className="board" aria-labelledby="board-title" data-testid="stub-board">
+      <header className="board__toolbar">
+        <div>
+          <p className="board__eyebrow">הלוח הפעיל</p>
+          <h2 id="board-title">בחרו צירוף מאותו צבע</h2>
+        </div>
+
+        <div className="board__toolbar-actions">
+          <div className="board__remaining" aria-label="קלפי קבוצה שנותרו במשחק">
+            <span className="role-red"><RoleIcon role="red" /> אדום {remaining.red}</span>
+            <span className="role-blue"><RoleIcon role="blue" /> כחול {remaining.blue}</span>
+          </div>
+
+          <div className="board__legend" ref={legendRef}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              aria-expanded={legendOpen}
+              aria-controls="board-role-legend"
+              onClick={() => setLegendOpen((open) => !open)}
+            >
+              מקרא
+            </button>
+            {legendOpen && (
+              <div id="board-role-legend" className="board__legend-popover" role="dialog" aria-label="מקרא תפקידי הלוח">
+                {legendRoles.map((role) => (
+                  <span className={`role-${role}`} key={role}>
+                    <RoleIcon role={role} /> {roleLabel[role]}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-secondary"
+            data-testid="btn-reset-game"
+            onClick={requestReset}
+          >
+            לוח חדש
+          </button>
+        </div>
+      </header>
+
+      {assassinRevealed && (
+        <div className="board__game-over" role="alert">
+          <RoleIcon role="assassin" /> המתנקש נחשף — סוף משחק
+        </div>
+      )}
+
+      <div className="board__grid" data-testid="board-grid">
+        {tiles.map((tile, index) => {
+          const selectionIndex = selected.indexOf(tile.word);
+          const selectedForClue = selectionIndex >= 0;
+          const chosen = tile.lifecycle === 'chosen';
+          const visualRole = chosen ? tile.chosenBy ?? tile.role : tile.role;
+          const classes = [
+            'board-tile',
+            `role-${visualRole}`,
+            selectedForClue ? 'is-selected' : '',
+            chosen ? 'is-chosen' : '',
+            chosen && tile.role === 'assassin' ? 'is-assassin-chosen' : '',
+            hoverWord === tile.word ? 'is-hover-linked' : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
+
+          return (
+            <div
+              className="board-cell"
+              onMouseEnter={() => setHoverWord(tile.word)}
+              onMouseLeave={() => setHoverWord(null)}
+              onFocus={() => setHoverWord(tile.word)}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) setHoverWord(null);
+              }}
+              key={tile.word}
+            >
+              <button
+                type="button"
+                className={classes}
+                data-testid={`tile-${index}`}
+                data-word={tile.word}
+                data-role={tile.role}
+                data-lifecycle={tile.lifecycle}
+                disabled={chosen}
+                aria-pressed={selectedForClue}
+                aria-label={`${tile.word}, ${roleLabel[tile.role]}${chosen ? ', נחשף' : ''}`}
+                onClick={() => selectTile(index)}
+              >
+                <span className="board-tile__content">
+                  <span className="board-tile__hole" aria-hidden="true" />
+                  <RoleIcon className="board-tile__role" role={tile.role} />
+                  {selectedForClue && (
+                    <span className="board-tile__badge" aria-label={`סדר בחירה ${selectionIndex + 1}`}>
+                      {selectionIndex + 1}
+                    </span>
+                  )}
+                  {chosen && (
+                    <span
+                      className="board-tile__chosen-chip"
+                      data-testid={`chip-chosenby-${index}`}
+                      title={`נלקח על ידי ${roleLabel[tile.chosenBy ?? tile.role]}`}
+                    >
+                      <RoleIcon role={tile.chosenBy ?? tile.role} />
+                      <span className="sr-only">נלקח על ידי {roleLabel[tile.chosenBy ?? tile.role]}</span>
+                    </span>
+                  )}
+                  <span className="board-tile__mirror" aria-hidden="true">{tile.word}</span>
+                  <span className="board-tile__label">{tile.word}</span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="board-tile__lifecycle"
+                data-testid={`btn-lifecycle-${index}`}
+                aria-label={chosen ? `החזר את ${tile.word} למשחק` : `סמן את ${tile.word} כנחשף`}
+                title={chosen ? 'החזר למשחק' : 'סמן כנחשף'}
+                onClick={() => toggleLifecycle(tile.word)}
+              >
+                {chosen ? 'החזר למשחק' : 'סמן כנחשף'}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="board__hint">לחצו על קלף קבוצה כדי לצרף אותו לרמז · סימון כנחשף מוציא אותו מהמהלך</p>
+    </section>
+  );
+}
