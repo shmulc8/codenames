@@ -65,6 +65,7 @@ suggestions, and have **DictaLM** play spymaster or guesser. A static, shareable
 
 ## Files
 
+- `docs/engine-improvement-plan.md` — measured roadmap for improving the engine.
 - `probe.py` — engine: encoders (incl. fastText), MLX LLM wrapper, board sampling, tiered spymaster, guesser, metrics, rule enforcement.
 - `deck_he.py` — the 573-word שם-קוד deck loader.
 - `probe.ipynb` — the minimal probe driver.
@@ -72,6 +73,8 @@ suggestions, and have **DictaLM** play spymaster or guesser. A static, shareable
 - `codenames_latent_space.html` — self-contained built site (also the shared Artifact).
 - `app.py` — local Flask server serving the map + DictaLM spymaster/guesser endpoints.
 - `data/` — fastText `cc.he.300.bin`, Hebrew frequency list, deck JSON.
+
+Generated benchmark snapshots are intentionally ignored; rerun the matching evaluator when a fresh result is needed.
 
 ## Caveats
 

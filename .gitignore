@@ -15,3 +15,10 @@ hf_space/data/cc.he.300.*
 
 # Personal Claude Code config & skills (not shared)
 .claude/
+
+# Generated evaluation outputs
+/bench_geom.json
+/bench_judge.json
+/bench_results.json
+/data/gemini*_eval_results.json
+/data/optuna_results.json
