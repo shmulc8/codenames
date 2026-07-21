@@ -76,6 +76,27 @@ test.describe('semantic map', () => {
     }
   });
 
+  test('fills the available semantic panel width', async ({ page }) => {
+    await setBoard(page, true);
+    await waitForMap(page);
+
+    const sizes = await page.evaluate(() => {
+      const frame = document.querySelector<HTMLElement>('.semantic-map__frame');
+      const map = document.querySelector<SVGSVGElement>('.semantic-map');
+      if (!frame || !map) throw new Error('Semantic map layout was not rendered');
+      const frameStyle = getComputedStyle(frame);
+      const horizontalPadding =
+        parseFloat(frameStyle.paddingInlineStart) +
+        parseFloat(frameStyle.paddingInlineEnd);
+      return {
+        available: frame.getBoundingClientRect().width - horizontalPadding,
+        map: map.getBoundingClientRect().width,
+      };
+    });
+
+    expect(Math.abs(sizes.available - sizes.map)).toBeLessThan(2);
+  });
+
   test('renders a hint node and one connection for each intended target', async ({
     page,
   }) => {

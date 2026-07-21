@@ -83,6 +83,14 @@
   opacity: 0.5;
 }
 
+.clue-target__option:focus-visible,
+.clue-risk__option:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--color-accent-300);
+  outline-offset: -3px;
+}
+
 .clue-selection {
   display: grid;
   gap: var(--space-3);
@@ -223,6 +231,31 @@
   line-height: 1;
 }
 
+.clue-result__use-button {
+  width: 2.1rem;
+  height: 2.1rem;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-accent-700);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-accent-300);
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.clue-result__use-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+.clue-result__use-button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  color: var(--color-accent-200);
+}
+.clue-result__use-button:disabled { cursor: default; opacity: .65; }
+.clue-result__use-button:focus-visible { outline: 2px solid var(--color-accent-300); outline-offset: 2px; }
+
 .clue-result__count {
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--color-accent-600);
@@ -350,20 +383,6 @@
   color: var(--cn-text-dim);
   font-variant-numeric: tabular-nums;
   text-align: end;
-}
-
-.clue-use {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-divider);
-}
-
-.clue-use__confirmation {
-  color: var(--cn-ok);
-  font-size: 0.72rem;
 }
 
 .clue-carousel {

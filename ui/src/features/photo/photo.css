@@ -38,12 +38,26 @@
 .photo-setup__modes button {
   min-height: 3rem;
   padding: 0 var(--space-6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   border: 0;
   border-inline-start: 1px solid var(--color-divider);
   background: transparent;
   color: var(--cn-text-muted);
   font: inherit;
   cursor: pointer;
+}
+.photo-setup__mode-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .photo-setup__modes button:last-child { border-inline-start: 0; }
 .photo-setup__modes button:hover:not(:disabled) { background: color-mix(in srgb, var(--cn-text) 7%, transparent); }

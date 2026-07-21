@@ -1,4 +1,9 @@
 .semantic-panel {
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--color-divider);
@@ -52,17 +57,22 @@
 
 .semantic-map__frame {
   position: relative;
+  width: 100%;
   min-height: 28rem;
+  flex: 1 1 28rem;
   padding: var(--space-4);
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: stretch;
   background: var(--cn-board-void);
 }
 
 .semantic-map {
   display: block;
-  width: min(100%, 48rem);
-  max-height: min(72vh, 48rem);
+  width: 100%;
+  min-width: 0;
+  min-height: 28rem;
+  flex: 1 1 auto;
+  max-height: none;
   overflow: visible;
   direction: rtl;
 }

@@ -22,11 +22,12 @@ test.describe('PhotoSetup', () => {
   test('starts in the RTL manual correction flow with all canonical controls', async ({ page }) => {
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.getByTestId('setup-screen')).toBeVisible();
-    await expect(page.getByText('הזנה ידנית', { exact: true })).toHaveAttribute(
+    await expect(page.getByRole('button', { name: 'הזנה ידנית' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
     await expect(page.getByText('אין מצלמה במחשב?')).toBeVisible();
+    await expect(page.locator('.photo-setup__modes svg')).toHaveCount(3);
 
     await expect(page.getByTestId('ocr-grid')).toBeVisible();
     await expect(page.getByTestId(/^ocr-cell-\d+$/)).toHaveCount(25);
@@ -42,6 +43,7 @@ test.describe('PhotoSetup', () => {
     await expect(page.getByTestId('photo-input-key')).toHaveAttribute('type', 'file');
     await expect(page.getByTestId('photo-input-key')).toHaveAttribute('accept', 'image/*');
     await expect(page.getByTestId('btn-confirm-board')).toBeEnabled();
+    await expect(page.locator('.photo-setup__word-mirror')).toHaveCount(0);
 
     await expect(
       page.getByText(/טוען מנוע זיהוי|מנוע הזיהוי מוכן|הזיהוי לא זמין כרגע/),
@@ -142,7 +144,7 @@ test.describe('PhotoSetup', () => {
     expect(result).toEqual({ first: 'neutral', fifth: 'assassin' });
   });
 
-  test('shows deterministic loading and success states for the demo board', async ({ page }) => {
+  test('loads random boards into the editor and allows rerolling before confirmation', async ({ page }) => {
     await page.evaluate(() => {
       const realFetch = window.fetch.bind(window);
       let release!: () => void;
@@ -166,11 +168,21 @@ test.describe('PhotoSetup', () => {
       release();
     });
 
+    await expect(page.getByTestId('setup-screen')).toBeVisible();
+    await expect(page.getByTestId('board-grid')).toHaveCount(0);
+    await expect(page.getByTestId('ocr-cell-0')).toHaveValue(fixtureBoard.words[0]);
+    await expect(page.getByTestId('key-cell-0')).toHaveAttribute('aria-label', /תפקיד אדום/);
+    await expect(page.getByTestId('key-cell-24')).toHaveAttribute(
+      'aria-label',
+      /תפקיד מתנקש/,
+    );
+    await expect(page.getByTestId('btn-skip-demo')).toContainText('הגרילו שוב');
+    await expect(page.locator('.photo-setup__word-mirror')).toHaveCount(25);
+
+    await page.getByTestId('btn-skip-demo').click();
+    await expect(page.getByTestId('setup-screen')).toBeVisible();
+    await page.getByTestId('btn-confirm-board').click();
     await expect(page.getByTestId('board-grid')).toBeVisible();
-    await expect(page.getByTestId(/^tile-\d+$/)).toHaveCount(25);
-    await expect(page.getByTestId('tile-0')).toHaveAttribute('data-word', fixtureBoard.words[0]);
-    await expect(page.getByTestId('tile-0')).toHaveAttribute('data-role', 'red');
-    await expect(page.getByTestId('tile-24')).toHaveAttribute('data-role', 'assassin');
   });
 
   test('surfaces a backend error and restores the demo control', async ({ page }) => {
@@ -203,7 +215,7 @@ test.describe('PhotoSetup', () => {
       buffer: onePixelPng,
     });
 
-    await expect(page.getByText('מתמונה', { exact: true })).toHaveAttribute(
+    await expect(page.getByRole('button', { name: 'מתמונה' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );

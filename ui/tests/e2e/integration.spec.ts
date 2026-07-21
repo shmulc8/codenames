@@ -7,6 +7,7 @@ test('complete spymaster flow stays synchronized across every desktop slice', as
 }) => {
   await page.goto('/');
   await page.getByTestId('btn-skip-demo').click();
+  await page.getByTestId('btn-confirm-board').click();
   await expect(page.getByTestId('board-grid')).toBeVisible();
 
   await page.getByTestId('target-red').click();
@@ -25,7 +26,7 @@ test('complete spymaster flow stays synchronized across every desktop slice', as
     window.__lastFeedback = undefined;
   });
   await page.getByTestId('btn-use-clue').click();
-  await expect(page.getByTestId('btn-use-clue')).toHaveText('הרמז סומן לשימוש');
+  await expect(page.getByTestId('btn-use-clue')).toHaveAttribute('aria-pressed', 'true');
 
   await page.getByTestId('btn-lifecycle-0').click();
   await page.getByTestId('btn-lifecycle-1').click();
