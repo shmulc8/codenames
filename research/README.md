@@ -40,5 +40,8 @@ the environment or an ignored local `.env` file.
 - `python data/build_clue_vocab.py` — materialize the broad reusable clue pool
   at `data/clue_vocab_broad.json`. Board-specific root/lemma legality remains
   dynamic because it depends on the current board.
+- `python data/build_clue_vocab_openai.py` — generate a curated, corpus-validated
+  list with familiarity, ambiguity, and translation-risk flags. Set
+  `CLUE_VOCAB_MODE=curated` to use it when the file exists.
 
 Keep provider credentials in environment variables. Generated result snapshots are ignored by Git.

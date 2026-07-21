@@ -207,12 +207,17 @@ def geo_assets():
         # Broad is now the default serving vocabulary: proper nouns and a wider
         # frequency band expose more association opportunities. Set
         # CLUE_VOCAB_MODE=baseline for the previous conservative pool.
-        broad = os.environ.get("CLUE_VOCAB_MODE", "broad").lower() == "broad"
-        saved_vocab = os.path.join(probe.DATA, "clue_vocab_broad.json")
-        if broad and os.path.exists(saved_vocab):
+        mode = os.environ.get("CLUE_VOCAB_MODE", "curated").lower()
+        broad = mode == "broad"
+        curated_vocab = os.path.join(probe.DATA, "clue_vocab_openai.json")
+        saved_vocab = curated_vocab if mode == "curated" and os.path.exists(curated_vocab) else os.path.join(probe.DATA, "clue_vocab_broad.json")
+        if os.path.exists(saved_vocab) and mode in {"curated", "broad"}:
             with open(saved_vocab, encoding="utf-8") as f:
                 saved = json.load(f)
-            rows = saved.get("words", [])
+            if "entries" in saved:
+                rows = [[word, meta["count"], meta["pos"]] for word, meta in saved["entries"].items()]
+            else:
+                rows = saved.get("words", [])
             vocab = [row[0] for row in rows]
             counts = np.asarray([row[1] for row in rows], dtype=np.float32)
         else:
@@ -232,7 +237,7 @@ def geo_assets():
         _clue_lemmas = list(_clue_vocab)
         _clue_freq = freq[keep]
         app.logger.info("clue vocab: %d %s words (%d blocklisted)",
-                        len(_clue_vocab), "broad" if broad else "baseline", len(vocab) - len(keep))
+                        len(_clue_vocab), mode, len(vocab) - len(keep))
     if GEO_ENC not in _clue_emb:
         _clue_emb[GEO_ENC] = get_enc(GEO_ENC).embed(_clue_vocab)
     return _clue_vocab, _clue_emb[GEO_ENC], _clue_lemmas, _clue_freq
