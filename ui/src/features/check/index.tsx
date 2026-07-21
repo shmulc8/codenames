@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { postCheck } from '../../api/client';
 import { Button, Panel, RoleIcon, showToast } from '../../components';
 import { FeedbackControls } from '../feedback';
-import { liveBoard, useAppStore } from '../../state/store';
+import { boardsMatch, liveBoard, useAppStore } from '../../state/store';
 import type {
   CheckResponse,
   ClueOption,
@@ -150,10 +150,19 @@ export function CheckPanel(): JSX.Element {
     }
 
     setValidationMessage('');
+    setResult(null);
+    setSubmittedClue('');
+    setCheckedClue(null);
+    setHoverWord(null);
     setLoading(true);
     try {
       const state = useAppStore.getState();
-      const response = await postCheck(liveBoard(state), state.target, clue);
+      const board = liveBoard(state);
+      const response = await postCheck(board, state.target, clue);
+      if (!boardsMatch(board, liveBoard(useAppStore.getState()))) {
+        showToast('הלוח השתנה בזמן הבדיקה — בדקו שוב', { tone: 'error' });
+        return;
+      }
       setResult(response);
       setSubmittedClue(clue);
       rememberCheckResult(clue, response.read);

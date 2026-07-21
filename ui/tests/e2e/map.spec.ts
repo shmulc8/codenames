@@ -80,22 +80,46 @@ test.describe('semantic map', () => {
     await setBoard(page, true);
     await waitForMap(page);
 
+    await expect(page.getByTestId('semantic-map')).toHaveCSS('overflow', 'visible');
+
     const sizes = await page.evaluate(() => {
       const frame = document.querySelector<HTMLElement>('.semantic-map__frame');
       const map = document.querySelector<SVGSVGElement>('.semantic-map');
-      if (!frame || !map) throw new Error('Semantic map layout was not rendered');
+      const background = document.querySelector<SVGRectElement>(
+        '.semantic-map__background',
+      );
+      const grid = document.querySelector<SVGRectElement>('.semantic-map__grid');
+      if (!frame || !map || !background || !grid) {
+        throw new Error('Semantic map surface was not rendered');
+      }
       const frameStyle = getComputedStyle(frame);
-      const horizontalPadding =
-        parseFloat(frameStyle.paddingInlineStart) +
-        parseFloat(frameStyle.paddingInlineEnd);
+      const frameRect = frame.getBoundingClientRect();
+      const mapRect = map.getBoundingClientRect();
+      const backgroundRect = background.getBoundingClientRect();
+      const gridRect = grid.getBoundingClientRect();
+      const contentLeft = frameRect.left + parseFloat(frameStyle.paddingLeft);
+      const contentRight = frameRect.right - parseFloat(frameStyle.paddingRight);
       return {
-        available: frame.getBoundingClientRect().width - horizontalPadding,
-        map: map.getBoundingClientRect().width,
+        available: contentRight - contentLeft,
+        background: backgroundRect.width,
+        endGutter: contentRight - mapRect.right,
+        map: mapRect.width,
+        startGutter: mapRect.left - contentLeft,
+        surfaceBottom: mapRect.bottom - gridRect.bottom,
+        surfaceLeft: gridRect.left - mapRect.left,
+        surfaceRight: mapRect.right - gridRect.right,
+        surfaceTop: gridRect.top - mapRect.top,
       };
     });
 
     expect(sizes.map).toBeLessThanOrEqual(736);
     expect(sizes.map).toBeLessThanOrEqual(sizes.available);
+    expect(Math.abs(sizes.startGutter - sizes.endGutter)).toBeLessThan(2);
+    expect(Math.abs(sizes.map - sizes.background)).toBeLessThan(3);
+    expect(sizes.surfaceBottom).toBeGreaterThanOrEqual(0);
+    expect(sizes.surfaceLeft).toBeGreaterThanOrEqual(0);
+    expect(sizes.surfaceRight).toBeGreaterThanOrEqual(0);
+    expect(sizes.surfaceTop).toBeGreaterThanOrEqual(0);
   });
 
   test('renders a hint node and one connection for each intended target', async ({

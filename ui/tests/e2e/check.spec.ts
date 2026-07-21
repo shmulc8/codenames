@@ -18,6 +18,66 @@ async function submitCheck(page: Page, clue: string): Promise<void> {
   await expect(page.getByTestId('check-result')).toBeVisible();
 }
 
+async function installCheckResponseGate(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const originalFetch = window.fetch;
+    let releaseResponse!: () => void;
+    let markResponseReady!: () => void;
+    const responseGate = new Promise<void>((resolve) => {
+      releaseResponse = resolve;
+    });
+    const responseReady = new Promise<void>((resolve) => {
+      markResponseReady = resolve;
+    });
+
+    const testWindow = window as Window & {
+      __checkResponseGate?: {
+        release: () => void;
+        ready: Promise<void>;
+      };
+    };
+    testWindow.__checkResponseGate = {
+      release: releaseResponse,
+      ready: responseReady,
+    };
+
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      const requestUrl =
+        typeof args[0] === 'string'
+          ? args[0]
+          : args[0] instanceof URL
+            ? args[0].toString()
+            : args[0].url;
+
+      if (requestUrl.includes('/api/coach/check')) {
+        markResponseReady();
+        await responseGate;
+      }
+
+      return response;
+    };
+  });
+}
+
+async function waitForCheckResponse(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const testWindow = window as Window & {
+      __checkResponseGate?: { ready: Promise<void> };
+    };
+    await testWindow.__checkResponseGate?.ready;
+  });
+}
+
+async function releaseCheckResponse(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const testWindow = window as Window & {
+      __checkResponseGate?: { release: () => void };
+    };
+    testWindow.__checkResponseGate?.release();
+  });
+}
+
 test.describe('check my word', () => {
   test('a legal clue renders the complete ranked read and exact safety verdict', async ({
     page,
@@ -160,5 +220,88 @@ test.describe('check my word', () => {
       page.getByTestId('btn-check').getByTestId('loading-spinner'),
     ).toHaveCount(0);
     await expect(page.getByTestId('btn-check')).toBeEnabled();
+  });
+
+  test('a failed replacement check clears the prior result and semantic hint', async ({
+    page,
+  }) => {
+    await openCheckPanel(page);
+    await submitCheck(page, 'טבע');
+
+    await expect(page.getByTestId('semantic-map')).toHaveAttribute(
+      'aria-label',
+      'מפה סמנטית עבור הרמז טבע',
+    );
+
+    await page.evaluate(() => {
+      const fetchWithMocks = window.fetch;
+      window.fetch = async (input, init) => {
+        const url = typeof input === 'string' ? input : input.url;
+        if (url.endsWith('/api/coach/check')) {
+          return new Response(JSON.stringify({ error: 'בדיקה זמנית נכשלה' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        return fetchWithMocks(input, init);
+      };
+    });
+
+    await page.getByTestId('check-input').fill('חדש');
+    await page.getByTestId('btn-check').click();
+
+    await expect(page.getByTestId('toast')).toContainText('בדיקה זמנית נכשלה');
+    await expect(page.getByTestId('check-result')).toHaveCount(0);
+    await expect
+      .poll(() =>
+        page.evaluate(() => window.__store?.getState().checkedClue ?? null),
+      )
+      .toBeNull();
+    await expect(page.getByTestId('semantic-map')).not.toHaveAttribute(
+      'aria-label',
+      'מפה סמנטית עבור הרמז טבע',
+    );
+    await expect(page.getByTestId('map-hint-node')).toHaveCount(0);
+  });
+
+  test('a check response is discarded when the live board changes in flight', async ({
+    page,
+  }) => {
+    await openCheckPanel(page);
+    await installCheckResponseGate(page);
+
+    await page.getByTestId('check-input').fill('טבע');
+    await page.getByTestId('btn-check').click();
+    try {
+      await waitForCheckResponse(page);
+
+      const heldRequest = await page.evaluate(() => window.__lastCheckReq);
+      expect(heldRequest?.words).toContain(fixtureBoard.words[0]);
+
+      await page.getByTestId('btn-lifecycle-0').click();
+      await expect
+        .poll(() =>
+          page.evaluate(() => window.__store?.getState().tiles[0]?.lifecycle),
+        )
+        .toBe('chosen');
+    } finally {
+      await releaseCheckResponse(page);
+    }
+
+    await expect(page.getByTestId('toast')).toContainText(
+      'הלוח השתנה בזמן הבדיקה — בדקו שוב',
+    );
+    await expect(page.getByTestId('check-result')).toHaveCount(0);
+    await expect(page.getByTestId('ranked-row-אריה')).toHaveCount(0);
+    await expect
+      .poll(() =>
+        page.evaluate(() => window.__store?.getState().checkedClue ?? null),
+      )
+      .toBeNull();
+    await expect(page.getByTestId('semantic-map')).not.toHaveAttribute(
+      'aria-label',
+      'מפה סמנטית עבור הרמז טבע',
+    );
+    await expect(page.getByTestId('map-hint-node')).toHaveCount(0);
   });
 });

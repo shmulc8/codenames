@@ -63,7 +63,6 @@
 }
 
 .main-screen__methods:hover {
-  text-decoration: none;
   filter: brightness(1.4);
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDeal } from '../../api/client';
 import { Card } from '../../components/Card';
@@ -72,6 +72,8 @@ export function PhotoSetup(): JSX.Element {
   const [validation, setValidation] = useState<string | null>(null);
   const [boardPreview, setBoardPreview] = useState<string | null>(null);
   const [keyPreview, setKeyPreview] = useState<string | null>(null);
+  const boardOcrAttempt = useRef(0);
+  const keyCardAttempt = useRef(0);
 
   useEffect(() => {
     let active = true;
@@ -87,6 +89,8 @@ export function PhotoSetup(): JSX.Element {
       });
     return () => {
       active = false;
+      boardOcrAttempt.current += 1;
+      keyCardAttempt.current += 1;
       unsubscribe();
     };
   }, []);
@@ -133,16 +137,19 @@ export function PhotoSetup(): JSX.Element {
   }
 
   async function handleBoardFile(file: File): Promise<void> {
+    const attempt = ++boardOcrAttempt.current;
     setMode('photo');
     setBoardPreview(filePreview(file));
     setOcrState('recognizing');
     setValidation(null);
     try {
       const recognized = await recognizeBoard(file);
+      if (attempt !== boardOcrAttempt.current) return;
       setWords(recognized.map((cell) => cell.word));
       setConfidences(recognized.map((cell) => cell.confidence));
       setOcrState('success');
     } catch (error) {
+      if (attempt !== boardOcrAttempt.current) return;
       setWords([...EMPTY_WORDS]);
       setConfidences(Array.from({ length: 25 }, () => 0));
       setOcrState('error');
@@ -154,25 +161,35 @@ export function PhotoSetup(): JSX.Element {
   }
 
   async function handleKeyFile(file: File): Promise<void> {
+    const attempt = ++keyCardAttempt.current;
     setKeyPreview(filePreview(file));
     setKeyBusy(true);
     try {
-      setRoles(await classifyKeyCard(file));
+      const classifiedRoles = await classifyKeyCard(file);
+      if (attempt !== keyCardAttempt.current) return;
+      setRoles(classifiedRoles);
       showToast('צבעי כרטיס המפתח זוהו — בדקו ותקנו לפי הצורך', {
         tone: 'success',
       });
     } catch (error) {
+      if (attempt !== keyCardAttempt.current) return;
       setRoles([...EMPTY_ROLES]);
       showToast(
         `${error instanceof Error ? error.message : 'זיהוי הצבעים נכשל'} — אפשר לסמן ידנית`,
         { tone: 'error' },
       );
     } finally {
-      setKeyBusy(false);
+      if (attempt === keyCardAttempt.current) setKeyBusy(false);
     }
   }
 
+  function invalidateKeyClassification(): void {
+    keyCardAttempt.current += 1;
+    setKeyBusy(false);
+  }
+
   function cycleRole(index: number, direction = 1): void {
+    invalidateKeyClassification();
     setRoles((current) => {
       const next = [...current];
       const currentIndex = roleOrder.indexOf(current[index]);
@@ -181,6 +198,29 @@ export function PhotoSetup(): JSX.Element {
       ];
       return next;
     });
+  }
+
+  function rotateRoles(): void {
+    invalidateKeyClassification();
+    setRoles((current) => rotateRolesClockwise(current));
+  }
+
+  function updateWord(index: number, value: string): void {
+    if (ocrState === 'recognizing') {
+      boardOcrAttempt.current += 1;
+      setOcrState('ready');
+    }
+    setWords((current) => {
+      const next = [...current];
+      next[index] = value;
+      return next;
+    });
+    setConfidences((current) => {
+      const next = [...current];
+      next[index] = 100;
+      return next;
+    });
+    setValidation(null);
   }
 
   function focusNextWord(index: number): void {
@@ -288,7 +328,7 @@ export function PhotoSetup(): JSX.Element {
             <button
               className="btn btn-secondary"
               type="button"
-              onClick={() => setRoles((current) => rotateRolesClockwise(current))}
+              onClick={rotateRoles}
             >
               סובב ↻
             </button>
@@ -315,17 +355,7 @@ export function PhotoSetup(): JSX.Element {
                   aria-label={`מילה ${index + 1}, תפקיד ${roleLabel[roles[index]]}`}
                   aria-describedby="words-help"
                   aria-invalid={validation !== null && word.trim().length === 0}
-                  onChange={(event) => {
-                    const next = [...words];
-                    next[index] = event.target.value;
-                    setWords(next);
-                    setConfidences((current) => {
-                      const confidence = [...current];
-                      confidence[index] = 100;
-                      return confidence;
-                    });
-                    setValidation(null);
-                  }}
+                  onChange={(event) => updateWord(index, event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') {
                       event.preventDefault();
@@ -407,6 +437,7 @@ export function PhotoSetup(): JSX.Element {
             type="button"
             className="btn btn-ghost photo-setup__skip"
             onClick={() => {
+              boardOcrAttempt.current += 1;
               setWords([...EMPTY_WORDS]);
               setConfidences([...EMPTY_CONFIDENCE]);
               setOcrState('ready');
@@ -447,7 +478,10 @@ export function PhotoSetup(): JSX.Element {
           <button
             type="button"
             className="btn btn-ghost photo-setup__skip"
-            onClick={() => setRoles([...EMPTY_ROLES])}
+            onClick={() => {
+              invalidateKeyClassification();
+              setRoles([...EMPTY_ROLES]);
+            }}
           >
             דלגו על צילום המפתח — סמנו ידנית
           </button>

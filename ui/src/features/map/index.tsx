@@ -22,6 +22,7 @@ import './styles.css';
 
 const VIEWBOX_SIZE = 600;
 const MAP_PADDING = 46;
+const MAP_SURFACE_INSET = 1;
 const REQUEST_DEBOUNCE_MS = 400;
 
 const roleLabels: Record<Role, string> = {
@@ -333,14 +334,18 @@ export function SemanticMap(): JSX.Element {
           </defs>
           <rect
             className="semantic-map__background"
-            width={viewBoxWidth}
-            height={VIEWBOX_SIZE}
+            x={MAP_SURFACE_INSET}
+            y={MAP_SURFACE_INSET}
+            width={viewBoxWidth - MAP_SURFACE_INSET * 2}
+            height={VIEWBOX_SIZE - MAP_SURFACE_INSET * 2}
             rx="16"
           />
           <rect
             className="semantic-map__grid"
-            width={viewBoxWidth}
-            height={VIEWBOX_SIZE}
+            x={MAP_SURFACE_INSET}
+            y={MAP_SURFACE_INSET}
+            width={viewBoxWidth - MAP_SURFACE_INSET * 2}
+            height={VIEWBOX_SIZE - MAP_SURFACE_INSET * 2}
             rx="16"
           />
 
