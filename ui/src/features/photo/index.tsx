@@ -45,6 +45,7 @@ export function PhotoSetup(): JSX.Element {
   const [boardPreview, setBoardPreview] = useState<string | null>(null);
   const [keyPreview, setKeyPreview] = useState<string | null>(null);
   const boardOcrAttempt = useRef(0);
+  const keyCardAttempt = useRef(0);
 
   useEffect(() => {
     let active = true;
@@ -61,6 +62,7 @@ export function PhotoSetup(): JSX.Element {
     return () => {
       active = false;
       boardOcrAttempt.current += 1;
+      keyCardAttempt.current += 1;
       unsubscribe();
     };
   }, []);
@@ -126,21 +128,25 @@ export function PhotoSetup(): JSX.Element {
   }
 
   async function handleKeyFile(file: File): Promise<void> {
+    const attempt = ++keyCardAttempt.current;
     setKeyPreview(filePreview(file));
     setKeyBusy(true);
     try {
-      setRoles(await classifyKeyCard(file));
+      const classifiedRoles = await classifyKeyCard(file);
+      if (attempt !== keyCardAttempt.current) return;
+      setRoles(classifiedRoles);
       showToast('צבעי כרטיס המפתח זוהו — בדקו ותקנו לפי הצורך', {
         tone: 'success',
       });
     } catch (error) {
+      if (attempt !== keyCardAttempt.current) return;
       setRoles([...EMPTY_ROLES]);
       showToast(
         `${error instanceof Error ? error.message : 'זיהוי הצבעים נכשל'} — אפשר לסמן ידנית`,
         { tone: 'error' },
       );
     } finally {
-      setKeyBusy(false);
+      if (attempt === keyCardAttempt.current) setKeyBusy(false);
     }
   }
 
@@ -415,7 +421,11 @@ export function PhotoSetup(): JSX.Element {
           <button
             type="button"
             className="btn btn-ghost photo-setup__skip"
-            onClick={() => setRoles([...EMPTY_ROLES])}
+            onClick={() => {
+              keyCardAttempt.current += 1;
+              setKeyBusy(false);
+              setRoles([...EMPTY_ROLES]);
+            }}
           >
             דלגו על צילום המפתח — סמנו ידנית
           </button>
