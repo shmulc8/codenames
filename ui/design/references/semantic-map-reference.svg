@@ -1,0 +1,65 @@
+<svg viewBox="0 0 982 522" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif" direction="rtl">
+  <defs>
+    <radialGradient id="hintGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5fb4ff" stop-opacity="0.55"></stop>
+      <stop offset="45%" stop-color="#3a7bd5" stop-opacity="0.20"></stop>
+      <stop offset="100%" stop-color="#3a7bd5" stop-opacity="0"></stop>
+    </radialGradient>
+    <pattern id="grid" width="46" height="46" patternUnits="userSpaceOnUse">
+      <path d="M46 0H0V46" fill="none" stroke="#1b2436" stroke-width="1"></path>
+    </pattern>
+  </defs>
+
+  
+  <rect x="1" y="1" width="980" height="520" rx="14" fill="#0a0e18" stroke="#223049" stroke-width="1.5"></rect>
+  
+  <rect x="1" y="1" width="980" height="78" rx="14" fill="#0c1220"></rect>
+  <rect x="1" y="60" width="980" height="20" fill="#0c1220"></rect>
+  <text x="952" y="42" font-size="30" font-weight="bold" fill="#eaf1fb" text-anchor="end">המרחב הסמנטי</text>
+  <text x="952" y="66" font-size="17" fill="#8fa3bd" text-anchor="end">הרמז יושב במרכז המילים שלך</text>
+
+  
+  <rect x="14" y="92" width="954" height="416" rx="10" fill="#070b13"></rect>
+  <rect x="14" y="92" width="954" height="416" rx="10" fill="url(#grid)" opacity="0.5"></rect>
+
+  
+  <g>
+    <circle cx="345" cy="122" r="7" fill="#8a94a6"></circle>
+    <circle cx="398" cy="135" r="7" fill="#c96b6b"></circle>
+    <circle cx="436" cy="150" r="7" fill="#3fae9a"></circle>
+    <circle cx="533" cy="123" r="7" fill="#3fae9a"></circle>
+    <circle cx="638" cy="188" r="7" fill="#8a94a6"></circle>
+    <circle cx="486" cy="228" r="7" fill="#3fae9a"></circle>
+    <circle cx="503" cy="233" r="7" fill="#c96b6b"></circle>
+    <circle cx="384" cy="233" r="7" fill="#c96b6b"></circle>
+    <circle cx="430" cy="285" r="7" fill="#8a94a6"></circle>
+    <circle cx="596" cy="268" r="7" fill="#3fae9a"></circle>
+    <circle cx="573" cy="305" r="7" fill="#3fae9a"></circle>
+    <circle cx="647" cy="352" r="7" fill="#3fae9a"></circle>
+    <circle cx="628" cy="315" r="7" fill="#c96b6b"></circle>
+    <circle cx="318" cy="352" r="7" fill="#3fae9a"></circle>
+    <circle cx="372" cy="452" r="7" fill="#c96b6b"></circle>
+    <circle cx="404" cy="454" r="7" fill="#c96b6b"></circle>
+  </g>
+
+  
+  <line x1="368" y1="338" x2="342" y2="410" stroke="#3fae9a" stroke-width="2" opacity="0.9"></line>
+  <line x1="368" y1="338" x2="566" y2="440" stroke="#7fe3d2" stroke-width="2" opacity="0.9"></line>
+
+  
+  <circle cx="461" cy="360" r="9" fill="#0a0e18" stroke="#e7edf5" stroke-width="2.5"></circle>
+  <text x="461" y="345" font-size="18" fill="#dbe4f0" text-anchor="middle">מפה</text>
+
+  
+  <circle cx="342" cy="410" r="8" fill="#3fae9a"></circle>
+  <text x="342" y="400" font-size="19" fill="#7fe3d2" text-anchor="middle">מסך</text>
+
+  
+  <circle cx="566" cy="440" r="9" fill="#3fae9a"></circle>
+  <text x="600" y="424" font-size="21" fill="#7fe3d2" text-anchor="middle">עתיד</text>
+
+  
+  <circle cx="368" cy="338" r="70" fill="url(#hintGlow)"></circle>
+  <circle cx="368" cy="338" r="13" fill="#bcdcff" stroke="#5fb4ff" stroke-width="4"></circle>
+  <text x="368" y="316" font-size="40" font-weight="bold" fill="#eef5ff" text-anchor="middle">קדמי</text>
+</svg>
