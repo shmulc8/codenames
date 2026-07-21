@@ -73,3 +73,28 @@
   overflow-wrap: anywhere;
   color: var(--muted);
 }
+
+.mobile-mode-choice {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1rem;
+  min-height: 100svh;
+  padding: 1.5rem;
+  background: var(--bg);
+  color: var(--ink);
+  text-align: center;
+}
+
+.mobile-mode-choice .ant-typography {
+  margin: 0;
+  color: var(--ink);
+}
+
+.mobile-mode-choice .ant-typography-secondary {
+  color: var(--muted);
+}
+
+.mobile-mode-actions {
+  width: min(100%, 20rem);
+}

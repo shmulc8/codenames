@@ -5,6 +5,7 @@ import { api } from './api/client.ts'
 import type { HealthResponse } from './api/types.ts'
 import { Board } from './components/board/Board.tsx'
 import { CountChips } from './components/board/CountChips.tsx'
+import { SpyFlow } from './spy/SpyFlow.tsx'
 import { GameProvider, useGame } from './state/GameProvider.tsx'
 import './App.css'
 
@@ -90,6 +91,31 @@ function GameShell() {
 }
 
 function App() {
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(pointer: coarse) and (max-width: 820px)').matches)
+  const [mode, setMode] = useState<'play' | 'spy' | null>(null)
+
+  useEffect(() => {
+    const media = window.matchMedia('(pointer: coarse) and (max-width: 820px)')
+    const update = () => setIsMobile(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  if (isMobile && !mode) {
+    return (
+      <main className="mobile-mode-choice" dir="rtl">
+        <Typography.Title level={2}>שם קוד</Typography.Title>
+        <Typography.Text type="secondary">איך תרצו להמשיך?</Typography.Text>
+        <Space direction="vertical" size="middle" className="mobile-mode-actions">
+          <Button type="primary" size="large" block onClick={() => setMode('play')}>לשחק</Button>
+          <Button size="large" block onClick={() => setMode('spy')}>מצב מרגל</Button>
+        </Space>
+      </main>
+    )
+  }
+
+  if (isMobile && mode === 'spy') return <SpyFlow />
+
   return (
     <GameProvider>
       <GameShell />

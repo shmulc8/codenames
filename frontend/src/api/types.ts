@@ -129,3 +129,20 @@ export interface FeedbackRequest {
 export interface FeedbackResponse {
   ok: boolean
 }
+
+export type SpyCoverColor = 'red' | 'blue' | 'neutral' | 'assassin' | 'unknown'
+
+export interface SpyCoveredWord {
+  word: string
+  color: SpyCoverColor
+}
+
+export interface SpyScanRequest {
+  image: string
+  words?: string[]
+}
+
+export interface SpyScanResponse {
+  words: string[]
+  covered?: SpyCoveredWord[]
+}

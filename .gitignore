@@ -10,6 +10,13 @@ __pycache__/
 data/cc.he.300.*
 hf_space/data/cc.he.300.*
 
+# Secrets
+.env
+
+# Codex orchestrator artifacts
+agents.log
+runs/
+
 # OS
 .DS_Store
 

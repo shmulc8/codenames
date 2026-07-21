@@ -32,8 +32,10 @@ from flask import Flask, request, jsonify, send_file, send_from_directory, abort
 
 import morph
 import probe
+import spy
 
 app = Flask(__name__)
+app.register_blueprint(spy.spy)
 
 # Public deploy: embedding-only. No generative LLM is offered (the geometry engine
 # is fastText + DictaBERT legality + a NeoDictaBERT second opinion). When set, the

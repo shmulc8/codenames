@@ -9,6 +9,8 @@ import type {
   OperativeResponse,
   SpaceRequest,
   SpaceResponse,
+  SpyScanRequest,
+  SpyScanResponse,
   SpymasterRequest,
   SpymasterResponse,
 } from './types.ts'
@@ -57,4 +59,5 @@ export const api = {
   check: (body: CheckRequest) => post<CheckResponse>('/api/coach/check', body),
   operative: (body: OperativeRequest) => post<OperativeResponse>('/api/coach/operative', body),
   feedback: (body: FeedbackRequest) => post<FeedbackResponse>('/api/feedback', body),
+  spyScan: (body: SpyScanRequest) => post<SpyScanResponse>('/api/spy/scan', body),
 }
