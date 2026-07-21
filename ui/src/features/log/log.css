@@ -1,0 +1,165 @@
+.session-log {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-divider);
+  background: color-mix(in srgb, var(--cn-sheet) 88%, transparent);
+}
+
+.session-log > .cn-panel__header {
+  display: block;
+}
+
+.session-log__toggle {
+  width: 100%;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--cn-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: start;
+}
+
+.session-log__toggle:hover {
+  background: color-mix(in srgb, var(--cn-text) 4%, transparent);
+}
+
+.session-log__total {
+  min-width: 1.35rem;
+  height: 1.35rem;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 52%, transparent);
+  border-radius: 50%;
+  color: var(--color-accent-300);
+  font-size: 11px;
+}
+
+.session-log__chevron {
+  margin-inline-start: auto;
+  color: var(--cn-text-muted);
+  transition: transform 160ms ease;
+}
+
+.session-log__toggle[aria-expanded='false'] .session-log__chevron {
+  transform: rotate(90deg);
+}
+
+.session-log .cn-panel__body {
+  border-block-start: 1px solid var(--color-divider);
+}
+
+.session-log__empty {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--cn-text-muted);
+  font-size: 12px;
+}
+
+.session-log__list {
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.session-log__entry {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.session-log__entry + .session-log__entry {
+  border-block-start: 1px solid var(--color-divider);
+}
+
+.session-log__entry-header,
+.session-log__clue-line,
+.session-log__meta,
+.session-log__intended,
+.session-log__outcome,
+.session-log__team,
+.session-log__reveal {
+  display: flex;
+  align-items: center;
+}
+
+.session-log__entry-header {
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.session-log__clue-line {
+  gap: var(--space-2);
+}
+
+.session-log__clue-line strong {
+  color: var(--cn-text);
+  font-size: 16px;
+}
+
+.session-log__count {
+  width: 1.6rem;
+  height: 1.6rem;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--color-accent);
+  border-radius: 50%;
+  color: var(--color-accent-300);
+  font-size: 12px;
+}
+
+.session-log__entry time,
+.session-log__meta,
+.session-log__pending {
+  color: var(--cn-text-muted);
+  font-size: 11px;
+}
+
+.session-log__meta,
+.session-log__intended,
+.session-log__outcome {
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.session-log__team,
+.session-log__reveal {
+  gap: var(--space-1);
+}
+
+.session-log__repeat {
+  color: var(--cn-warn);
+}
+
+.session-log__reveal {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+}
+
+.session-log__reveal--correct {
+  color: var(--cn-ok);
+  background: color-mix(in srgb, var(--cn-ok) 8%, transparent);
+}
+
+.session-log__reveal--miss {
+  color: var(--cn-warn);
+  background: var(--cn-warn-bg);
+}
+
+.session-log__reveal--danger {
+  color: var(--cn-red-text);
+  background: color-mix(in srgb, var(--cn-red-dot) 10%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .session-log__chevron {
+    transition: none;
+  }
+}
