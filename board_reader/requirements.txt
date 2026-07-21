@@ -1,0 +1,3 @@
+# Kept separate from the Codenames engine dependencies on purpose.
+numpy>=1.24
+opencv-python-headless>=4.9

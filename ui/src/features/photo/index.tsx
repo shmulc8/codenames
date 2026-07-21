@@ -16,6 +16,14 @@ import './photo.css';
 const EMPTY_WORDS = Array.from({ length: 25 }, () => '');
 const EMPTY_CONFIDENCE = Array.from({ length: 25 }, () => 100);
 const EMPTY_ROLES: Role[] = Array.from({ length: 25 }, () => 'neutral');
+const SCANNED_DEMO_WORDS = [
+  'שיגור', 'בית-ספר', 'לבוש', 'סוס', 'קניון',
+  'מרוצים', 'מגדל', 'הודו', 'יוון', 'שקל',
+  'נסיכה', 'עליה', 'אגודל', 'סגור', 'ארץ',
+  'חפרפרת', 'אבן', 'עמוד', 'כף', 'כלב',
+  'מסלול', 'רעל', 'שלג', 'פצצה', 'חשבון',
+];
+const DEMO_ASSET_BASE = `${import.meta.env.BASE_URL}demo/`;
 const roleOrder: Role[] = ['red', 'blue', 'neutral', 'assassin'];
 const roleLabel: Record<Role, string> = {
   red: 'אדום',
@@ -97,6 +105,18 @@ export function PhotoSetup(): JSX.Element {
     } finally {
       setDemoBusy(false);
     }
+  }
+
+  function loadScannedDemo(): void {
+    setMode('photo');
+    setWords([...SCANNED_DEMO_WORDS]);
+    setConfidences([...EMPTY_CONFIDENCE]);
+    setRoles([...EMPTY_ROLES]);
+    setBoardPreview(`${DEMO_ASSET_BASE}board.jpg`);
+    setOcrProgress(100);
+    setOcrState('success');
+    setValidation(null);
+    showToast('לוח ההדגמה נטען מהצילום האמיתי', { tone: 'success' });
   }
 
   async function handleBoardFile(file: File): Promise<void> {
@@ -315,6 +335,21 @@ export function PhotoSetup(): JSX.Element {
         <aside className={`photo-setup__uploads ${mode === 'photo' ? 'is-emphasized' : ''}`}>
           <h2>יש תמונה של הלוח?</h2>
           <p>גררו לכאן צילום מהטלפון, או בחרו קובץ. תמיד תוכלו לתקן את הזיהוי.</p>
+
+          <button
+            type="button"
+            className="btn btn-secondary photo-setup__demo"
+            data-testid="btn-scanned-demo"
+            onClick={loadScannedDemo}
+          >
+            טענו את לוח ההדגמה
+          </button>
+
+          <nav className="photo-setup__demo-files" aria-label="קבצי לוח ההדגמה">
+            <a href={`${DEMO_ASSET_BASE}board.jpg`} target="_blank" rel="noreferrer">צילום מקורי</a>
+            <a href={`${DEMO_ASSET_BASE}detected.jpg`} target="_blank" rel="noreferrer">זיהוי מסומן</a>
+            <a href={`${DEMO_ASSET_BASE}board.csv`} download>CSV</a>
+          </nav>
 
           <label
             className="photo-setup__drop-zone"

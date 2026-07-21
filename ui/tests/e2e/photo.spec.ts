@@ -186,4 +186,24 @@ test.describe('PhotoSetup', () => {
     ).toBeVisible();
     await expect(page.getByTestId('ocr-grid')).toBeVisible();
   });
+
+  test('loads the real scanned-board demo and builds the same board in the app', async ({ page }) => {
+    await page.getByTestId('btn-scanned-demo').click();
+
+    await expect(page.getByText('מתמונה', { exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.getByTestId('ocr-cell-0')).toHaveValue('שיגור');
+    await expect(page.getByTestId('ocr-cell-24')).toHaveValue('חשבון');
+    await expect(page.getByAltText('תצוגה מקדימה של צילום הלוח')).toHaveAttribute(
+      'src',
+      '/demo/board.jpg',
+    );
+
+    await page.getByTestId('btn-confirm-board').click();
+    await expect(page.getByTestId('board-grid')).toBeVisible();
+    await expect(page.getByTestId('tile-0')).toHaveAttribute('data-word', 'שיגור');
+    await expect(page.getByTestId('tile-24')).toHaveAttribute('data-word', 'חשבון');
+  });
 });

@@ -153,6 +153,16 @@
 
 .photo-setup__uploads { transition: border-color .2s ease, box-shadow .2s ease; }
 .photo-setup__uploads.is-emphasized { border-color: var(--color-accent-700); box-shadow: 0 0 18px rgba(150,138,224,.09); }
+.photo-setup__demo { width: 100%; margin-top: var(--space-4); }
+.photo-setup__demo-files {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  font-size: .7rem;
+}
+.photo-setup__demo-files a { color: var(--color-accent-300); }
+.photo-setup__demo-files a:hover { color: var(--cn-text); }
 .photo-setup__drop-zone {
   min-height: 12.5rem;
   margin-top: var(--space-6);
