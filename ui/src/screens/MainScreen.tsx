@@ -1,0 +1,72 @@
+import { BoardGrid } from '../features/board';
+import { CheckPanel } from '../features/check';
+import { CluePanel } from '../features/clue';
+import { SessionLog } from '../features/log';
+import { SemanticMap } from '../features/map';
+import { PhotoSetup } from '../features/photo';
+import { useAppStore } from '../state/store';
+import './MainScreen.css';
+
+export function MainScreen(): JSX.Element {
+  const screen = useAppStore((state) => state.screen);
+  const activeTab = useAppStore((state) => state.activeTab);
+  const setActiveTab = useAppStore((state) => state.setActiveTab);
+
+  if (screen === 'setup') {
+    return (
+      <main className="setup-shell" data-testid="setup-screen">
+        <PhotoSetup />
+      </main>
+    );
+  }
+
+  return (
+    <div className="main-screen">
+      <header className="main-screen__header">
+        <div>
+          <p className="main-screen__eyebrow">שם קוד · מנתח לוח</p>
+          <h1>קודנהיימס קופיילוט</h1>
+        </div>
+        <p className="main-screen__status">הרמזים מותאמים ללוח שנמצא מולכם</p>
+      </header>
+
+      <main className="main-screen__workspace">
+        <section className="main-screen__primary" aria-label="לוח ומפה סמנטית">
+          <BoardGrid />
+          <SemanticMap />
+        </section>
+
+        <aside className="main-screen__controls" aria-label="כלי המפעיל">
+          <div className="main-screen__tabs" role="tablist" aria-label="מצב עבודה">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'clue'}
+              className={activeTab === 'clue' ? 'is-active' : undefined}
+              data-testid="tab-clue"
+              onClick={() => setActiveTab('clue')}
+            >
+              קבל רמז
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'check'}
+              className={activeTab === 'check' ? 'is-active' : undefined}
+              data-testid="tab-check"
+              onClick={() => setActiveTab('check')}
+            >
+              בדוק מילה שלי
+            </button>
+          </div>
+
+          <section className="main-screen__active-panel" role="tabpanel">
+            {activeTab === 'clue' ? <CluePanel /> : <CheckPanel />}
+          </section>
+
+          <SessionLog />
+        </aside>
+      </main>
+    </div>
+  );
+}
