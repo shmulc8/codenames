@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card } from '../../components/Card';
 import { RoleIcon } from '../../components/RoleIcon';
@@ -29,6 +29,9 @@ export function BoardGrid(): JSX.Element {
   const tiles = useAppStore((state) => state.tiles);
   const selected = useAppStore((state) => state.selected);
   const hoverWord = useAppStore((state) => state.hoverWord);
+  const currentClueOption = useAppStore(
+    (state) => state.clue.current?.options[state.clue.optionIndex] ?? null,
+  );
   const toggleSelected = useAppStore((state) => state.toggleSelected);
   const toggleLifecycle = useAppStore((state) => state.toggleLifecycle);
   const setHoverWord = useAppStore((state) => state.setHoverWord);
@@ -48,6 +51,10 @@ export function BoardGrid(): JSX.Element {
   );
   const assassinRevealed = tiles.some(
     (tile) => tile.role === 'assassin' && tile.lifecycle === 'chosen',
+  );
+  const intendedWords = useMemo(
+    () => new Set(currentClueOption?.intended ?? []),
+    [currentClueOption],
   );
 
   useEffect(() => {
@@ -159,6 +166,7 @@ export function BoardGrid(): JSX.Element {
             selectedForClue ? 'is-selected' : '',
             chosen ? 'is-chosen' : '',
             chosen && tile.role === 'assassin' ? 'is-assassin-chosen' : '',
+            intendedWords.has(tile.word) ? 'is-clue-target' : '',
             hoverWord === tile.word ? 'is-hover-linked' : '',
           ]
             .filter(Boolean)

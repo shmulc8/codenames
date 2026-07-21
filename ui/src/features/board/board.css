@@ -103,7 +103,8 @@
     0 10px 20px rgba(0,0,0,.55),
     0 0 20px rgba(150,138,224,.48);
 }
-.board-tile.is-hover-linked { outline: 2px solid var(--color-accent-300); outline-offset: 2px; }
+.board-tile.is-hover-linked,
+.board-tile.is-clue-target { outline: 2px solid var(--color-accent-300); outline-offset: 2px; }
 
 /* Card SVG is the tile face; the grommet/hole is dropped, mirror + label are placed on the card. */
 .board-tile__face { position: absolute; inset: 0; z-index: 0; }

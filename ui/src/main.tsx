@@ -8,7 +8,8 @@ import './theme/game.css';
 // Vite replaces `import.meta.env.DEV` at build time, so React Grab is excluded
 // from production bundles and only available while running the local dev server.
 if (import.meta.env.DEV) {
-  void import('react-grab');
+  const reactGrab: string = 'react-grab';
+  void import(/* @vite-ignore */ reactGrab).catch(() => undefined);
 }
 
 async function enableMocking(): Promise<void> {

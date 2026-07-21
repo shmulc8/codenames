@@ -168,7 +168,9 @@ export function CluePanel(): JSX.Element {
 
   function moveOption(delta: number): void {
     if (options.length < 2) return;
-    setOptionIndex((clue.optionIndex + delta + options.length) % options.length);
+    const nextIndex = (clue.optionIndex + delta + options.length) % options.length;
+    setOptionIndex(nextIndex);
+    selectSuggested(options[nextIndex]?.intended ?? [], target);
   }
 
   function handleRegenerate(): void {
