@@ -43,9 +43,10 @@ test.describe('BoardGrid', () => {
 
     await expect(page.getByText(/אדום\s*9/)).toBeVisible();
     await expect(page.getByText(/כחול\s*8/)).toBeVisible();
-    await page.getByText('מקרא', { exact: true }).click();
-    await expect(page.getByText('מתנקש', { exact: true })).toBeVisible();
-    await expect(page.getByText('ניטרלי', { exact: true })).toBeVisible();
+    const board = page.getByTestId('stub-board');
+    await board.getByText('מקרא', { exact: true }).click();
+    await expect(board.getByText('מתנקש', { exact: true })).toBeVisible();
+    await expect(board.getByText('ניטרלי', { exact: true })).toBeVisible();
   });
 
   test('selects one team color, preserves order, and exposes keyboard focus', async ({ page }) => {

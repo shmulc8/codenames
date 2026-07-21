@@ -31,7 +31,9 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
 
   await page.getByTestId('btn-auto-cluster').click();
 
-  await expect(page.getByTestId('loading-spinner')).toBeVisible();
+  await expect(
+    page.getByTestId('btn-auto-cluster').getByTestId('loading-spinner'),
+  ).toBeVisible();
   await expect(page.getByTestId('btn-auto-cluster')).toBeDisabled();
   await expect(page.getByTestId('risk-balanced')).toBeDisabled();
 
@@ -69,7 +71,9 @@ test('focused request posts the selected cluster and keyboard-selected risk', as
   await expect(page.getByTestId('risk-bold')).toHaveAttribute('aria-pressed', 'true');
 
   await page.getByTestId('btn-get-clue').click();
-  await expect(page.getByTestId('loading-spinner')).toBeVisible();
+  await expect(
+    page.getByTestId('btn-get-clue').getByTestId('loading-spinner'),
+  ).toBeVisible();
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');
 
   const request = await page.evaluate(() => window.__lastSpymasterReq);
