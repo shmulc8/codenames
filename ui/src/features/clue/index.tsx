@@ -105,6 +105,7 @@ export function CluePanel(): JSX.Element {
   const setRisk = useAppStore((state) => state.setRisk);
   const setTarget = useAppStore((state) => state.setTarget);
   const setClueResult = useAppStore((state) => state.setClueResult);
+  const selectSuggested = useAppStore((state) => state.selectSuggested);
   const setOptionIndex = useAppStore((state) => state.setOptionIndex);
   const useCurrentClue = useAppStore((state) => state.useCurrentClue);
   const [loading, setLoading] = useState<RequestKind | null>(null);
@@ -140,6 +141,15 @@ export function CluePanel(): JSX.Element {
         snapshot.risk,
       );
       setClueResult(result);
+
+      // "Find the best combination" is an engine-led flow: mirror the exact targets
+      // of the option the engine chose on the board, so they can immediately inspect
+      // or refine that combination. Focused requests preserve the user's selection.
+      if (kind === 'auto' || (kind === 'regenerate' && !snapshot.focus?.length)) {
+        const picked = result.picked ?? 0;
+        const option = result.options[picked] ?? result.options[0];
+        selectSuggested(option?.intended ?? [], snapshot.target);
+      }
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'לא הצלחנו לקבל רמז',
@@ -398,8 +408,10 @@ export function CluePanel(): JSX.Element {
                 aria-label="האפשרות הבאה"
                 onClick={() => moveOption(1)}
               >
-                <span className="clue-carousel__chevron" aria-hidden="true">‹</span>
-                <span data-testid="next-option-label">הבא</span>
+                <span className="clue-carousel__arrow" aria-hidden="true" dir="ltr">
+                  ‹
+                </span>
+                <span>הבא</span>
               </Button>
               <span data-testid="option-counter">
                 אפשרות {clue.optionIndex + 1} מתוך {options.length}
@@ -411,8 +423,10 @@ export function CluePanel(): JSX.Element {
                 aria-label="האפשרות הקודמת"
                 onClick={() => moveOption(-1)}
               >
-                <span data-testid="prev-option-label">הקודם</span>
-                <span className="clue-carousel__chevron" aria-hidden="true">›</span>
+                <span className="clue-carousel__arrow" aria-hidden="true" dir="ltr">
+                  ›
+                </span>
+                <span>הקודם</span>
               </Button>
             </nav>
           ) : null}

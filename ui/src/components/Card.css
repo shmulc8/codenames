@@ -1,0 +1,26 @@
+.cn-card {
+  /* All shades derived from --card-color (set inline). */
+  --card-shade-0: color-mix(in srgb, var(--card-color), #000 9%);
+  --card-shade-1: color-mix(in srgb, var(--card-color), #000 18%);
+  --card-shade-2: color-mix(in srgb, var(--card-color), #000 30%);
+  --card-tint-1: color-mix(in srgb, var(--card-color), #fff 55%);
+  --card-tint-2: color-mix(in srgb, var(--card-color), #fff 78%);
+
+  position: relative;
+  aspect-ratio: 400 / 260;
+  width: 100%;
+}
+
+/* Content sits over the SVG's blank box (x54 y144 w292 h64 of the 400x260 viewBox). */
+.cn-card__content {
+  position: absolute;
+  left: 10%;
+  top: 56.9%;
+  width: 80%;
+  height: 25.4%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #2b241a;
+}

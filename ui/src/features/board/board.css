@@ -66,6 +66,7 @@
 }
 
 .board-cell { position: relative; min-width: 0; }
+.board-cell:has(.board-tile.is-selected) { z-index: 1; }
 
 .board-tile {
   --tile-ring: var(--cn-neutral-ring);
@@ -96,24 +97,30 @@
 .board-tile.role-assassin { --tile-ring: var(--cn-assassin-ring); --tile-tint: var(--cn-assassin-tint); --tile-gradient: var(--cn-assassin-grad); --tile-role-icon: var(--cn-assassin-dot); background: var(--cn-assassin-grad); }
 .board-cell:hover .board-tile:not(.is-chosen) { transform: translateY(-1px); }
 .board-tile.is-selected {
+  transform: translateY(-2px) scale(1.025);
+  filter: saturate(1.12) brightness(1.08);
   box-shadow:
-    inset 0 0 0 2px var(--tile-ring),
+    inset 0 0 0 3px rgba(255,255,255,.9),
     inset 0 0 22px var(--tile-tint),
     inset 0 1.5px 0 rgba(255,255,255,.55),
-    0 0 0 3px var(--cn-select-ring),
-    0 3px 7px rgba(0,0,0,.5);
+    0 0 0 4px var(--cn-select-ring),
+    0 0 0 7px rgba(150,138,224,.18),
+    0 10px 20px rgba(0,0,0,.55),
+    0 0 20px rgba(150,138,224,.48);
 }
 .board-tile.is-hover-linked { outline: 2px solid var(--color-accent-300); outline-offset: 2px; }
 
-.board-tile__content { position: absolute; inset: 0; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: clamp(5px, .7vw, 8px); border: 0; background: transparent; color: inherit; font: inherit; cursor: inherit; }
-.board-tile__hole { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; border-radius: 50%; background: var(--cn-card-hole); box-shadow: inset 0 1.5px 2.5px rgba(90,70,40,.55); }
+/* Card SVG is the tile face; the grommet/hole is dropped, mirror + label are placed on the card. */
+.board-tile__face { position: absolute; inset: 0; z-index: 0; }
+.board-tile__hole { display: none; }
+.board-tile__content { position: absolute; inset: 0; z-index: 1; border: 0; background: transparent; color: inherit; font: inherit; cursor: inherit; }
 .board-tile__role { position: absolute; top: 6px; left: 7px; color: var(--tile-role-icon, var(--tile-ring)); font-size: .72rem; }
-.board-tile__mirror { transform: rotate(180deg); text-align: center; margin-bottom: 2px; color: var(--cn-card-mirror); font-size: clamp(.52rem, .8vw, .72rem); font-weight: 600; line-height: 1; }
+.board-tile__mirror { position: absolute; top: 27%; left: 8%; right: 8%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transform: rotate(180deg); text-align: center; color: var(--cn-card-mirror); font-size: clamp(.52rem, .8vw, .72rem); font-weight: 600; line-height: 1; }
 .board-tile.role-red .board-tile__mirror,
 .board-tile.role-blue .board-tile__mirror,
 .board-tile.role-assassin .board-tile__mirror { color: rgba(255,255,255,.58); }
-.board-tile__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 3px 4px; border: 1px solid var(--cn-card-label-bd); border-radius: var(--radius-sm); background: var(--cn-card-label); color: var(--cn-card-ink); text-align: center; font-size: clamp(.9rem, 1.3vw, 1.1rem); font-weight: 700; line-height: 1.25; }
-.board-tile__badge { position: absolute; top: 4px; right: 5px; width: 1.15rem; height: 1.15rem; display: grid; place-items: center; border-radius: 50%; background: var(--cn-badge-bg); color: var(--cn-badge-ink); font-size: .65rem; font-weight: 700; }
+.board-tile__label { position: absolute; left: 10%; right: 10%; top: 56.9%; height: 25.4%; display: flex; align-items: center; justify-content: center; min-width: 0; overflow: hidden; white-space: nowrap; padding: 0 6px; color: var(--cn-card-ink); text-align: center; font-size: clamp(.9rem, 1.3vw, 1.1rem); font-weight: 700; line-height: 1.15; }
+.board-tile__badge { position: absolute; z-index: 2; top: 3px; right: 4px; width: 1.55rem; height: 1.55rem; display: grid; place-items: center; border: 2px solid rgba(255,255,255,.82); border-radius: 50%; background: var(--cn-badge-bg); box-shadow: 0 2px 7px rgba(20,16,48,.5); color: var(--cn-badge-ink); font-size: .84rem; font-weight: 800; }
 
 .board-tile__lifecycle {
   position: absolute;

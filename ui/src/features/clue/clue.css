@@ -400,10 +400,11 @@
   justify-self: end;
 }
 
-.clue-carousel__chevron {
-  direction: ltr;
-  unicode-bidi: isolate;
-  font-size: 1rem;
+.clue-carousel .cn-button__content {
+  direction: rtl;
+}
+
+.clue-carousel__arrow {
   line-height: 1;
 }
 

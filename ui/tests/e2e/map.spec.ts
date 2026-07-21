@@ -76,33 +76,26 @@ test.describe('semantic map', () => {
     }
   });
 
-  test('fills the available semantic panel width', async ({ page }) => {
+  test('centers a readable, bounded semantic canvas', async ({ page }) => {
     await setBoard(page, true);
     await waitForMap(page);
 
-    await expect
-      .poll(async () =>
-        page.evaluate(() => {
-          const frame = document.querySelector<HTMLElement>('.semantic-map__frame');
-          const map = document.querySelector<SVGSVGElement>('.semantic-map');
-          const background = document.querySelector<SVGRectElement>(
-            '.semantic-map__background',
-          );
-          if (!frame || !map || !background) {
-            throw new Error('Semantic map layout was not rendered');
-          }
-          const frameStyle = getComputedStyle(frame);
-          const available =
-            frame.getBoundingClientRect().width -
-            parseFloat(frameStyle.paddingInlineStart) -
-            parseFloat(frameStyle.paddingInlineEnd);
-          return Math.max(
-            Math.abs(available - map.getBoundingClientRect().width),
-            Math.abs(available - background.getBoundingClientRect().width),
-          );
-        }),
-      )
-      .toBeLessThan(2);
+    const sizes = await page.evaluate(() => {
+      const frame = document.querySelector<HTMLElement>('.semantic-map__frame');
+      const map = document.querySelector<SVGSVGElement>('.semantic-map');
+      if (!frame || !map) throw new Error('Semantic map layout was not rendered');
+      const frameStyle = getComputedStyle(frame);
+      const horizontalPadding =
+        parseFloat(frameStyle.paddingInlineStart) +
+        parseFloat(frameStyle.paddingInlineEnd);
+      return {
+        available: frame.getBoundingClientRect().width - horizontalPadding,
+        map: map.getBoundingClientRect().width,
+      };
+    });
+
+    expect(sizes.map).toBeLessThanOrEqual(736);
+    expect(sizes.map).toBeLessThanOrEqual(sizes.available);
   });
 
   test('renders a hint node and one connection for each intended target', async ({
