@@ -5,7 +5,7 @@ Parametrizes encoders and boards to evaluate LLM-guesser recovery, Spearman corr
 assassin avoidance, and safe-rate.
 
 Run from the repository root:
-    FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin HF_HUB_OFFLINE=1 .venv/bin/python bench_recovery.py --encoders fasttext,numberbatch --boards 15
+    FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin HF_HUB_OFFLINE=1 .venv/bin/python -m research.bench_recovery --encoders fasttext,numberbatch --boards 15
 """
 
 import os

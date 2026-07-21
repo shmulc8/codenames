@@ -11,7 +11,7 @@ Guesser rankings are cached per (board, clue), so most of the search is candidat
 generation. Prints the best profile per risk with its metrics and writes them for promotion.
 
   HF_HUB_OFFLINE=1 FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin EMBED_ONLY=1 \\
-    .venv/bin/python tune_clue.py --boards 24 --configs 40 --out data/tuned_profiles.json
+    .venv/bin/python -m research.tune_clue --boards 24 --configs 40 --out data/tuned_profiles.json
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ import random
 
 import app
 import probe
-import bench_clue
+from research import bench_clue
 from guesser import make_guesser
 
 GRID = {

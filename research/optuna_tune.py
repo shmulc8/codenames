@@ -7,7 +7,7 @@ objective:  0.5 * recovery + 0.3 * safe_rate + 0.2 * (assassin_rank / 25)
 
 Usage:
     PYTHONPATH=. FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin HF_HUB_OFFLINE=1 \
-        .venv/bin/python optuna_tune.py --trials 60 --boards 15
+        .venv/bin/python -m research.optuna_tune --trials 60 --boards 15
 """
 
 import os

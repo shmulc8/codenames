@@ -7,7 +7,7 @@ Reconstructs each 👍/👎 spymaster board from the feedback log and measures t
               flagged illegal (i.e. would have been prevented)?
   - retention: for 👍 rows, is the liked clue still in the served shortlist?
 
-Reads the feedback from the HF dataset (falls back to the local log). Run: python bench_feedback.py
+Reads the feedback from the HF dataset (falls back to the local log). Run: python -m research.bench_feedback
 """
 import os, json, collections
 os.environ.setdefault("FASTTEXT_COMPRESSED", "data/cc.he.300.fp16.bin")

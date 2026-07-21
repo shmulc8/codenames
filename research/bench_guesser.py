@@ -10,7 +10,7 @@ separation score (AUC of recovery ranking 👍 above 👎). A guesser that can't
 groups (AUC ≈ 0.5) is not trustworthy as a benchmark oracle.
 
   HF_HUB_OFFLINE=1 FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin \\
-    .venv/bin/python bench_guesser.py --guesser ensemble
+    .venv/bin/python -m research.bench_guesser --guesser ensemble
 """
 from __future__ import annotations
 

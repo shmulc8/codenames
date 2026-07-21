@@ -21,7 +21,7 @@ from scipy.stats import spearmanr
 from exp_encoders import make_exp_encoder
 
 
-DEFAULT_DATA = Path(__file__).with_name("data") / "simlex_he.tsv"
+DEFAULT_DATA = Path(__file__).resolve().parents[1] / "data" / "simlex_he.tsv"
 
 
 @dataclass(frozen=True)

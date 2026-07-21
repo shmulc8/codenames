@@ -42,15 +42,15 @@ lexicon) + a **fastText cosine gate θ=0.30** (`probe.ROOT_TRANSPARENCY_THETA`).
 live vocab with `pos={"NOUN","ADJ"}` → ~5,260 lemmas. **Proper nouns are currently EXCLUDED.**
 
 **Eval harnesses:**
-- `compare_encoders.py` — LLM-guesser **recovery** across encoders (the association-aware
+- `research/compare_encoders.py` — LLM-guesser **recovery** across encoders (the association-aware
   signal). Loads `HebrewLLM(LLM_FAST)` (1.7B DictaLM via MLX). Uses `sample_board`,
   `encoder_spymaster`, `llm_guess_ranking`, `recovery_at_k`, `spearman`.
-- `bench.py` — synthetic boards, per-clue legal/safe/recovery + optional 12B judge.
-  Run LLM-free: `HF_HUB_OFFLINE=1 .venv/bin/python bench.py --n 15 --no-judge --configs geom`.
-- `bench_feedback.py` — consistency vs real 👍/👎 (dataset `shmulc/codenames-feedback`,
+- `research/bench.py` — synthetic boards, per-clue legal/safe/recovery + optional 12B judge.
+  Run LLM-free: `HF_HUB_OFFLINE=1 .venv/bin/python -m research.bench --n 15 --no-judge --configs geom`.
+- `research/bench_feedback.py` — consistency vs real 👍/👎 (dataset `shmulc/codenames-feedback`,
   fallback `feedback/feedback.jsonl`). Currently ~1 row.
-- `oracle.py` — hits live server `:7860`, judges geometry vs LLM clue with 12B.
-- `bench_intrinsic.py` — **NEW, already built** — SimLex-999 Spearman (see §1/§2).
+- `research/oracle.py` — hits live server `:7860`, judges geometry vs LLM clue with 12B.
+- `research/bench_intrinsic.py` — **NEW, already built** — SimLex-999 Spearman (see §1/§2).
 
 **Data conventions:** `DATA = <repo>/data`; plain JSON loaded once (`lru_cache`/global);
 expensive derived files disk-cached with params in the name; one-off `data/build_*.py` +
@@ -89,7 +89,7 @@ game-derived association data for those, or exclude them from a ConceptNet-deriv
 - **`bench_intrinsic.py`** + **`data/simlex_he.tsv`** (Hebrew SimLex-999, 999 pairs,
   Apache-2.0, `data/build_simlex_he.py`, `data/SIMLEX_HE_NOTICE.md`). Baseline recorded:
   **fastText SimLex ρ = 0.389** (100% coverage). This is the SECONDARY tripwire.
-  Run: `FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin HF_HUB_OFFLINE=1 .venv/bin/python bench_intrinsic.py --encoders fasttext`
+  Run: `FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin HF_HUB_OFFLINE=1 .venv/bin/python -m research.bench_intrinsic --encoders fasttext`
 - **Numberbatch Hebrew + `exp_encoders.py`** — DONE and selftest-verified:
   `data/numberbatch_he.npy`, `data/numberbatch_he_vocab.json`, `data/build_numberbatch_he.py`,
   `data/NUMBERBATCH_NOTICE.md`, `exp_encoders.py` (`NumberbatchEncoder` + `make_exp_encoder(key)`).
@@ -187,7 +187,7 @@ path untouched** until §4 promotion. Eval harnesses import `make_exp_encoder`, 
 ---
 
 ## 5. Constraints (repeat)
-- New/experimental code in `exp_encoders.py` + `bench_*.py`; **do not edit the serving path**
+- New/experimental code in `exp_encoders.py` + `research/`; **do not edit the serving path**
   (`probe.py`/`app.py`/`deck_he.py`/`morph.py`/`hf_space/`) until §4.
 - Never fabricate datasets — if a download fails, say so.
 - L2-normalize every encoder's output; NaN (not zero) for OOV.

@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: hebrew-codenames-copilot
+    runtime: docker
+    region: frankfurt
+    plan: free
+    dockerfilePath: ./hf_space/Dockerfile
+    dockerContext: ./hf_space
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: EMBED_ONLY
+        value: "1"
+      - key: SECOND_OPINION
+        value: "0"
+      - key: HF_HUB_OFFLINE
+        value: "1"
+      - key: TRANSFORMERS_OFFLINE
+        value: "1"
+      - key: FASTTEXT_COMPRESSED
+        value: /app/data/cc.he.300.fp16.bin
+      - key: FEEDBACK_DIR
+        value: /tmp/cn_feedback
+      - key: WARMUP
+        value: "1"
