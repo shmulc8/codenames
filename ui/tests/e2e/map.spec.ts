@@ -80,6 +80,8 @@ test.describe('semantic map', () => {
     await setBoard(page, true);
     await waitForMap(page);
 
+    await expect(page.getByTestId('semantic-map')).toHaveCSS('overflow', 'visible');
+
     await expect
       .poll(async () =>
         page.evaluate(() => {
@@ -103,6 +105,24 @@ test.describe('semantic map', () => {
         }),
       )
       .toBeLessThan(2);
+
+    const surfaceBounds = await page.evaluate(() => {
+      const map = document.querySelector<SVGSVGElement>('.semantic-map');
+      const grid = document.querySelector<SVGRectElement>('.semantic-map__grid');
+      if (!map || !grid) throw new Error('Semantic map surface was not rendered');
+      const mapRect = map.getBoundingClientRect();
+      const gridRect = grid.getBoundingClientRect();
+      return {
+        bottom: mapRect.bottom - gridRect.bottom,
+        left: gridRect.left - mapRect.left,
+        right: mapRect.right - gridRect.right,
+        top: gridRect.top - mapRect.top,
+      };
+    });
+    expect(surfaceBounds.bottom).toBeGreaterThanOrEqual(0);
+    expect(surfaceBounds.left).toBeGreaterThanOrEqual(0);
+    expect(surfaceBounds.right).toBeGreaterThanOrEqual(0);
+    expect(surfaceBounds.top).toBeGreaterThanOrEqual(0);
   });
 
   test('renders a hint node and one connection for each intended target', async ({
