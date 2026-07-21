@@ -181,7 +181,13 @@ export function PhotoSetup(): JSX.Element {
     }
   }
 
+  function invalidateKeyClassification(): void {
+    keyCardAttempt.current += 1;
+    setKeyBusy(false);
+  }
+
   function cycleRole(index: number, direction = 1): void {
+    invalidateKeyClassification();
     setRoles((current) => {
       const next = [...current];
       const currentIndex = roleOrder.indexOf(current[index]);
@@ -190,6 +196,11 @@ export function PhotoSetup(): JSX.Element {
       ];
       return next;
     });
+  }
+
+  function rotateRoles(): void {
+    invalidateKeyClassification();
+    setRoles((current) => rotateRolesClockwise(current));
   }
 
   function focusNextWord(index: number): void {
@@ -297,7 +308,7 @@ export function PhotoSetup(): JSX.Element {
             <button
               className="btn btn-secondary"
               type="button"
-              onClick={() => setRoles((current) => rotateRolesClockwise(current))}
+              onClick={rotateRoles}
             >
               סובב ↻
             </button>
@@ -458,8 +469,7 @@ export function PhotoSetup(): JSX.Element {
             type="button"
             className="btn btn-ghost photo-setup__skip"
             onClick={() => {
-              keyCardAttempt.current += 1;
-              setKeyBusy(false);
+              invalidateKeyClassification();
               setRoles([...EMPTY_ROLES]);
             }}
           >

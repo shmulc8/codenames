@@ -397,4 +397,59 @@ test.describe('PhotoSetup', () => {
 
     await page.context().close();
   });
+
+  test('direct key correction cancels an in-flight key-card classification', async ({ browser }) => {
+    const page = await openPageWithDelayedKeyImage(browser);
+    const redKeyCard = Buffer.from(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#b04548"/></svg>',
+    );
+
+    await page.getByTestId('photo-input-key').setInputFiles({
+      name: 'red-key-card.svg',
+      mimeType: 'image/svg+xml',
+      buffer: redKeyCard,
+    });
+    await expect.poll(() => page.evaluate(() => (
+      window as Window & { __keyImageLoads?: number }
+    ).__keyImageLoads ?? 0)).toBe(1);
+    await expect(page.getByText('מזהה צבעים…', { exact: true })).toBeVisible();
+
+    await page.getByTestId('key-cell-0').click();
+    await expect(page.getByTestId('key-cell-0')).toHaveAttribute('aria-label', /תפקיד מתנקש/);
+    await expect(page.getByText('הצבעים ייכנסו לרשת ויישארו ניתנים לתיקון', { exact: true })).toBeVisible();
+
+    await page.evaluate(() => {
+      const release = (window as Window & { __releaseKeyImage?: () => void })
+        .__releaseKeyImage;
+      if (!release) throw new Error('Key image gate was not installed');
+      release();
+    });
+
+    await expect.poll(() => page.evaluate(() => (
+      window as Window & { __keySamples?: number }
+    ).__keySamples ?? 0)).toBe(25);
+    const roleLabels = await page.getByTestId(/^key-cell-\d+$/).evaluateAll((cells) =>
+      cells.map((cell) => cell.getAttribute('aria-label')),
+    );
+    expect(roleLabels[0]).toContain('תפקיד מתנקש');
+    expect(roleLabels.slice(1)).toHaveLength(24);
+    expect(roleLabels.slice(1).every((label) => label?.includes('תפקיד ניטרלי'))).toBe(true);
+    await expect(page.getByTestId('toast')).toHaveCount(0);
+    await expect(page.getByText('מזהה צבעים…', { exact: true })).toHaveCount(0);
+    await expect(page.getByAltText('תצוגה מקדימה של כרטיס המפתח')).toBeVisible();
+
+    const counters = await page.evaluate(() => {
+      const current = window as Window & {
+        __keyImageReleases?: number;
+        __keySamples?: number;
+      };
+      return {
+        released: current.__keyImageReleases ?? 0,
+        samples: current.__keySamples ?? 0,
+      };
+    });
+    expect(counters).toEqual({ released: 1, samples: 25 });
+
+    await page.context().close();
+  });
 });
