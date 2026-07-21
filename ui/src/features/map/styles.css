@@ -1,0 +1,299 @@
+.semantic-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: var(--cn-panel);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
+}
+
+.semantic-panel__header {
+  min-height: 4.25rem;
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  border-bottom: 1px solid var(--color-divider);
+  background: color-mix(in srgb, var(--cn-surface-2) 82%, transparent);
+}
+
+.semantic-panel__header h2,
+.semantic-panel__header p {
+  margin: 0;
+}
+
+.semantic-panel__header h2 {
+  font-size: 1.05rem;
+}
+
+.semantic-panel__eyebrow {
+  margin-block-end: var(--space-1) !important;
+  color: var(--color-accent-400);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.semantic-panel__clue {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-accent-700);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--color-accent-200);
+  font-size: 0.76rem;
+}
+
+.semantic-panel__clue.is-empty {
+  border-color: var(--color-divider);
+  background: transparent;
+  color: var(--cn-text-dim);
+}
+
+.semantic-map__frame {
+  position: relative;
+  min-height: 28rem;
+  padding: var(--space-4);
+  display: grid;
+  place-items: center;
+  background: var(--cn-board-void);
+}
+
+.semantic-map {
+  display: block;
+  width: min(100%, 48rem);
+  max-height: min(72vh, 48rem);
+  overflow: visible;
+  direction: rtl;
+}
+
+.semantic-map__background {
+  fill: var(--cn-map-bg);
+  stroke: var(--color-divider);
+  stroke-width: 1.5;
+}
+
+.semantic-map__grid {
+  fill: url(#semantic-grid);
+  opacity: 0.56;
+}
+
+.semantic-map__grid-line {
+  fill: none;
+  stroke: var(--cn-map-grid);
+  stroke-width: 1;
+}
+
+.semantic-map__target-line {
+  stroke: var(--color-accent-500);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+
+.semantic-map__dot {
+  cursor: pointer;
+  outline: none;
+}
+
+.semantic-map__dot-hit-area {
+  fill: transparent;
+  pointer-events: all;
+}
+
+.semantic-map__dot-circle {
+  fill: var(--cn-map-bg);
+  stroke: var(--cn-role-dot);
+  stroke-width: 2.5;
+  transition: r 120ms ease, filter 120ms ease;
+}
+
+.semantic-map__dot.is-target .semantic-map__dot-circle {
+  fill: var(--cn-role-dot);
+  filter: drop-shadow(0 0 8px var(--cn-role-tint));
+}
+
+.semantic-map__dot:hover .semantic-map__dot-circle,
+.semantic-map__dot:focus-visible .semantic-map__dot-circle,
+.semantic-map__dot.is-linked .semantic-map__dot-circle {
+  filter: drop-shadow(0 0 7px var(--cn-role-dot));
+}
+
+.semantic-map__dot-shape {
+  fill: var(--cn-role-dot);
+  font-size: 8px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.semantic-map__dot.is-target .semantic-map__dot-shape {
+  fill: var(--cn-map-bg);
+}
+
+.semantic-map__word-label {
+  fill: var(--cn-role-text);
+  font-family: var(--font-hebrew);
+  font-size: 12px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--cn-map-bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.semantic-map__linked-ring {
+  fill: none;
+  stroke: var(--color-accent-300);
+  stroke-width: 2;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+
+.semantic-map__danger {
+  fill: none;
+  stroke: var(--cn-warn);
+  stroke-width: 2;
+  opacity: 0.9;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: semantic-danger-pulse 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.semantic-map__danger.is-assassin {
+  stroke: var(--cn-red-dot);
+  stroke-width: 3.5;
+  stroke-dasharray: 4 3;
+}
+
+.semantic-map__hint {
+  pointer-events: none;
+}
+
+.semantic-map__hint-glow {
+  fill: url(#semantic-hint-glow);
+}
+
+.semantic-map__hint-node {
+  fill: var(--color-accent-300);
+  stroke: var(--cn-map-hint);
+  stroke-width: 4;
+  filter: drop-shadow(0 0 9px var(--cn-map-hint-glow));
+}
+
+.semantic-map__hint-label {
+  fill: var(--color-accent-100);
+  font-family: var(--font-hebrew);
+  font-size: 21px;
+  font-weight: 800;
+  paint-order: stroke;
+  stroke: var(--cn-map-bg);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+.semantic-map__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  background: color-mix(in srgb, var(--cn-map-bg) 86%, transparent);
+  color: var(--cn-text-muted);
+  font-size: 0.8rem;
+}
+
+.semantic-map__loading .cn-loading-spinner {
+  position: static;
+  width: 1rem;
+  height: 1rem;
+  transform: none;
+}
+
+.semantic-map__tooltip {
+  position: absolute;
+  inset-block-end: var(--space-6);
+  inset-inline-start: 50%;
+  min-height: 2.6rem;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--cn-role-ring) 75%, var(--color-divider));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--cn-sheet) 94%, transparent);
+  box-shadow: var(--shadow-md);
+  color: var(--cn-text);
+  font-size: 0.76rem;
+  pointer-events: none;
+  transform: translateX(50%);
+}
+
+.semantic-map__tooltip span {
+  color: var(--cn-text-muted);
+}
+
+.semantic-map__legend {
+  min-height: 3rem;
+  padding: var(--space-3) var(--space-6);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+  color: var(--cn-text-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.semantic-map__legend strong {
+  color: var(--cn-text);
+}
+
+.semantic-map__legend-role {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--cn-role-text);
+}
+
+.semantic-map__legend-hintless {
+  flex-basis: 100%;
+  color: var(--cn-text-dim);
+}
+
+@keyframes semantic-danger-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .semantic-map__danger {
+    animation: none;
+  }
+
+  .semantic-map__dot-circle {
+    transition: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .semantic-map__frame {
+    min-height: 22rem;
+    padding: var(--space-3);
+  }
+
+  .semantic-panel__header,
+  .semantic-map__legend {
+    padding-inline: var(--space-4);
+  }
+}
