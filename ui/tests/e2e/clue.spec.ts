@@ -26,6 +26,11 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
 }) => {
   await setupFixtureBoard(page);
 
+  const focusedAction = await page.getByTestId('btn-get-clue').boundingBox();
+  const automaticAction = await page.getByTestId('btn-auto-cluster').boundingBox();
+  expect(focusedAction).not.toBeNull();
+  expect(automaticAction).not.toBeNull();
+  expect(focusedAction!.y).toBeLessThan(automaticAction!.y);
   await expect(page.getByTestId('btn-get-clue')).toBeDisabled();
   await expect(page.getByTestId('target-red')).toHaveAttribute('aria-pressed', 'true');
 
@@ -84,6 +89,28 @@ test('focused request posts the selected cluster and keyboard-selected risk', as
 test('carousel wraps and renders risky and no-clue states', async ({ page }) => {
   await setupFixtureBoard(page);
   await requestAutoClue(page);
+
+  const controlPositions = await page.evaluate(() => {
+    const nextButton = document.querySelector<HTMLElement>('[data-testid="btn-next-option"]');
+    const nextLabel = document.querySelector<HTMLElement>('[data-testid="next-option-label"]');
+    const previousButton = document.querySelector<HTMLElement>('[data-testid="btn-prev-option"]');
+    const previousLabel = document.querySelector<HTMLElement>('[data-testid="prev-option-label"]');
+    const nextChevron = nextButton?.querySelector<HTMLElement>('.clue-carousel__chevron');
+    const previousChevron = previousButton?.querySelector<HTMLElement>('.clue-carousel__chevron');
+    if (!nextLabel || !previousLabel || !nextChevron || !previousChevron) {
+      throw new Error('Carousel controls were not rendered');
+    }
+    return {
+      nextChevron: nextChevron.getBoundingClientRect().x,
+      nextLabel: nextLabel.getBoundingClientRect().x,
+      previousChevron: previousChevron.getBoundingClientRect().x,
+      previousLabel: previousLabel.getBoundingClientRect().x,
+    };
+  });
+  expect(controlPositions.nextChevron).toBeGreaterThan(controlPositions.nextLabel);
+  expect(controlPositions.previousLabel).toBeGreaterThan(
+    controlPositions.previousChevron,
+  );
 
   await page.getByTestId('btn-prev-option').click();
   await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 3 מתוך 3');

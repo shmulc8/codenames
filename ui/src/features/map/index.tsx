@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -53,11 +54,12 @@ interface DotData extends Point {
   word: string;
 }
 
-function toPoint(coord: [number, number]): Point {
-  const usable = VIEWBOX_SIZE - MAP_PADDING * 2;
+function toPoint(coord: [number, number], viewBoxWidth: number): Point {
+  const usableWidth = viewBoxWidth - MAP_PADDING * 2;
+  const usableHeight = VIEWBOX_SIZE - MAP_PADDING * 2;
   return {
-    x: MAP_PADDING + ((coord[0] + 1) / 2) * usable,
-    y: MAP_PADDING + (1 - (coord[1] + 1) / 2) * usable,
+    x: MAP_PADDING + ((coord[0] + 1) / 2) * usableWidth,
+    y: MAP_PADDING + (1 - (coord[1] + 1) / 2) * usableHeight,
   };
 }
 
@@ -125,7 +127,27 @@ export function SemanticMap(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [hoveredWord, setHoveredWord] = useState<string | null>(null);
   const [pinnedWord, setPinnedWord] = useState<string | null>(null);
+  const [viewBoxWidth, setViewBoxWidth] = useState(VIEWBOX_SIZE);
+  const mapRef = useRef<SVGSVGElement>(null);
   const requestSequence = useRef(0);
+
+  useLayoutEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const updateViewBox = () => {
+      if (map.clientWidth === 0 || map.clientHeight === 0) return;
+      const nextWidth = VIEWBOX_SIZE * (map.clientWidth / map.clientHeight);
+      setViewBoxWidth((currentWidth) =>
+        Math.abs(currentWidth - nextWidth) < 0.5 ? currentWidth : nextWidth,
+      );
+    };
+
+    updateViewBox();
+    const observer = new ResizeObserver(updateViewBox);
+    observer.observe(map);
+    return () => observer.disconnect();
+  }, []);
 
   const currentOption = clueResult?.options[optionIndex] ?? null;
   const clue = activeTab === 'clue' ? currentOption?.word ?? null : checkedClue;
@@ -195,7 +217,7 @@ export function SemanticMap(): JSX.Element {
   }, [board.words, pinnedWord]);
 
   const hintCoord = space?.clue_xy ?? null;
-  const hintPoint = hintCoord ? toPoint(hintCoord) : null;
+  const hintPoint = hintCoord ? toPoint(hintCoord, viewBoxWidth) : null;
   const fallbackScores = useMemo(
     () => normalizedScores(space?.coords ?? {}, hintCoord),
     [hintCoord, space?.coords],
@@ -209,7 +231,7 @@ export function SemanticMap(): JSX.Element {
   const dots = useMemo<DotData[]>(() => {
     if (!space) return [];
     return Object.entries(space.coords).map(([word, coord]) => {
-      const point = toPoint(coord);
+      const point = toPoint(coord, viewBoxWidth);
       return {
         ...point,
         coord,
@@ -220,7 +242,7 @@ export function SemanticMap(): JSX.Element {
         word,
       };
     });
-  }, [board.roles, fallbackScores, hintCoord, preferredScores, space, targetSet]);
+  }, [board.roles, fallbackScores, hintCoord, preferredScores, space, targetSet, viewBoxWidth]);
 
   const farthestTargetDistance = dots
     .filter((dot) => dot.target)
@@ -289,9 +311,10 @@ export function SemanticMap(): JSX.Element {
 
       <div className="semantic-map__frame">
         <svg
+          ref={mapRef}
           className="semantic-map"
           data-testid="semantic-map"
-          viewBox={`0 0 ${VIEWBOX_SIZE} ${VIEWBOX_SIZE}`}
+          viewBox={`0 0 ${viewBoxWidth} ${VIEWBOX_SIZE}`}
           role="img"
           aria-label={
             clue
@@ -308,8 +331,18 @@ export function SemanticMap(): JSX.Element {
               <stop offset="100%" stopColor="var(--cn-map-hint)" stopOpacity="0" />
             </radialGradient>
           </defs>
-          <rect className="semantic-map__background" width="600" height="600" rx="16" />
-          <rect className="semantic-map__grid" width="600" height="600" rx="16" />
+          <rect
+            className="semantic-map__background"
+            width={viewBoxWidth}
+            height={VIEWBOX_SIZE}
+            rx="16"
+          />
+          <rect
+            className="semantic-map__grid"
+            width={viewBoxWidth}
+            height={VIEWBOX_SIZE}
+            rx="16"
+          />
 
           {hintPoint
             ? dots

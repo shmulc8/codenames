@@ -1,4 +1,9 @@
-.board { min-width: 0; }
+.board {
+  width: 100%;
+  max-width: 54rem;
+  min-width: 0;
+  align-self: center;
+}
 
 .board__toolbar,
 .board__toolbar-actions,

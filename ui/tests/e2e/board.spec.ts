@@ -24,6 +24,15 @@ async function readBoardState(page: Page) {
 }
 
 test.describe('BoardGrid', () => {
+  test('caps card size on wide screens', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await setupDemoBoard(page);
+
+    const tile = await page.getByTestId('tile-0').boundingBox();
+    expect(tile).not.toBeNull();
+    expect(tile!.width).toBeLessThanOrEqual(160);
+  });
+
   test('renders all absolute roles with canonical attributes and game counters', async ({ page }) => {
     await setupDemoBoard(page);
 

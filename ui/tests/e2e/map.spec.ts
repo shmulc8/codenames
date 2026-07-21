@@ -80,21 +80,29 @@ test.describe('semantic map', () => {
     await setBoard(page, true);
     await waitForMap(page);
 
-    const sizes = await page.evaluate(() => {
-      const frame = document.querySelector<HTMLElement>('.semantic-map__frame');
-      const map = document.querySelector<SVGSVGElement>('.semantic-map');
-      if (!frame || !map) throw new Error('Semantic map layout was not rendered');
-      const frameStyle = getComputedStyle(frame);
-      const horizontalPadding =
-        parseFloat(frameStyle.paddingInlineStart) +
-        parseFloat(frameStyle.paddingInlineEnd);
-      return {
-        available: frame.getBoundingClientRect().width - horizontalPadding,
-        map: map.getBoundingClientRect().width,
-      };
-    });
-
-    expect(Math.abs(sizes.available - sizes.map)).toBeLessThan(2);
+    await expect
+      .poll(async () =>
+        page.evaluate(() => {
+          const frame = document.querySelector<HTMLElement>('.semantic-map__frame');
+          const map = document.querySelector<SVGSVGElement>('.semantic-map');
+          const background = document.querySelector<SVGRectElement>(
+            '.semantic-map__background',
+          );
+          if (!frame || !map || !background) {
+            throw new Error('Semantic map layout was not rendered');
+          }
+          const frameStyle = getComputedStyle(frame);
+          const available =
+            frame.getBoundingClientRect().width -
+            parseFloat(frameStyle.paddingInlineStart) -
+            parseFloat(frameStyle.paddingInlineEnd);
+          return Math.max(
+            Math.abs(available - map.getBoundingClientRect().width),
+            Math.abs(available - background.getBoundingClientRect().width),
+          );
+        }),
+      )
+      .toBeLessThan(2);
   });
 
   test('renders a hint node and one connection for each intended target', async ({
