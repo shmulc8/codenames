@@ -172,11 +172,11 @@ def _validate_words(words):
 
 def _initial_words(result):
     words = result.get("words")
-    if not isinstance(words, list) or len(words) != 25:
-        raise OpenAIError("OpenAI did not return 25 board words")
-    if any(not isinstance(word, str) or not word.strip() for word in words):
-        raise OpenAIError("OpenAI returned invalid board words")
-    return words
+    if not isinstance(words, list):
+        raise OpenAIError("OpenAI did not return board words")
+    words = [word.strip() for word in words if isinstance(word, str)]
+    words = words[:25]
+    return words + [""] * (25 - len(words))
 
 
 def _covered_words(result, known_words):
@@ -184,14 +184,16 @@ def _covered_words(result, known_words):
     if not isinstance(covered, list):
         raise OpenAIError("OpenAI returned invalid covered words")
     seen = set()
+    filtered = []
     for item in covered:
         if not isinstance(item, dict):
-            raise OpenAIError("OpenAI returned invalid covered words")
+            continue
         word, color = item.get("word"), item.get("color")
         if word not in known_words or color not in _COLORS or word in seen:
-            raise OpenAIError("OpenAI returned invalid covered words")
+            continue
         seen.add(word)
-    return covered
+        filtered.append({"word": word, "color": color})
+    return filtered
 
 
 @spy.post("/api/spy/scan")
