@@ -63,6 +63,11 @@ RISK_PROFILES = {
 # Which keys parameterise candidate generation vs. the count-trim threshold. safe_margin is the
 # real risk dial: how far a team word must outrank every enemy word to count toward a clue.
 _CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu", "safe_margin")
+# Listener-competition (RSA-style) danger term: penalise clues by the softmax share a literal
+# guesser would put on the assassin/opponent words (see probe._listener_danger). One global pair
+# across risk profiles; SOFT_TAU is the softmax temperature. LAM_SOFT=0 restores hinge-only scoring.
+LAM_SOFT = 1.0
+SOFT_TAU = 0.10
 
 # Cohesion: a counted word must cohere (cosine >= COH_FLOOR) with the cluster's *head* (strongest)
 # word, not merely with the clue — so the number reflects a real cluster, not passengers riding
@@ -458,6 +463,7 @@ def coach_spymaster():
         vocab, emb, lems, freq = geo_assets(vocab_mode)
         cands = probe.encoder_clue_candidates(get_enc(GEO_ENC), board, vocab, emb,
                                               vocab_lemmas=lems, vocab_freq=freq, lam_f=0.14,
+                                              lam_soft=LAM_SOFT, soft_tau=SOFT_TAU,
                                               n=10, targets=focus, **cand_kw)
         if risk == "bold":
             # A bold player should not be offered less coverage merely because the bolder
@@ -467,7 +473,8 @@ def coach_spymaster():
             balanced_kw = {key: balanced[key] for key in _CAND_KEYS}
             fallback = probe.encoder_clue_candidates(
                 get_enc(GEO_ENC), board, vocab, emb, vocab_lemmas=lems,
-                vocab_freq=freq, lam_f=0.14, n=10, targets=focus, **balanced_kw)
+                vocab_freq=freq, lam_f=0.14, lam_soft=LAM_SOFT, soft_tau=SOFT_TAU,
+                n=10, targets=focus, **balanced_kw)
             seen = {candidate["word"] for candidate in cands}
             cands.extend(candidate for candidate in fallback if candidate["word"] not in seen)
         if engine == "hybrid":     # shoresh/derivative gate (DictaLM); geometry stays LLM-free

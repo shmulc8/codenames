@@ -375,6 +375,34 @@ def freq_scores(counts, lo: float = 200.0, hi: float = 60000.0, margin: float = 
     return np.where(c <= 0, 0.0, s).astype(np.float32)
 
 
+# The assassin costs the game outright, an opponent word only a turn, so the listener-danger
+# term weighs probability mass on the assassin more than on a rival word.
+_SOFT_ASSASSIN_WEIGHT = 2.0
+
+
+def _board_softmax(sim: np.ndarray, tau: float) -> np.ndarray:
+    """Row-wise softmax of board similarities: L0(word | clue), a literal-listener
+    distribution over the 25 board words for each candidate clue (rows). `tau` is the
+    temperature (lower = peakier). Invariant to the per-clue mean-centring of `sim`, since a
+    per-row shift cancels in the softmax."""
+    z = sim / max(tau, 1e-6)
+    z = z - z.max(1, keepdims=True)
+    e = np.exp(z)
+    return e / e.sum(1, keepdims=True)
+
+
+def _listener_danger(adj: np.ndarray, is_as: np.ndarray, is_opp: np.ndarray, tau: float) -> np.ndarray:
+    """Probability mass a literal listener puts on danger words, per candidate clue: the
+    softmax share landing on the assassin (weighted) plus the share on opponent words. Unlike
+    the hinge penalties (which read absolute centred similarity), this is scale-invariant and
+    accounts for board competition — a clue near the assassin is safe if team/neutral words
+    draw more of the listener's mass, and risky if they don't."""
+    L0 = _board_softmax(adj, tau)
+    as_mass = L0[:, is_as].sum(1) if is_as.any() else 0.0
+    opp_mass = L0[:, is_opp].sum(1) if is_opp.any() else 0.0
+    return _SOFT_ASSASSIN_WEIGHT * as_mass + opp_mass
+
+
 # --------------------------------------------------------------------------- #
 # Board
 # --------------------------------------------------------------------------- #
@@ -494,18 +522,23 @@ class Clue:
 
 def encoder_spymaster(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas=None,
                       lam_opp: float = 1.0, lam_neu: float = 0.3, lam_a: float = 2.0,
-                      lam_f: float = 0.0, vocab_freq=None, m: int = 2) -> Clue:
+                      lam_f: float = 0.0, vocab_freq=None, m: int = 2,
+                      lam_soft: float = 0.0, soft_tau: float = 0.1) -> Clue:
     """Pick the clue maximising a tiered Codenames scoring function:
         g(c) = sum_{top-m team} s'(c,b)
                - lam_a   * max(0, s'(c, assassin))     # the black card — avoid hardest
                - lam_opp * max(0, max_opp  s'(c,r))    # rival team — avoid strongly
                - lam_neu * max(0, max_neut s'(c,r))    # bystanders — avoid mildly
                + lam_f   * FREQ(c)                      # DETECT-FREQ: prefer mid-frequency
+               - lam_soft * P_danger(c)                 # listener mass on assassin+opp words
     where s'(c,w) = cos(c,w) - mean_b cos(c,b) is the similarity centred per clue over
     the 25 board words (anisotropy / DETECT-style correction so broadly-similar common
-    words don't win). Clues come from `clue_vocab`, never the board (no shared surface
-    form). Pass precomputed `clue_emb` (aligned with clue_vocab) to skip re-embedding, and
-    `vocab_freq` (FREQ scores in [0,1] aligned with clue_vocab) to enable the FREQ term.
+    words don't win). P_danger(c) is the softmax share (temperature `soft_tau`) a literal
+    listener puts on danger words — a board-competition-aware complement to the absolute
+    hinge penalties (see `_listener_danger`); set lam_soft=0 to disable. Clues come from
+    `clue_vocab`, never the board (no shared surface form). Pass precomputed `clue_emb`
+    (aligned with clue_vocab) to skip re-embedding, and `vocab_freq` (FREQ scores in [0,1]
+    aligned with clue_vocab) to enable the FREQ term.
     """
     bw, B, cand, keep, C = _legal_candidates(enc, board, clue_vocab, clue_emb, vocab_lemmas)
     adj = C @ B.T                                    # (V, 25) cosine to every board word
@@ -530,6 +563,8 @@ def encoder_spymaster(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas
     g = top_my - lam_a * tier_max(is_as) - lam_opp * tier_max(is_opp) - lam_neu * tier_max(is_neu)
     if vocab_freq is not None and lam_f:
         g = g + lam_f * np.asarray(vocab_freq, dtype=np.float32)[keep]
+    if lam_soft:
+        g = g - lam_soft * _listener_danger(adj, is_as, is_opp, soft_tau)
 
     bi = int(np.nanargmax(g))
     my_words = [w for w, mm in zip(bw, is_my) if mm]
@@ -543,7 +578,8 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
                             n: int = 10, targets: list[str] | None = None,
                             lam_opp: float = 1.0, lam_neu: float = 0.3, lam_a: float = 2.0,
                             lam_f: float = 0.0, vocab_freq=None, m: int = 2,
-                            safe_margin: float = 0.0):
+                            safe_margin: float = 0.0,
+                            lam_soft: float = 0.0, soft_tau: float = 0.1):
     """Top-n legal clue candidates, each with the team words it *safely* connects.
 
     A team word counts toward a clue only if it is safe — its mean-centred similarity to the
@@ -552,7 +588,12 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
     word (a stretched m-th word an opponent outranks no longer inflates it), and the returned
     `intended`/`count` are exactly those safe words. Larger `safe_margin` = more conservative
     (the risk dial). `targets` forces a clue for a chosen team subset (the "clue for these words"
-    path): there all targets are scored, and safety only informs the tiered penalties."""
+    path): there all targets are scored, and safety only informs the tiered penalties.
+
+    `lam_soft` adds a listener-competition penalty: the score drops by lam_soft times the
+    softmax share (temperature `soft_tau`) a literal listener would put on the assassin
+    (weighted) and opponent words (see `_listener_danger`). It complements the absolute hinge
+    penalties with a scale-invariant, whole-board view; set lam_soft=0 to disable."""
     bw, B, cand, keep, C = _legal_candidates(enc, board, clue_vocab, clue_emb, vocab_lemmas)
     adj = C @ B.T; adj = adj - adj.mean(1, keepdims=True)
     roles = np.array([board.role[w] for w in bw])
@@ -583,6 +624,8 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
     g = g_team - lam_a * tmax(is_as) - lam_opp * tmax(is_opp) - lam_neu * tmax(is_neu)
     if vocab_freq is not None and lam_f:
         g = g + lam_f * np.asarray(vocab_freq, dtype=np.float32)[keep]
+    if lam_soft:
+        g = g - lam_soft * _listener_danger(adj, is_as, is_opp, soft_tau)
     out = []
     for bi in np.argsort(-g)[:n]:
         if fixed:

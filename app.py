@@ -63,6 +63,11 @@ RISK_PROFILES = {
 }
 _CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu", "safe_margin")
 LAM_F = 0.14                # weight on the mid-frequency (DETECT-FREQ) prior in candidate scoring
+# Listener-competition (RSA-style) danger term: penalise clues by the softmax share a literal
+# guesser would put on the assassin/opponent words (see probe._listener_danger). One global pair
+# across risk profiles; SOFT_TAU is the softmax temperature. LAM_SOFT=0 restores hinge-only scoring.
+LAM_SOFT = 1.0
+SOFT_TAU = 0.10
 
 # Cohesion: a counted word must cohere (cosine >= COH_FLOOR) with the cluster's *head* (strongest)
 # word, not merely with the clue — so the number reflects a real cluster, not passengers riding
@@ -149,6 +154,23 @@ _DEFAULT_AMBIGUITY = {
     "עלה": {"ambiguity": 0.95, "senses": ["leaf", "rose/ascended"]},
     "פרח": {"ambiguity": 0.95, "senses": ["flower", "flourished/youth"]},
 }
+
+
+def get_llm(mid):
+    mid = mid or probe.LLM_FAST
+    if mid not in (probe.LLM_FAST, probe.LLM_BIG):    # never hand an arbitrary client string to mlx_lm.load
+        abort(400, f"unknown model {mid!r}")
+    if mid not in _llms:
+        app.logger.info("loading LLM %s ...", mid)
+        _llms[mid] = probe.HebrewLLM(mid)
+    return _llms[mid]
+
+
+def get_enc(key):
+    if key not in _encs:
+        app.logger.info("loading encoder %s ...", key)
+        _encs[key] = probe.make_encoder(key)
+    return _encs[key]
 
 
 def _load_ambiguity_lexicon():
@@ -475,7 +497,8 @@ def serve_clue(board: probe.Board, risk: str = "balanced", focus=None, profile=N
     vocab, emb, lems, freq = geo_assets(vocab_mode)
     cands = probe.encoder_clue_candidates(
         get_enc(GEO_ENC), board, vocab, emb, vocab_lemmas=lems, vocab_freq=freq,
-        lam_f=LAM_F, n=10, targets=focus, **{k: prof[k] for k in _CAND_KEYS})
+        lam_f=LAM_F, lam_soft=LAM_SOFT, soft_tau=SOFT_TAU,
+        n=10, targets=focus, **{k: prof[k] for k in _CAND_KEYS})
     options = [_analyze_clue(board, c["word"], c["intended"], c["count"], c["score"], focus,
                              keep_rel=prof["keep"], max_count=prof["m"]) for c in cands]
     order = _risk_order(options, risk)
@@ -514,6 +537,7 @@ def coach_spymaster():
         vocab, emb, lems, freq = geo_assets(vocab_mode)
         cands = probe.encoder_clue_candidates(get_enc(GEO_ENC), board, vocab, emb,
                                               vocab_lemmas=lems, vocab_freq=freq, lam_f=LAM_F,
+                                              lam_soft=LAM_SOFT, soft_tau=SOFT_TAU,
                                               n=10, targets=focus, **cand_kw)
         bad = probe.llm_root_conflicts(get_llm(mid), [c["word"] for c in cands], board.words)
         cands = [c for c in cands if c["word"] not in bad] or cands   # keep >=1
