@@ -3,7 +3,7 @@ services:
     name: hebrew-codenames-copilot
     runtime: docker
     region: frankfurt
-    plan: starter
+    plan: free
     dockerfilePath: ./hf_space/Dockerfile
     dockerContext: ./hf_space
     healthCheckPath: /api/health
