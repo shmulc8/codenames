@@ -61,7 +61,7 @@
     font-size:14px; font-weight:700; letter-spacing:.005em; transition:color .15s}
   .seg button.on{background:var(--grad-cta); color:#04141b; box-shadow:0 0 18px rgba(46,230,214,.4)}
   .seg.sm{padding:3px} .seg.sm button{padding:6px 12px; font-size:13px}
-  .riskwrap{display:inline-flex; align-items:center; gap:7px}
+  .riskwrap, .vocabwrap{display:inline-flex; align-items:center; gap:7px}
 
   .tools{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:10px; flex:0 0 auto}
   select,.btn{
@@ -374,6 +374,14 @@
         <button data-risk="bold">נועז</button>
       </span>
     </span>
+    <span class="vocabwrap" id="vocabwrap" title="מצב אוצר מילים לרמז: שמרני = שמות עצם ותארים נפוצים · רחב = כולל שמות פרטיים ומקומות · ניסיוני = כולל גם פעלים וטווח רחב יותר">
+      <span class="lbl">אוצר מילים:</span>
+      <span class="seg sm" id="vocab">
+        <button data-vocab="conservative" class="on">שמרני</button>
+        <button data-vocab="broad">רחב</button>
+        <button data-vocab="experimental">ניסיוני</button>
+      </span>
+    </span>
     <span style="flex:1"></span>
     <span class="lbl engtag">גאומטריה · fastText · ללא LLM</span>
     <a class="methods-link" href="/methods" target="_blank" rel="noopener">איך זה עובד ›</a>
@@ -422,7 +430,7 @@ const sideTxt = () => "הצוות שלך (" + (S.side==="opp"?"אדום":"תכל
 const S = {
   mode:"spymaster", side:"my", words:[], roles:{}, editing:false, revealMode:false,
   focus:new Set(), revealed:new Set(),
-  engine:{spymaster:"geometry", operative:"geometry"}, model:null, risk:"balanced",
+  engine:{spymaster:"geometry", operative:"geometry"}, model:null, risk:"balanced", vocab_mode:"conservative",
   spyTab:"generate",
   spyResult:null, spyIdx:0, checkResult:null, opResult:null,
   opClue:"", opCount:2, checkClue:"",
@@ -733,8 +741,10 @@ function render(){
     ? '<b style="color:var(--opp)">אדום</b>' : '<b style="color:var(--team)">תכלת</b>');
   $("#swap").classList.toggle("active", S.side==="opp");
   $("#riskwrap").style.display = S.mode==="spymaster" ? "" : "none";
+  $("#vocabwrap").style.display = S.mode==="spymaster" ? "" : "none";
   $("#clearsel").style.display = (S.mode==="spymaster" && S.focus.size>0) ? "" : "none";
   document.querySelectorAll("#risk button").forEach(b=>b.classList.toggle("on", b.dataset.risk===S.risk));
+  document.querySelectorAll("#vocab button").forEach(b=>b.classList.toggle("on", b.dataset.vocab===S.vocab_mode));
   $("#reveal").textContent = S.revealMode?"✓ סיום חשיפה":"🃏 חשיפה";
   $("#reveal").classList.toggle("active", S.revealMode);
 
@@ -805,7 +815,7 @@ async function genClue(){
   S.busy=true; S.error=""; render();
   try{
     const ab=activeBoard();
-    const r = await api("/api/coach/spymaster",{words:ab.words,roles:ab.roles,engine:S.engine.spymaster,model:S.model,focus:[...S.focus],risk:S.risk});
+    const r = await api("/api/coach/spymaster",{words:ab.words,roles:ab.roles,engine:S.engine.spymaster,model:S.model,focus:[...S.focus],risk:S.risk,vocab_mode:S.vocab_mode});
     if(r.error){ S.error=r.error; S.spyResult=null; }
     else { S.spyResult=r; S.spyIdx=r.picked||0; const cur=curOpt(); await showSpace(cur.word, cur.no_clue?[]:cur.intended); }
   }finally{ S.busy=false; render();
@@ -850,6 +860,8 @@ document.addEventListener("click", e=>{
   const t=e.target;
   if(t.closest("#mode button")){ S.mode=t.closest("button").dataset.mode; S.error=""; S.space=null; S.spaceLinks=[]; render(); drawSpace(); return; }
   const rb=t.closest("#risk button"); if(rb){ S.risk=rb.dataset.risk;
+    if(S.words.length && !S.editing){ genClue(); } else { render(); } return; }
+  const vb=t.closest("#vocab button"); if(vb){ S.vocab_mode=vb.dataset.vocab;
     if(S.words.length && !S.editing){ genClue(); } else { render(); } return; }
   if(t.id==="pcg-go"){ document.body.classList.add("pcg-in"); try{ sessionStorage.setItem("pcg","1"); }catch(_){}; drawSpace(); return; }
   if(t.id==="clearsel"){ S.focus.clear(); S.spyResult=null; S.spyIdx=0; S.space=null; S.spaceLinks=[]; render(); drawSpace(); return; }

@@ -278,17 +278,87 @@ def content_lemma_master(source_n: int = 14000, cache: str | None = None):
     return data
 
 
+_BLOCKLIST: set[str] | None = None
+
+
+def load_blocklist() -> set[str]:
+    global _BLOCKLIST
+    if _BLOCKLIST is None:
+        block = set()
+        path = os.path.join(DATA, "blocklist_he.txt")
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                for line in f:
+                    w = line.strip()
+                    if w and not w.startswith("#"):
+                        block.add(w)
+        _BLOCKLIST = block
+    return _BLOCKLIST
+
+
+def is_malformed(word: str) -> bool:
+    # 1. Reject words with 3 or more of the same character in a row
+    for i in range(len(word) - 2):
+        if word[i] == word[i+1] == word[i+2]:
+            return True
+            
+    # 2. Reject words with final letters (ך, ם, ן, ף, ץ) in middle positions (non-final)
+    finals = set("ךםןףץ")
+    for i in range(len(word) - 1):
+        if word[i] in finals:
+            return True
+            
+    # 3. Reject words with non-final letters (כ, מ, נ, פ, צ) at the end of the word
+    non_finals = set("כמנפצ")
+    if word[-1] in non_finals:
+        return True
+        
+    return False
+
+
 def clue_vocab_band(n: int = 1800, lo: int = 200, hi: int = 60000,
-                    pos: set[str] | None = None, source_n: int = 14000, min_len: int = 3):
+                    pos: set[str] | None = None, source_n: int = 14000, min_len: int = 3,
+                    mode: str | None = None, filter_malformed: bool = True,
+                    filter_blocklist: bool = True):
     """Clue vocab from a frequency BAND of content lemmas: drop over-common conversational
     words (count > hi) and obscure words (count < lo). `pos` optionally restricts the part
     of speech (e.g. {'NOUN','ADJ'} — nouns/adjectives make cleaner clues than verbs and
     avoid the subtitle proper-name noise). `min_len` drops 1–2 letter tokens, which in the
     frequency list are mostly fragments / mislabeled function words (עו, תר, מה) rather than
     real clue words. Returns (words, counts)."""
+    if mode is not None:
+        source_n = 30000
+        if mode == "conservative":
+            pos = {"NOUN", "ADJ"}
+            lo, hi = 1000, 80000
+        elif mode == "broad":
+            pos = {"NOUN", "ADJ", "PROPN"}
+            lo, hi = 300, 100000
+        elif mode == "experimental":
+            pos = {"NOUN", "ADJ", "PROPN", "VERB"}
+            lo, hi = 100, 150000
+        else:
+            raise ValueError(f"Unknown vocabulary mode: {mode}")
+
     data = content_lemma_master(source_n)
-    band = [(w, c) for w, c, p in data
-            if lo <= c <= hi and len(w) >= min_len and (pos is None or p in pos)][:n]
+    block = load_blocklist() if filter_blocklist else set()
+    
+    band = []
+    for w, c, p in data:
+        if not (lo <= c <= hi):
+            continue
+        if len(w) < min_len:
+            continue
+        if pos is not None and p not in pos:
+            continue
+        if filter_blocklist and w in block:
+            continue
+        if filter_malformed and is_malformed(w):
+            continue
+        band.append((w, c))
+        if len(band) >= n:
+            break
+            
     return [w for w, _ in band], np.array([c for _, c in band], dtype=np.float32)
 
 
