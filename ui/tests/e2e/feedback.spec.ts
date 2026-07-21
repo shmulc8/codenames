@@ -109,7 +109,11 @@ async function mountFeedbackHarness(page: Page): Promise<void> {
     createRoot(rootElement).render(createElement(Harness));
   });
 
-  await expect(page.getByTestId('btn-like')).toBeVisible();
+  await expect(feedbackHarness(page).getByTestId('btn-like')).toBeVisible();
+}
+
+function feedbackHarness(page: Page) {
+  return page.locator('#feedback-test-root');
 }
 
 async function setupFeedback(page: Page): Promise<void> {
@@ -127,6 +131,7 @@ function expectedWireRole(role: Role, target: 'red' | 'blue'): string {
 test.describe('instant feedback', () => {
   test('👍 sends the complete wire payload and keeps its uid across reloads', async ({ page }) => {
     await setupFeedback(page);
+    const feedback = feedbackHarness(page);
     await page.evaluate((board) => {
       if (!window.__store) throw new Error('The dev store hook was not installed');
       window.__store.getState().toggleLifecycle(board.words[9]);
@@ -150,17 +155,17 @@ test.describe('instant feedback', () => {
       };
     });
 
-    await page.getByTestId('btn-like').click();
-    await expect(page.getByTestId('loading-spinner')).toBeVisible();
+    await feedback.getByTestId('btn-like').click();
+    await expect(feedback.getByTestId('loading-spinner')).toBeVisible();
     await page.evaluate(() => {
       window.dispatchEvent(new Event('feedback-test:release-request'));
     });
-    await expect(page.getByTestId('feedback-sent')).toContainText(
+    await expect(feedback.getByTestId('feedback-sent')).toContainText(
       'תודה! זה עוזר לאמן את המודל',
     );
-    await expect(page.getByTestId('feedback-comment')).toBeVisible();
-    await expect(page.getByTestId('btn-like')).toBeDisabled();
-    await expect(page.getByTestId('btn-dislike')).toBeDisabled();
+    await expect(feedback.getByTestId('feedback-comment')).toBeVisible();
+    await expect(feedback.getByTestId('btn-like')).toBeDisabled();
+    await expect(feedback.getByTestId('btn-dislike')).toBeDisabled();
 
     const firstPayload = await expect
       .poll(() => page.evaluate(() => window.__lastFeedback))
@@ -201,8 +206,8 @@ test.describe('instant feedback', () => {
     }, fixtureBoard);
     await installClue(page);
     await mountFeedbackHarness(page);
-    await page.getByTestId('btn-like').click();
-    await expect(page.getByTestId('feedback-sent')).toBeVisible();
+    await feedback.getByTestId('btn-like').click();
+    await expect(feedback.getByTestId('feedback-sent')).toBeVisible();
 
     const secondUid = await expect
       .poll(() => page.evaluate(() => window.__lastFeedback?.uid))
@@ -213,15 +218,16 @@ test.describe('instant feedback', () => {
 
   test('👎 requires a reason and includes the selected why tag', async ({ page }) => {
     await setupFeedback(page);
+    const feedback = feedbackHarness(page);
 
-    await page.getByTestId('btn-dislike').click();
-    await expect(page.getByTestId('feedback-why')).toBeVisible();
-    await expect(page.getByText('מה לא עבד? בחרו סיבה')).toBeVisible();
+    await feedback.getByTestId('btn-dislike').click();
+    await expect(feedback.getByTestId('feedback-why')).toBeVisible();
+    await expect(feedback.getByText('מה לא עבד? בחרו סיבה')).toBeVisible();
     expect(await page.evaluate(() => window.__lastFeedback)).toBeUndefined();
 
-    await page.getByRole('button', { name: 'מסוכן', exact: true }).click();
-    await expect(page.getByTestId('feedback-sent')).toBeVisible();
-    await expect(page.getByTestId('feedback-comment')).toBeVisible();
+    await feedback.getByRole('button', { name: 'מסוכן', exact: true }).click();
+    await expect(feedback.getByTestId('feedback-sent')).toBeVisible();
+    await expect(feedback.getByTestId('feedback-comment')).toBeVisible();
 
     await expect
       .poll(() => page.evaluate(() => window.__lastFeedback))
@@ -235,22 +241,23 @@ test.describe('instant feedback', () => {
 
   test('changing the store option resets the widget state', async ({ page }) => {
     await setupFeedback(page);
+    const feedback = feedbackHarness(page);
 
-    await page.getByTestId('btn-like').click();
-    await expect(page.getByTestId('feedback-sent')).toBeVisible();
-    await expect(page.getByTestId('btn-like')).toBeDisabled();
+    await feedback.getByTestId('btn-like').click();
+    await expect(feedback.getByTestId('feedback-sent')).toBeVisible();
+    await expect(feedback.getByTestId('btn-like')).toBeDisabled();
 
     await page.evaluate(() => {
       if (!window.__store) throw new Error('The dev store hook was not installed');
       window.__store.getState().setOptionIndex(1);
     });
 
-    await expect(page.getByTestId('btn-like')).toBeEnabled();
-    await expect(page.getByTestId('btn-dislike')).toBeEnabled();
-    await expect(page.getByTestId('feedback-sent')).toBeHidden();
-    await expect(page.getByTestId('feedback-comment')).toBeHidden();
+    await expect(feedback.getByTestId('btn-like')).toBeEnabled();
+    await expect(feedback.getByTestId('btn-dislike')).toBeEnabled();
+    await expect(feedback.getByTestId('feedback-sent')).toBeHidden();
+    await expect(feedback.getByTestId('feedback-comment')).toBeHidden();
 
-    await page.getByTestId('btn-like').click();
+    await feedback.getByTestId('btn-like').click();
     await expect
       .poll(() => page.evaluate(() => window.__lastFeedback?.clue))
       .toBe(riskyOption.word);
@@ -258,13 +265,14 @@ test.describe('instant feedback', () => {
 
   test('a failed request stays silent and is retried from the queue', async ({ page }) => {
     await setupFeedback(page);
+    const feedback = feedbackHarness(page);
     await page.clock.install();
     await page.evaluate(() => {
       window.__failFeedbackOnce = true;
     });
 
-    await page.getByTestId('btn-like').click();
-    await expect(page.getByTestId('feedback-sent')).toBeVisible();
+    await feedback.getByTestId('btn-like').click();
+    await expect(feedback.getByTestId('feedback-sent')).toBeVisible();
     await expect(page.getByTestId('toast')).toBeHidden();
     await expect.poll(() => page.evaluate(() => window.__failFeedbackOnce)).toBe(false);
 
