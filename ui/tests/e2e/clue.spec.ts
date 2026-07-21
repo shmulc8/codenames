@@ -1,0 +1,206 @@
+import { expect, test, type Page } from '@playwright/test';
+
+import { fixtureBoard } from '../../src/mocks/fixtures/board';
+
+async function setupFixtureBoard(page: Page): Promise<void> {
+  await page.setViewportSize({ width: 1320, height: 900 });
+  await page.goto('/');
+  await expect(page.getByTestId('setup-screen')).toBeVisible();
+
+  await page.evaluate((board) => {
+    if (!window.__store) throw new Error('The dev store hook was not installed');
+    window.__store.getState().setBoard(board.words, board.roles);
+  }, fixtureBoard);
+
+  await expect(page.getByTestId('target-color')).toBeVisible();
+}
+
+async function requestAutoClue(page: Page): Promise<void> {
+  await page.getByTestId('btn-auto-cluster').click();
+  await expect(page.getByTestId('clue-result')).toBeVisible();
+  await expect(page.getByTestId('clue-word')).toHaveText('טבע');
+}
+
+test('auto-cluster renders option 0, posts no focus, and exposes loading state', async ({
+  page,
+}) => {
+  await setupFixtureBoard(page);
+
+  await expect(page.getByTestId('btn-get-clue')).toBeDisabled();
+  await expect(page.getByTestId('target-red')).toHaveAttribute('aria-pressed', 'true');
+
+  await page.getByTestId('btn-auto-cluster').click();
+
+  await expect(page.getByTestId('loading-spinner')).toBeVisible();
+  await expect(page.getByTestId('btn-auto-cluster')).toBeDisabled();
+  await expect(page.getByTestId('risk-balanced')).toBeDisabled();
+
+  await expect(page.getByTestId('clue-result')).toBeVisible();
+  await expect(page.getByTestId('clue-word')).toHaveText('טבע');
+  await expect(page.getByTestId('clue-count')).toHaveText('מספר: 2');
+  await expect(page.getByTestId('clue-reason')).toContainText(
+    'הרמז מחבר היטב בין מילות המטרה',
+  );
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 3');
+  await expect(page.getByText(/המתנקש \(נחש\) במקום \d+ בדירוג/)).toBeVisible();
+
+  const request = await page.evaluate(() => window.__lastSpymasterReq);
+  expect(request?.focus).toBeUndefined();
+  expect(request?.risk).toBe('balanced');
+});
+
+test('focused request posts the selected cluster and keyboard-selected risk', async ({
+  page,
+}) => {
+  await setupFixtureBoard(page);
+
+  await page.evaluate((words) => {
+    if (!window.__store) throw new Error('The dev store hook was not installed');
+    window.__store.getState().toggleSelected(words[0]);
+    window.__store.getState().toggleSelected(words[1]);
+  }, fixtureBoard.words);
+
+  await expect(page.getByText('נבחרו: 2 קלפים בצבע אדום')).toBeVisible();
+  await expect(page.getByTestId('btn-get-clue')).toBeEnabled();
+
+  await page.getByTestId('risk-bold').focus();
+  await expect(page.getByTestId('risk-bold')).toBeFocused();
+  await page.getByTestId('risk-bold').press('Space');
+  await expect(page.getByTestId('risk-bold')).toHaveAttribute('aria-pressed', 'true');
+
+  await page.getByTestId('btn-get-clue').click();
+  await expect(page.getByTestId('loading-spinner')).toBeVisible();
+  await expect(page.getByTestId('clue-word')).toHaveText('טבע');
+
+  const request = await page.evaluate(() => window.__lastSpymasterReq);
+  expect(request?.focus).toEqual(fixtureBoard.words.slice(0, 2));
+  expect(request?.risk).toBe('bold');
+});
+
+test('carousel wraps and renders risky and no-clue states', async ({ page }) => {
+  await setupFixtureBoard(page);
+  await requestAutoClue(page);
+
+  await page.getByTestId('btn-prev-option').click();
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 3 מתוך 3');
+  await expect(page.getByTestId('no-clue-state')).toContainText(
+    'לא נמצא רמז בטוח. נסו אשכול אחר או רמת סיכון אחרת.',
+  );
+  await expect(page.getByTestId('no-clue-state')).toContainText(
+    "נסה רמת 'נועז' או בחר מילים אחרות",
+  );
+
+  await page.getByTestId('btn-next-option').click();
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 3');
+  await expect(page.getByTestId('clue-word')).toHaveText('טבע');
+
+  await page.getByTestId('btn-next-option').click();
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 2 מתוך 3');
+  await expect(page.getByTestId('clue-word')).toHaveText('מסע');
+  await expect(page.getByTestId('warning-banner')).toContainText(
+    'זהירות: הרמז עלול למשוך מילה מסוכנת.',
+  );
+  await expect(page.getByTestId('warning-banner')).toContainText('נחש');
+});
+
+test('target switch clears selection and blue-target requests use my/opp wire roles', async ({
+  page,
+}) => {
+  await setupFixtureBoard(page);
+
+  await page.evaluate((word) => {
+    if (!window.__store) throw new Error('The dev store hook was not installed');
+    window.__store.getState().toggleSelected(word);
+  }, fixtureBoard.words[0]);
+
+  await expect(page.getByText('נבחרו: 1 קלפים בצבע אדום')).toBeVisible();
+  await page.getByTestId('target-blue').focus();
+  await expect(page.getByTestId('target-blue')).toBeFocused();
+  await page.getByTestId('target-blue').press('Enter');
+  await expect(page.getByTestId('target-blue')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('לא נבחרו קלפים — אפשר לתת למנוע לבחור צירוף.')).toBeVisible();
+
+  const switchedState = await page.evaluate(() => {
+    if (!window.__store) throw new Error('The dev store hook was not installed');
+    const { selected, target } = window.__store.getState();
+    return { selected, target };
+  });
+  expect(switchedState).toEqual({ selected: [], target: 'blue' });
+
+  await requestAutoClue(page);
+
+  const request = await page.evaluate(() => window.__lastSpymasterReq);
+  expect(request?.focus).toBeUndefined();
+  expect(request?.roles[fixtureBoard.words[9]]).toBe('my');
+  expect(request?.roles[fixtureBoard.words[0]]).toBe('opp');
+  expect(request?.roles[fixtureBoard.words[17]]).toBe('neutral');
+  expect(request?.roles[fixtureBoard.words[24]]).toBe('assassin');
+});
+
+test('using a clue records its target in the store log and confirms usage', async ({
+  page,
+}) => {
+  await setupFixtureBoard(page);
+  await page.getByTestId('target-blue').click();
+  await requestAutoClue(page);
+
+  await page.getByTestId('btn-use-clue').click();
+  await expect(page.getByTestId('btn-use-clue')).toHaveText('הרמז סומן לשימוש');
+  await expect(page.getByText(/נשמר — תוצאות החשיפות יתווספו לרמז הזה/)).toBeVisible();
+
+  const result = await page.evaluate(() => {
+    if (!window.__store) throw new Error('The dev store hook was not installed');
+    const state = window.__store.getState();
+    return {
+      usedTarget: state.clue.used?.target,
+      usedClue: state.clue.used?.clue,
+      logLength: state.log.length,
+      logTarget: state.log[0]?.target,
+    };
+  });
+
+  expect(result).toEqual({
+    usedTarget: 'blue',
+    usedClue: 'טבע',
+    logLength: 1,
+    logTarget: 'blue',
+  });
+});
+
+test('lifecycle changes display the stale-result overlay', async ({ page }) => {
+  await setupFixtureBoard(page);
+  await requestAutoClue(page);
+
+  await page.evaluate((word) => {
+    if (!window.__store) throw new Error('The dev store hook was not installed');
+    window.__store.getState().toggleLifecycle(word);
+  }, fixtureBoard.words[0]);
+
+  await expect(
+    page.getByText('הלוח השתנה — הרמז חושב על לוח ישן'),
+  ).toBeVisible();
+  await expect(page.getByText('כדאי לחשב שוב לפני שמשתמשים בו.')).toBeVisible();
+  await expect(page.getByText('חשבו שוב')).toBeVisible();
+  await expect(page.getByTestId('btn-use-clue')).toBeDisabled();
+});
+
+test.describe('backend error handling', () => {
+  test.use({ serviceWorkers: 'block' });
+
+  test('surfaces the backend message in the canonical toast', async ({ page }) => {
+    await page.route('**/api/coach/spymaster', async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'בדיקת כשל מהשרת' }),
+      });
+    });
+
+    await setupFixtureBoard(page);
+    await page.getByTestId('btn-auto-cluster').click();
+
+    await expect(page.getByTestId('toast')).toBeVisible();
+    await expect(page.getByTestId('toast')).toContainText('בדיקת כשל מהשרת');
+    await expect(page.getByTestId('loading-spinner')).toHaveCount(0);
+  });
+});
