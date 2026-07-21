@@ -134,6 +134,26 @@ test.describe('BoardGrid', () => {
     });
   });
 
+  test('mark-revealed mode makes covered cards visible and removes them from hint requests', async ({ page }) => {
+    await setupDemoBoard(page);
+
+    await page.getByTestId('btn-mark-revealed').click();
+    await expect(page.getByTestId('btn-mark-revealed')).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('tile-0').click();
+    await expect(page.getByTestId('tile-0')).toHaveAttribute('data-lifecycle', 'chosen');
+    await expect(page.getByTestId('chip-chosenby-0')).toBeVisible();
+
+    const liveWords = await page.evaluate(() =>
+      window.__store?.getState().tiles
+        .filter((tile) => tile.lifecycle === 'inPlay')
+        .map((tile) => tile.word),
+    );
+    expect(liveWords).not.toContain(fixtureBoard.words[0]);
+
+    await page.getByTestId('tile-0').click();
+    await expect(page.getByTestId('tile-0')).toHaveAttribute('data-lifecycle', 'inPlay');
+  });
+
   test('announces the assassin and updates the remaining team counters', async ({ page }) => {
     await setupDemoBoard(page);
 

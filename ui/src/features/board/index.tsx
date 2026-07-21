@@ -37,6 +37,7 @@ export function BoardGrid(): JSX.Element {
   const setHoverWord = useAppStore((state) => state.setHoverWord);
   const setBoard = useAppStore((state) => state.setBoard);
   const [legendOpen, setLegendOpen] = useState(false);
+  const [markingRevealed, setMarkingRevealed] = useState(false);
   const [dealing, setDealing] = useState(false);
   const legendRef = useRef<HTMLDivElement | null>(null);
 
@@ -91,6 +92,7 @@ export function BoardGrid(): JSX.Element {
       // setBoard intentionally keeps the player on the game screen while replacing
       // all board-scoped state (selections, clues, reveals, and log).
       setBoard(deal.words, deal.roles);
+      setMarkingRevealed(false);
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי',
@@ -138,6 +140,16 @@ export function BoardGrid(): JSX.Element {
 
           <button
             type="button"
+            className={`btn btn-secondary ${markingRevealed ? 'is-active' : ''}`}
+            data-testid="btn-mark-revealed"
+            aria-pressed={markingRevealed}
+            onClick={() => setMarkingRevealed((marking) => !marking)}
+          >
+            {markingRevealed ? 'סיום סימון' : 'סימון כנחשף'}
+          </button>
+
+          <button
+            type="button"
             className="btn btn-secondary"
             data-testid="btn-reset-game"
             disabled={dealing}
@@ -168,6 +180,7 @@ export function BoardGrid(): JSX.Element {
             chosen && tile.role === 'assassin' ? 'is-assassin-chosen' : '',
             intendedWords.has(tile.word) ? 'is-clue-target' : '',
             hoverWord === tile.word ? 'is-hover-linked' : '',
+            markingRevealed ? 'is-marking-revealed' : '',
           ]
             .filter(Boolean)
             .join(' ');
@@ -190,10 +203,16 @@ export function BoardGrid(): JSX.Element {
                 data-word={tile.word}
                 data-role={tile.role}
                 data-lifecycle={tile.lifecycle}
-                disabled={chosen}
+                disabled={chosen && !markingRevealed}
                 aria-pressed={selectedForClue}
                 aria-label={`${tile.word}, ${roleLabel[tile.role]}${chosen ? ', נחשף' : ''}`}
-                onClick={() => selectTile(index)}
+                onClick={() => {
+                  if (markingRevealed) {
+                    toggleLifecycle(tile.word);
+                    return;
+                  }
+                  selectTile(index);
+                }}
               >
                 <Card className="board-tile__face" color={roleColor[visualRole]} />
                 <span className="board-tile__content">
@@ -234,7 +253,9 @@ export function BoardGrid(): JSX.Element {
         })}
       </div>
 
-      <p className="board__hint">לחצו על קלף קבוצה כדי לצרף אותו לרמז · סימון כנחשף מוציא אותו מהמהלך</p>
+      <p className="board__hint">
+        לחצו על קלף קבוצה כדי לצרף אותו לרמז · ב״סימון כנחשף״ לחצו על קלף שכבר יצא מהמשחק — הוא לא יישלח יותר לקבלת רמזים.
+      </p>
     </section>
   );
 }
