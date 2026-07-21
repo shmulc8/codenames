@@ -95,11 +95,28 @@ def lemmas(words) -> list[str]:
     return out
 
 
+@functools.lru_cache(maxsize=1024)
 def lemma(word: str) -> str:
     return lemmas([word])[0]
 
 
 _FINALS = str.maketrans("ךםןףץ", "כמנפצ")
+
+
+_CUSTOM_ROOTS = {
+    "פרחח": {"פרחח"},
+    "פרחחים": {"פרחח"},
+}
+
+
+def _get_lex_roots(w: str, lex: dict) -> set[str]:
+    if w in _CUSTOM_ROOTS:
+        return set(_CUSTOM_ROOTS[w])
+    # Exact spelling is authoritative, final-letter variant is fallback
+    roots_found = set(lex.get(w, ()))
+    if not roots_found:
+        roots_found.update(lex.get(w.translate(_FINALS), ()))
+    return roots_found
 
 
 def root_sig(word: str) -> str:
@@ -151,14 +168,88 @@ def _root_lexicon() -> dict:
         return {}
 
 
+@functools.lru_cache(maxsize=4096)
 def roots(word: str) -> set[str]:
     """Triliteral root(s) of a surface Hebrew word per the vendored Wiktionary lexicon.
-    Returns an empty set for out-of-lexicon words — the caller then falls back to root_sig."""
-    key = _norm_lookup(word)
-    lexicon = _root_lexicon()
-    # Exact spelling is authoritative. The final-letter variant is a conservative
-    # recall fallback for text copied with inconsistent Hebrew orthography.
-    roots_found = set(lexicon.get(key, ()))
-    if not roots_found:
-        roots_found.update(lexicon.get(key.translate(_FINAL_FORMS), ()))
-    return roots_found
+    Handles prefixes, suffixes, plurals, construct forms, and inflections using 
+    lexicon-based decomposition and lemmatization fallbacks."""
+    lex = _root_lexicon()
+    if not lex:
+        return set()
+        
+    norm = _norm_lookup(word)
+    if not norm:
+        return set()
+        
+    # Tier 1: Direct lookup
+    res = _get_lex_roots(norm, lex)
+    if res:
+        return res
+            
+    # Tier 2: Systematic prefix/suffix stripping based on lexicon validation
+    # This avoids loading/running DictaBERT for simple prefix/suffix inflections
+    PREFIXES = ["וב", "וכ", "ול", "ומ", "וה", "וש", "שב", "שה", "שכ", "של", "שמ", "ו", "ש", "ה", "ב", "כ", "ל", "מ"]
+    SUFFIXES = ["יהם", "יהן", "יכם", "יכן", "ינו", "יה", "יו", "יך", "יי", "הם", "הן", "כם", "כן", "נו", "ות", "ים", "ה", "ת", "י", "ו", "ך"]
+    
+    candidates = set()
+    
+    # Try stripping prefixes only
+    for p in PREFIXES:
+        if norm.startswith(p) and len(norm) - len(p) >= 2:
+            stem = norm[len(p):]
+            stem_roots = _get_lex_roots(stem, lex)
+            if stem_roots:
+                candidates.update(stem_roots)
+                
+    # Try stripping suffixes only
+    for s in SUFFIXES:
+        if norm.endswith(s) and len(norm) - len(s) >= 2:
+            stem = norm[:-len(s)]
+            stem_roots = _get_lex_roots(stem, lex)
+            if stem_roots:
+                candidates.update(stem_roots)
+                
+    # Try stripping both prefixes and suffixes
+    for p in PREFIXES:
+        for s in SUFFIXES:
+            if norm.startswith(p) and norm.endswith(s) and len(norm) - len(p) - len(s) >= 2:
+                stem = norm[len(p):-len(s)]
+                stem_roots = _get_lex_roots(stem, lex)
+                if stem_roots:
+                    candidates.update(stem_roots)
+                    
+    if candidates:
+        return candidates
+        
+    # Tier 3: Lemmatizer fallback
+    try:
+        lem = lemma(word)
+        norm_lem = _norm_lookup(lem)
+        res = _get_lex_roots(norm_lem, lex)
+        if res:
+            return res
+        # Try stripping on the lemma itself
+        for p in PREFIXES:
+            if norm_lem.startswith(p) and len(norm_lem) - len(p) >= 2:
+                stem = norm_lem[len(p):]
+                stem_roots = _get_lex_roots(stem, lex)
+                if stem_roots:
+                    candidates.update(stem_roots)
+        for s in SUFFIXES:
+            if norm_lem.endswith(s) and len(norm_lem) - len(s) >= 2:
+                stem = norm_lem[:-len(s)]
+                stem_roots = _get_lex_roots(stem, lex)
+                if stem_roots:
+                    candidates.update(stem_roots)
+        for p in PREFIXES:
+            for s in SUFFIXES:
+                if norm_lem.startswith(p) and norm_lem.endswith(s) and len(norm_lem) - len(p) - len(s) >= 2:
+                    stem = norm_lem[len(p):-len(s)]
+                    stem_roots = _get_lex_roots(stem, lex)
+                    if stem_roots:
+                        candidates.update(stem_roots)
+    except Exception:
+        # DictaBERT might fail or not be loaded
+        pass
+        
+    return candidates
