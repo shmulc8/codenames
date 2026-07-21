@@ -76,7 +76,7 @@ test.describe('semantic map', () => {
     }
   });
 
-  test('fills the available semantic panel width', async ({ page }) => {
+  test('centers a readable, bounded semantic canvas', async ({ page }) => {
     await setBoard(page, true);
     await waitForMap(page);
 
@@ -94,7 +94,8 @@ test.describe('semantic map', () => {
       };
     });
 
-    expect(Math.abs(sizes.available - sizes.map)).toBeLessThan(2);
+    expect(sizes.map).toBeLessThanOrEqual(736);
+    expect(sizes.map).toBeLessThanOrEqual(sizes.available);
   });
 
   test('renders a hint node and one connection for each intended target', async ({

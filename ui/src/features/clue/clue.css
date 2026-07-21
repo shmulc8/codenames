@@ -400,6 +400,14 @@
   justify-self: end;
 }
 
+.clue-carousel .cn-button__content {
+  direction: rtl;
+}
+
+.clue-carousel__arrow {
+  line-height: 1;
+}
+
 .clue-stale {
   position: absolute;
   z-index: 5;

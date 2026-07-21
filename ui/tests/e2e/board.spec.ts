@@ -136,23 +136,14 @@ test.describe('BoardGrid', () => {
     await expect(page.getByText('המתנקש נחשף — סוף משחק', { exact: true })).toBeVisible();
   });
 
-  test('requires confirmation before resetting and can cancel safely', async ({ page }) => {
+  test('replaces the board in place without confirmation or navigating to setup', async ({ page }) => {
     await setupDemoBoard(page);
 
-    page.once('dialog', async (dialog) => {
-      expect(dialog.type()).toBe('confirm');
-      await dialog.dismiss();
-    });
+    await page.getByTestId('btn-lifecycle-0').click();
     await page.getByTestId('btn-reset-game').click();
     await expect(page.getByTestId('board-grid')).toBeVisible();
+    await expect(page.getByTestId('setup-screen')).toHaveCount(0);
+    await expect(page.getByTestId('tile-0')).toHaveAttribute('data-lifecycle', 'inPlay');
     expect((await readBoardState(page)).screen).toBe('game');
-
-    page.once('dialog', async (dialog) => {
-      expect(dialog.type()).toBe('confirm');
-      await dialog.accept();
-    });
-    await page.getByTestId('btn-reset-game').click();
-    await expect(page.getByTestId('setup-screen')).toBeVisible();
-    await expect(page.getByTestId('board-grid')).toHaveCount(0);
   });
 });

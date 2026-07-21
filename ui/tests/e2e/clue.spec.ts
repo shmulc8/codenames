@@ -49,6 +49,11 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
   const request = await page.evaluate(() => window.__lastSpymasterReq);
   expect(request?.focus).toBeUndefined();
   expect(request?.risk).toBe('balanced');
+
+  const selected = await page.evaluate(() => window.__store?.getState().selected);
+  expect(selected).toEqual(fixtureBoard.words.slice(0, 2));
+  await expect(page.getByTestId('tile-0')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('tile-1')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('focused request posts the selected cluster and keyboard-selected risk', async ({
