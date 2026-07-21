@@ -208,12 +208,20 @@ def geo_assets():
         # frequency band expose more association opportunities. Set
         # CLUE_VOCAB_MODE=baseline for the previous conservative pool.
         broad = os.environ.get("CLUE_VOCAB_MODE", "broad").lower() == "broad"
-        vocab, counts = probe.clue_vocab_band(
-            30000 if broad else 20000,
-            lo=100 if broad else 1000,
-            hi=150000 if broad else 80000,
-            pos={"NOUN", "ADJ", "PROPN"} if broad else {"NOUN", "ADJ"},
-            source_n=30000)
+        saved_vocab = os.path.join(probe.DATA, "clue_vocab_broad.json")
+        if broad and os.path.exists(saved_vocab):
+            with open(saved_vocab, encoding="utf-8") as f:
+                saved = json.load(f)
+            rows = saved.get("words", [])
+            vocab = [row[0] for row in rows]
+            counts = np.asarray([row[1] for row in rows], dtype=np.float32)
+        else:
+            vocab, counts = probe.clue_vocab_band(
+                30000 if broad else 20000,
+                lo=100 if broad else 1000,
+                hi=150000 if broad else 80000,
+                pos={"NOUN", "ADJ", "PROPN"} if broad else {"NOUN", "ADJ"},
+                source_n=30000)
         freq = probe.freq_scores(counts, lo=300 if broad else 1500,
                                  hi=80000 if broad else 40000)
         block = _load_blocklist()                  # drop offensive terms from the clue pool

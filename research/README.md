@@ -37,5 +37,8 @@ the environment or an ignored local `.env` file.
   OpenAI at runtime.
 - `CLUE_VOCAB_MODE=broad` — experimentally include proper nouns and a wider
   frequency band in the geometry clue vocabulary.
+- `python data/build_clue_vocab.py` — materialize the broad reusable clue pool
+  at `data/clue_vocab_broad.json`. Board-specific root/lemma legality remains
+  dynamic because it depends on the current board.
 
 Keep provider credentials in environment variables. Generated result snapshots are ignored by Git.
