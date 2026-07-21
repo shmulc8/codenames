@@ -30,7 +30,7 @@ test.describe('PhotoSetup', () => {
 
     await expect(page.getByTestId('ocr-grid')).toBeVisible();
     await expect(page.getByTestId(/^ocr-cell-\d+$/)).toHaveCount(25);
-    await expect(page.getByTestId('key-grid')).toBeVisible();
+    await expect(page.getByTestId('key-grid')).toHaveCount(0);
     await expect(page.getByTestId(/^key-cell-\d+$/)).toHaveCount(25);
 
     await expect(page.getByTestId('photo-input-board')).toHaveAttribute('type', 'file');
@@ -46,6 +46,32 @@ test.describe('PhotoSetup', () => {
     await expect(
       page.getByText(/טוען מנוע זיהוי|מנוע הזיהוי מוכן|הזיהוי לא זמין כרגע/),
     ).toBeVisible();
+  });
+
+  test('Tab and Enter move directly between word inputs while arrow keys change roles', async ({ page }) => {
+    const first = page.getByTestId('ocr-cell-0');
+    const second = page.getByTestId('ocr-cell-1');
+    const third = page.getByTestId('ocr-cell-2');
+
+    await first.focus();
+    await first.fill('נמל');
+    await page.keyboard.press('Tab');
+    await expect(second).toBeFocused();
+
+    await second.fill('פורים');
+    await page.keyboard.press('Enter');
+    await expect(third).toBeFocused();
+
+    await page.keyboard.press('ArrowDown');
+    await expect(page.getByTestId('key-cell-2')).toHaveAttribute(
+      'aria-label',
+      /תפקיד מתנקש/,
+    );
+    await page.keyboard.press('ArrowUp');
+    await expect(page.getByTestId('key-cell-2')).toHaveAttribute(
+      'aria-label',
+      /תפקיד ניטרלי/,
+    );
   });
 
   test('validates all 25 words, uniqueness, and focuses the offending cell', async ({ page }) => {

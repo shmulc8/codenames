@@ -41,9 +41,9 @@
 
 .clue-target,
 .clue-risk__options {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
   background: color-mix(in srgb, var(--cn-app-bg) 35%, transparent);
 }
 
@@ -147,7 +147,7 @@
 }
 
 .clue-risk__options {
-  width: 100%;
+  justify-self: start;
 }
 
 .clue-risk__help {

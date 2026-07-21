@@ -139,6 +139,29 @@ export function PhotoSetup(): JSX.Element {
     }
   }
 
+  function cycleRole(index: number, direction = 1): void {
+    setRoles((current) => {
+      const next = [...current];
+      const currentIndex = roleOrder.indexOf(current[index]);
+      next[index] = roleOrder[
+        (currentIndex + direction + roleOrder.length) % roleOrder.length
+      ];
+      return next;
+    });
+  }
+
+  function focusNextWord(index: number): void {
+    const nextInput = document.querySelector<HTMLInputElement>(
+      `[data-testid="ocr-cell-${index + 1}"]`,
+    );
+    if (nextInput) {
+      nextInput.focus();
+      nextInput.select();
+      return;
+    }
+    document.querySelector<HTMLButtonElement>('[data-testid="btn-confirm-board"]')?.focus();
+  }
+
   function confirmBoard(): void {
     const normalized = words.map((word) => word.trim());
     const firstEmpty = normalized.findIndex((word) => word.length === 0);
@@ -211,59 +234,12 @@ export function PhotoSetup(): JSX.Element {
           <div className="photo-setup__section-title">
             <div>
               <h2 id="words-heading">25 המילים שעל הלוח</h2>
-              <p>הקלידו כל מילה והקישו על סמל התפקיד כדי לקבוע צבע.</p>
+              <p id="words-help">Tab או Enter עוברים למילה הבאה · ↑/↓ מחליפים תפקיד.</p>
             </div>
             <span className={`photo-setup__key-status ${validKey ? 'is-valid' : ''}`}>
               {validKey ? '9·8·7·1 מפתח תקין' : 'חלוקת המפתח עדיין לא 9·8·7·1'}
             </span>
           </div>
-
-          <div className="photo-setup__word-grid" data-testid="ocr-grid">
-            {words.map((word, index) => (
-              <label
-                className={`photo-setup__word-cell role-${roles[index]} ${
-                  confidences[index] < 60 ? 'is-low-confidence' : ''
-                }`}
-                key={index}
-              >
-                <span className="sr-only">מילה {index + 1}</span>
-                <input
-                  data-testid={`ocr-cell-${index}`}
-                  value={word}
-                  aria-invalid={validation !== null && word.trim().length === 0}
-                  onChange={(event) => {
-                    const next = [...words];
-                    next[index] = event.target.value;
-                    setWords(next);
-                    setConfidences((current) => {
-                      const confidence = [...current];
-                      confidence[index] = 100;
-                      return confidence;
-                    });
-                    setValidation(null);
-                  }}
-                />
-                <button
-                  type="button"
-                  aria-label={`תפקיד ${roleLabel[roles[index]]} למילה ${index + 1}; לחצו להחלפה`}
-                  title={`החלפת תפקיד: ${roleLabel[roles[index]]}`}
-                  onClick={() => {
-                    const next = [...roles];
-                    next[index] = roleOrder[(roleOrder.indexOf(roles[index]) + 1) % roleOrder.length];
-                    setRoles(next);
-                  }}
-                >
-                  <RoleIcon role={roles[index]} />
-                </button>
-              </label>
-            ))}
-          </div>
-
-          {validation && (
-            <p className="photo-setup__validation" role="alert">
-              {validation}
-            </p>
-          )}
 
           <div className="photo-setup__key-tools">
             <div className="photo-setup__counts" aria-label="ספירת תפקידי המפתח">
@@ -282,24 +258,69 @@ export function PhotoSetup(): JSX.Element {
             </button>
           </div>
 
-          <div className="photo-setup__key-grid" data-testid="key-grid" aria-label="כרטיס מפתח לעריכה">
-            {roles.map((role, index) => (
-              <button
-                type="button"
-                data-testid={`key-cell-${index}`}
-                className={`role-${role}`}
-                aria-label={`תא מפתח ${index + 1}: ${roleLabel[role]}`}
-                onClick={() => {
-                  const next = [...roles];
-                  next[index] = roleOrder[(roleOrder.indexOf(role) + 1) % roleOrder.length];
-                  setRoles(next);
-                }}
+          <div className="photo-setup__word-grid" data-testid="ocr-grid">
+            {words.map((word, index) => (
+              <div
+                className={`photo-setup__word-cell role-${roles[index]} ${
+                  confidences[index] < 60 ? 'is-low-confidence' : ''
+                }`}
                 key={index}
               >
-                <RoleIcon role={role} />
-              </button>
+                <span className="sr-only">מילה {index + 1}</span>
+                <span className="photo-setup__word-hole" aria-hidden="true" />
+                <span className="photo-setup__word-mirror" aria-hidden="true">
+                  {word || `מילה ${index + 1}`}
+                </span>
+                <input
+                  data-testid={`ocr-cell-${index}`}
+                  value={word}
+                  aria-label={`מילה ${index + 1}, תפקיד ${roleLabel[roles[index]]}`}
+                  aria-describedby="words-help"
+                  aria-invalid={validation !== null && word.trim().length === 0}
+                  onChange={(event) => {
+                    const next = [...words];
+                    next[index] = event.target.value;
+                    setWords(next);
+                    setConfidences((current) => {
+                      const confidence = [...current];
+                      confidence[index] = 100;
+                      return confidence;
+                    });
+                    setValidation(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      focusNextWord(index);
+                    } else if (event.key === 'ArrowDown') {
+                      event.preventDefault();
+                      cycleRole(index, 1);
+                    } else if (event.key === 'ArrowUp') {
+                      event.preventDefault();
+                      cycleRole(index, -1);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="photo-setup__word-role"
+                  data-testid={`key-cell-${index}`}
+                  tabIndex={-1}
+                  aria-label={`תפקיד ${roleLabel[roles[index]]} למילה ${index + 1}; לחצו להחלפה`}
+                  title={`החלפת תפקיד: ${roleLabel[roles[index]]}`}
+                  onClick={() => cycleRole(index)}
+                >
+                  <RoleIcon role={roles[index]} />
+                </button>
+              </div>
             ))}
           </div>
+
+          {validation && (
+            <p className="photo-setup__validation" role="alert">
+              {validation}
+            </p>
+          )}
 
           <button
             type="button"
