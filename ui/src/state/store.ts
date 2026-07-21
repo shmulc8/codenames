@@ -193,10 +193,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     let used = state.clue.used;
     let log = state.log;
 
-    if (isBeingChosen && used) {
+    if (used) {
+      const revealedAfter = isBeingChosen
+        ? used.revealedAfter.some((reveal) => reveal.word === word)
+          ? used.revealedAfter
+          : [...used.revealedAfter, { word, chosenBy }]
+        : used.revealedAfter.filter((reveal) => reveal.word !== word);
+
       used = {
         ...used,
-        revealedAfter: [...used.revealedAfter, { word, chosenBy }],
+        revealedAfter,
       };
       log = log.map((entry) => (entry.ts === used?.ts ? used : entry));
     }
@@ -261,4 +267,3 @@ declare global {
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   window.__store = useAppStore;
 }
-

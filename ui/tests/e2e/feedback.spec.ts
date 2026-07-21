@@ -289,6 +289,57 @@ test.describe('instant feedback', () => {
 });
 
 test.describe('outcome feedback and session log', () => {
+  test('restoring a reveal clears the active outcome and log until it is revealed again', async ({
+    page,
+  }) => {
+    await openGame(page);
+    await installClue(page);
+    await page.clock.install();
+
+    await page.evaluate(() => {
+      if (!window.__store) throw new Error('The dev store hook was not installed');
+      window.__store.getState().useCurrentClue();
+    });
+
+    const tileWord = fixtureBoard.words[0];
+    const lifecycleButton = page.getByTestId('btn-lifecycle-0');
+    const outcome = page.getByTestId('log-entry-0').getByLabel('תוצאת הרמז');
+
+    await lifecycleButton.click();
+    await expect(page.getByTestId('tile-0')).toHaveAttribute('data-lifecycle', 'chosen');
+    await expect(outcome).toContainText(tileWord);
+
+    await lifecycleButton.click();
+    await expect(page.getByTestId('tile-0')).toHaveAttribute('data-lifecycle', 'inPlay');
+    await expect(outcome).toContainText('ממתין לקלפים שייחשפו');
+
+    const restoredState = await page.evaluate(() => {
+      const state = window.__store?.getState();
+      return {
+        used: state?.clue.used?.revealedAfter,
+        logged: state?.log[0]?.revealedAfter,
+      };
+    });
+    expect(restoredState).toEqual({ used: [], logged: [] });
+
+    await page.clock.fastForward(5_001);
+    expect(await page.evaluate(() => window.__lastFeedback)).toBeUndefined();
+
+    await lifecycleButton.click();
+    await expect(page.getByTestId('tile-0')).toHaveAttribute('data-lifecycle', 'chosen');
+    expect(
+      await page.evaluate(() => window.__store?.getState().clue.used?.revealedAfter),
+    ).toEqual([{ word: tileWord, chosenBy: 'red' }]);
+
+    await page.clock.fastForward(5_001);
+    await expect
+      .poll(() => page.evaluate(() => window.__lastFeedback))
+      .toMatchObject({
+        verdict: 'outcome',
+        revealed: [{ word: tileWord, chosenBy: 'my' }],
+      });
+  });
+
   test('debounces both reveals into one outcome payload and renders them in the log', async ({
     page,
   }) => {
