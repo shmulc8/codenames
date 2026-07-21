@@ -150,6 +150,10 @@ export function CheckPanel(): JSX.Element {
     }
 
     setValidationMessage('');
+    setResult(null);
+    setSubmittedClue('');
+    setCheckedClue(null);
+    setHoverWord(null);
     setLoading(true);
     try {
       const state = useAppStore.getState();

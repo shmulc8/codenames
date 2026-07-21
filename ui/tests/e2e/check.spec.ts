@@ -161,4 +161,46 @@ test.describe('check my word', () => {
     ).toHaveCount(0);
     await expect(page.getByTestId('btn-check')).toBeEnabled();
   });
+
+  test('a failed replacement check clears the prior result and semantic hint', async ({
+    page,
+  }) => {
+    await openCheckPanel(page);
+    await submitCheck(page, 'טבע');
+
+    await expect(page.getByTestId('semantic-map')).toHaveAttribute(
+      'aria-label',
+      'מפה סמנטית עבור הרמז טבע',
+    );
+
+    await page.evaluate(() => {
+      const fetchWithMocks = window.fetch;
+      window.fetch = async (input, init) => {
+        const url = typeof input === 'string' ? input : input.url;
+        if (url.endsWith('/api/coach/check')) {
+          return new Response(JSON.stringify({ error: 'בדיקה זמנית נכשלה' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        return fetchWithMocks(input, init);
+      };
+    });
+
+    await page.getByTestId('check-input').fill('חדש');
+    await page.getByTestId('btn-check').click();
+
+    await expect(page.getByTestId('toast')).toContainText('בדיקה זמנית נכשלה');
+    await expect(page.getByTestId('check-result')).toHaveCount(0);
+    await expect
+      .poll(() =>
+        page.evaluate(() => window.__store?.getState().checkedClue ?? null),
+      )
+      .toBeNull();
+    await expect(page.getByTestId('semantic-map')).not.toHaveAttribute(
+      'aria-label',
+      'מפה סמנטית עבור הרמז טבע',
+    );
+    await expect(page.getByTestId('map-hint-node')).toHaveCount(0);
+  });
 });
