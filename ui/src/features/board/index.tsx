@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { Card } from '../../components/Card';
 import { RoleIcon } from '../../components/RoleIcon';
+import { getDeal } from '../../api/client';
 import { useAppStore } from '../../state/store';
 import { showToast } from '../../state/toast';
 import type { Role } from '../../types/api';
@@ -15,6 +17,14 @@ const roleLabel: Record<Role, string> = {
 
 const legendRoles: Role[] = ['red', 'blue', 'neutral', 'assassin'];
 
+// Card base color per role; the Card derives all its shades from this.
+export const roleColor: Record<Role, string> = {
+  red: '#d98f8f',
+  blue: '#8fb3d9',
+  neutral: '#e8d4b9',
+  assassin: '#4a4d5c',
+};
+
 export function BoardGrid(): JSX.Element {
   const tiles = useAppStore((state) => state.tiles);
   const selected = useAppStore((state) => state.selected);
@@ -22,8 +32,9 @@ export function BoardGrid(): JSX.Element {
   const toggleSelected = useAppStore((state) => state.toggleSelected);
   const toggleLifecycle = useAppStore((state) => state.toggleLifecycle);
   const setHoverWord = useAppStore((state) => state.setHoverWord);
-  const resetGame = useAppStore((state) => state.resetGame);
+  const setBoard = useAppStore((state) => state.setBoard);
   const [legendOpen, setLegendOpen] = useState(false);
+  const [dealing, setDealing] = useState(false);
   const legendRef = useRef<HTMLDivElement | null>(null);
 
   const remaining = tiles.reduce(
@@ -64,9 +75,22 @@ export function BoardGrid(): JSX.Element {
     }
   }
 
-  function requestReset(): void {
-    if (window.confirm('לפתוח לוח חדש? כל הסימונים והרמזים יימחקו.')) {
-      resetGame();
+  async function dealNewBoard(): Promise<void> {
+    if (dealing) return;
+
+    setDealing(true);
+    try {
+      const deal = await getDeal();
+      // setBoard intentionally keeps the player on the game screen while replacing
+      // all board-scoped state (selections, clues, reveals, and log).
+      setBoard(deal.words, deal.roles);
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי',
+        { tone: 'error' },
+      );
+    } finally {
+      setDealing(false);
     }
   }
 
@@ -109,9 +133,10 @@ export function BoardGrid(): JSX.Element {
             type="button"
             className="btn btn-secondary"
             data-testid="btn-reset-game"
-            onClick={requestReset}
+            disabled={dealing}
+            onClick={() => void dealNewBoard()}
           >
-            לוח חדש
+            {dealing ? 'מגרילים לוח…' : 'לוח אקראי חדש'}
           </button>
         </div>
       </header>
@@ -162,6 +187,7 @@ export function BoardGrid(): JSX.Element {
                 aria-label={`${tile.word}, ${roleLabel[tile.role]}${chosen ? ', נחשף' : ''}`}
                 onClick={() => selectTile(index)}
               >
+                <Card className="board-tile__face" color={roleColor[visualRole]} />
                 <span className="board-tile__content">
                   <span className="board-tile__hole" aria-hidden="true" />
                   <RoleIcon className="board-tile__role" role={tile.role} />

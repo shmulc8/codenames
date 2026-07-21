@@ -76,53 +76,50 @@ test.describe('semantic map', () => {
     }
   });
 
-  test('fills the available semantic panel width', async ({ page }) => {
+  test('centers a readable, bounded semantic canvas', async ({ page }) => {
     await setBoard(page, true);
     await waitForMap(page);
 
     await expect(page.getByTestId('semantic-map')).toHaveCSS('overflow', 'visible');
 
-    await expect
-      .poll(async () =>
-        page.evaluate(() => {
-          const frame = document.querySelector<HTMLElement>('.semantic-map__frame');
-          const map = document.querySelector<SVGSVGElement>('.semantic-map');
-          const background = document.querySelector<SVGRectElement>(
-            '.semantic-map__background',
-          );
-          if (!frame || !map || !background) {
-            throw new Error('Semantic map layout was not rendered');
-          }
-          const frameStyle = getComputedStyle(frame);
-          const available =
-            frame.getBoundingClientRect().width -
-            parseFloat(frameStyle.paddingInlineStart) -
-            parseFloat(frameStyle.paddingInlineEnd);
-          return Math.max(
-            Math.abs(available - map.getBoundingClientRect().width),
-            Math.abs(available - background.getBoundingClientRect().width),
-          );
-        }),
-      )
-      .toBeLessThan(2);
-
-    const surfaceBounds = await page.evaluate(() => {
+    const sizes = await page.evaluate(() => {
+      const frame = document.querySelector<HTMLElement>('.semantic-map__frame');
       const map = document.querySelector<SVGSVGElement>('.semantic-map');
+      const background = document.querySelector<SVGRectElement>(
+        '.semantic-map__background',
+      );
       const grid = document.querySelector<SVGRectElement>('.semantic-map__grid');
-      if (!map || !grid) throw new Error('Semantic map surface was not rendered');
+      if (!frame || !map || !background || !grid) {
+        throw new Error('Semantic map surface was not rendered');
+      }
+      const frameStyle = getComputedStyle(frame);
+      const frameRect = frame.getBoundingClientRect();
       const mapRect = map.getBoundingClientRect();
+      const backgroundRect = background.getBoundingClientRect();
       const gridRect = grid.getBoundingClientRect();
+      const contentLeft = frameRect.left + parseFloat(frameStyle.paddingLeft);
+      const contentRight = frameRect.right - parseFloat(frameStyle.paddingRight);
       return {
-        bottom: mapRect.bottom - gridRect.bottom,
-        left: gridRect.left - mapRect.left,
-        right: mapRect.right - gridRect.right,
-        top: gridRect.top - mapRect.top,
+        available: contentRight - contentLeft,
+        background: backgroundRect.width,
+        endGutter: contentRight - mapRect.right,
+        map: mapRect.width,
+        startGutter: mapRect.left - contentLeft,
+        surfaceBottom: mapRect.bottom - gridRect.bottom,
+        surfaceLeft: gridRect.left - mapRect.left,
+        surfaceRight: mapRect.right - gridRect.right,
+        surfaceTop: gridRect.top - mapRect.top,
       };
     });
-    expect(surfaceBounds.bottom).toBeGreaterThanOrEqual(0);
-    expect(surfaceBounds.left).toBeGreaterThanOrEqual(0);
-    expect(surfaceBounds.right).toBeGreaterThanOrEqual(0);
-    expect(surfaceBounds.top).toBeGreaterThanOrEqual(0);
+
+    expect(sizes.map).toBeLessThanOrEqual(736);
+    expect(sizes.map).toBeLessThanOrEqual(sizes.available);
+    expect(Math.abs(sizes.startGutter - sizes.endGutter)).toBeLessThan(2);
+    expect(Math.abs(sizes.map - sizes.background)).toBeLessThan(3);
+    expect(sizes.surfaceBottom).toBeGreaterThanOrEqual(0);
+    expect(sizes.surfaceLeft).toBeGreaterThanOrEqual(0);
+    expect(sizes.surfaceRight).toBeGreaterThanOrEqual(0);
+    expect(sizes.surfaceTop).toBeGreaterThanOrEqual(0);
   });
 
   test('renders a hint node and one connection for each intended target', async ({

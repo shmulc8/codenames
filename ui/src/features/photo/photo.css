@@ -32,7 +32,7 @@
   grid-template-columns: repeat(3, minmax(7.5rem, 1fr));
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .photo-setup__modes button {
@@ -59,7 +59,15 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.photo-setup__modes button:last-child { border-inline-start: 0; }
+.photo-setup__modes button:first-child {
+  border-start-start-radius: calc(var(--radius-md) - 1px);
+  border-end-start-radius: calc(var(--radius-md) - 1px);
+}
+.photo-setup__modes button:last-child {
+  border-inline-start: 0;
+  border-start-end-radius: calc(var(--radius-md) - 1px);
+  border-end-end-radius: calc(var(--radius-md) - 1px);
+}
 .photo-setup__modes button:hover:not(:disabled) { background: color-mix(in srgb, var(--cn-text) 7%, transparent); }
 .photo-setup__modes button.is-active {
   color: var(--color-accent-300);
@@ -108,34 +116,32 @@
   position: relative;
   min-width: 0;
   aspect-ratio: 1.5;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
   overflow: hidden;
   padding: clamp(5px, .65vw, 8px);
   border: 0;
   border-radius: var(--radius-md);
-  background: var(--setup-face);
-  box-shadow:
-    inset 0 0 0 2px var(--setup-role),
-    inset 0 1.5px 0 rgba(255,255,255,.45),
-    0 2px 5px rgba(0,0,0,.4);
+  box-shadow: 0 2px 5px rgba(0,0,0,.4);
 }
-.photo-setup__word-cell.role-red { --setup-role: var(--cn-red-ring); --setup-face: var(--cn-red-grad); --setup-icon: var(--cn-red-text); }
-.photo-setup__word-cell.role-blue { --setup-role: var(--cn-blue-ring); --setup-face: var(--cn-blue-grad); --setup-icon: var(--cn-blue-text); }
-.photo-setup__word-cell.role-neutral { --setup-role: var(--cn-neutral-ring); --setup-icon: var(--cn-neutral-icon); }
-.photo-setup__word-cell.role-assassin { --setup-role: var(--cn-assassin-dot); --setup-face: var(--cn-assassin-grad); --setup-icon: var(--cn-assassin-dot); }
+/* Card SVG (per-role color) is the cell face; role classes only set the icon tint now. */
+.photo-setup__word-face { position: absolute; inset: 0; z-index: 0; }
+.photo-setup__word-cell.role-red { --setup-icon: var(--cn-red-text); }
+.photo-setup__word-cell.role-blue { --setup-icon: var(--cn-blue-text); }
+.photo-setup__word-cell.role-neutral { --setup-icon: var(--cn-neutral-icon); }
+.photo-setup__word-cell.role-assassin { --setup-icon: var(--cn-assassin-dot); }
 .photo-setup__word-cell.is-low-confidence { box-shadow: 0 0 0 2px var(--cn-warn); }
 .photo-setup__word-cell:focus-within { box-shadow: 0 0 0 2px var(--color-accent); }
 .photo-setup__word-cell input {
-  position: relative;
+  position: absolute;
   z-index: 2;
-  width: 100%;
+  right: 10%;
+  bottom: 17.7%;
+  left: 10%;
   min-width: 0;
-  padding: 3px 4px;
-  border: 1px solid var(--cn-card-label-bd);
-  border-radius: var(--radius-sm);
-  background: var(--cn-card-label);
+  height: 25.4%;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--cn-card-ink);
   direction: rtl;
   font: inherit;
@@ -145,19 +151,16 @@
   text-align: center;
 }
 .photo-setup__word-cell input:focus { outline: 0; }
-.photo-setup__word-hole {
-  position: absolute;
-  top: 5px;
-  left: 50%;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--cn-card-hole);
-  box-shadow: inset 0 1px 2px rgba(90,70,40,.55);
-  transform: translateX(-50%);
-}
+.photo-setup__word-cell.role-red input,
+.photo-setup__word-cell.role-blue input,
+.photo-setup__word-cell.role-assassin input { text-shadow: 0 1px 1px rgba(255,255,255,.72), 0 0 2px rgba(255,255,255,.5); }
+.photo-setup__word-hole { display: none; }
 .photo-setup__word-mirror {
-  margin-bottom: 2px;
+  position: absolute;
+  z-index: 1;
+  top: 27%;
+  right: 8%;
+  left: 8%;
   overflow: hidden;
   color: var(--cn-card-mirror);
   font-size: clamp(.5rem, .7vw, .66rem);

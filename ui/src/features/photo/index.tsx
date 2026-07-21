@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { getDeal } from '../../api/client';
+import { Card } from '../../components/Card';
 import { RoleIcon } from '../../components/RoleIcon';
+import { roleColor } from '../board';
 import { useAppStore } from '../../state/store';
 import { showToast } from '../../state/toast';
 import type { Role } from '../../types/api';
@@ -301,7 +303,7 @@ export function PhotoSetup(): JSX.Element {
                 key={index}
               >
                 <span className="sr-only">מילה {index + 1}</span>
-                <span className="photo-setup__word-hole" aria-hidden="true" />
+                <Card className="photo-setup__word-face" color={roleColor[roles[index]]} />
                 {word ? (
                   <span className="photo-setup__word-mirror" aria-hidden="true">
                     {word}

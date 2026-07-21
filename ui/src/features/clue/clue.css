@@ -400,6 +400,10 @@
   justify-self: end;
 }
 
+.clue-carousel .cn-button__content {
+  direction: rtl;
+}
+
 .clue-carousel__chevron {
   direction: ltr;
   unicode-bidi: isolate;

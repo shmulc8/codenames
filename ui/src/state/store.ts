@@ -50,6 +50,7 @@ export interface AppState {
 
   setBoard(words: string[], roles: Record<string, Role>): void;
   toggleSelected(word: string): void;
+  selectSuggested(words: string[], target: TeamColor): void;
   clearSelected(): void;
   setRisk(risk: Risk): void;
   setTarget(color: TeamColor): void;
@@ -67,6 +68,7 @@ type StateValues = Omit<
   AppState,
   | 'setBoard'
   | 'toggleSelected'
+  | 'selectSuggested'
   | 'clearSelected'
   | 'setRisk'
   | 'setTarget'
@@ -176,6 +178,20 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
+  // Accept only live cards of the requested team. The engine response is external input,
+  // so it must not be able to mark an opponent, neutral card, or an old card as selected.
+  selectSuggested: (words, target) => {
+    const state = get();
+    const selectable = new Set(
+      state.tiles
+        .filter((tile) => tile.lifecycle === 'inPlay' && tile.role === target)
+        .map((tile) => tile.word),
+    );
+    const selected = [...new Set(words)].filter((word) => selectable.has(word));
+
+    set({ selected, target });
+  },
+
   clearSelected: () => set({ selected: [] }),
   setRisk: (risk) => set({ risk }),
   setTarget: (target) => set({ target, selected: [] }),
@@ -218,9 +234,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setClueResult: (current) =>
-    set((state) => ({
-      clue: { ...state.clue, current, optionIndex: 0, stale: false },
-    })),
+    set((state) => {
+      const picked = current?.picked ?? 0;
+      const optionIndex =
+        current && picked >= 0 && picked < current.options.length ? picked : 0;
+
+      return { clue: { ...state.clue, current, optionIndex, stale: false } };
+    }),
 
   setOptionIndex: (optionIndex) =>
     set((state) => ({ clue: { ...state.clue, optionIndex } })),
@@ -261,4 +281,3 @@ declare global {
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   window.__store = useAppStore;
 }
-
