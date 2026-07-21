@@ -6,7 +6,7 @@ It never writes credentials, prompts, or model responses to the repository.
 
 Example:
   OPENROUTER_API_KEY="..." FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin \\
-    .venv/bin/python novita_eval.py --provider openrouter --model tencent/hy3:free
+    .venv/bin/python -m research.novita_eval --provider openrouter --model tencent/hy3:free
 """
 
 from __future__ import annotations

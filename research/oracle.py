@@ -6,7 +6,7 @@ Memory-light by design: the geometry clues come from the already-running co-pilo
 generate the LLM clues and judge both sides on the same boards.
 
     # with app.py running on :7860
-    HF_HUB_OFFLINE=1 .venv/bin/python oracle.py --n 12
+    HF_HUB_OFFLINE=1 .venv/bin/python -m research.oracle --n 12
 """
 
 import os
@@ -20,7 +20,7 @@ import urllib.request
 from statistics import mean
 
 import probe
-import bench
+from research import bench
 
 SERVER = "http://127.0.0.1:7860"
 

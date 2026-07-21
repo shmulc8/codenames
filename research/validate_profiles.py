@@ -5,7 +5,7 @@ win on fresh boards and reports every metric side by side, so a gain isn't just 
 Point `--profiles` at tune_clue's output; omit it to re-measure the shipped profiles.
 
   HF_HUB_OFFLINE=1 FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin EMBED_ONLY=1 \\
-    .venv/bin/python validate_profiles.py --profiles data/tuned_profiles.json \\
+    .venv/bin/python -m research.validate_profiles --profiles data/tuned_profiles.json \\
       --boards 40 --seed 900 --guesser ensemble
 """
 from __future__ import annotations
@@ -16,7 +16,7 @@ import random
 
 import app
 import probe
-import bench_clue
+from research import bench_clue
 from guesser import make_guesser
 
 METRICS = ["served_rate", "gained", "recovery", "safe_turn", "assassin", "over_claim", "mean_count"]

@@ -19,7 +19,7 @@ fidelity to humans is measured separately (`bench_guesser.py`); the offline ense
 default fast signal, the external LLM (`--guesser llm:...`) the promotion gate.
 
   HF_HUB_OFFLINE=1 FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin EMBED_ONLY=1 \\
-    .venv/bin/python bench_clue.py --boards 40 --guesser ensemble
+    .venv/bin/python -m research.bench_clue --boards 40 --guesser ensemble
 """
 from __future__ import annotations
 

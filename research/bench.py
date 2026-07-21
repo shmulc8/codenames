@@ -14,7 +14,7 @@ The configs isolate the DETECT-style levers (Koyyalagunta et al. 2021):
   - the soft FREQ scoring term (`lam_f`), and
   - target size m.
 
-  HF_HUB_OFFLINE=1 .venv/bin/python bench.py --n 15
+  HF_HUB_OFFLINE=1 .venv/bin/python -m research.bench --n 15
       [--model 1.7b|12b] [--no-judge] [--configs geom,band] [--out bench_results.json]
 """
 

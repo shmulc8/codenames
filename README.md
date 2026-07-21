@@ -51,7 +51,7 @@ the LLM spymaster. See [[codenames-clue-rules]] — full *shoresh* matching is s
 
 **The probe (notebook):**
 ```bash
-.venv/bin/python -m jupyter lab probe.ipynb
+.venv/bin/python -m jupyter lab notebooks/probe.ipynb
 ```
 Knobs: `N_BOARDS`, `ENCODER_KEYS`, `LLM_MODEL` (`LLM_FAST`/`LLM_BIG`). → `results.json`.
 
@@ -68,7 +68,8 @@ suggestions, and have **DictaLM** play spymaster or guesser. A static, shareable
 - `docs/engine-improvement-plan.md` — measured roadmap for improving the engine.
 - `probe.py` — engine: encoders (incl. fastText), MLX LLM wrapper, board sampling, tiered spymaster, guesser, metrics, rule enforcement.
 - `deck_he.py` — the 573-word שם-קוד deck loader.
-- `probe.ipynb` — the minimal probe driver.
+- `notebooks/probe.ipynb` — the minimal probe driver.
+- `research/` — offline benchmarks, tuning, and external-evaluator runners; see `research/README.md`.
 - `latent_space.template.html` + `build_site.py` — the interactive map (template + data baker).
 - `codenames_latent_space.html` — self-contained built site (also the shared Artifact).
 - `app.py` — local Flask server serving the map + DictaLM spymaster/guesser endpoints.

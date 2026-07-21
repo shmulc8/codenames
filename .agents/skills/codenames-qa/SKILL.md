@@ -26,7 +26,7 @@ a case flips, that's the intended trip-wire — re-judge, don't just edit the ex
 ## 2. Clue-quality benchmark against real feedback
 
 ```bash
-python bench_feedback.py
+python -m research.bench_feedback
 ```
 
 Reconstructs every 👍/👎 spymaster board (from the HF feedback dataset) and reports:

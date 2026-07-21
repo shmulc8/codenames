@@ -44,4 +44,4 @@ python app.py                  # serves http://127.0.0.1:7860
 - **Optional local LLM** spymaster/guesser (DictaLM 3.0) needs Apple Silicon +
   `mlx-lm`; it is not required and the geometry engine matches/beats it here.
 - `transformers` is pinned `<5` — NeoDictaBERT returns NaN embeddings on 5.x.
-- The probe notebook (`probe.ipynb`) reproduces the encoder↔LLM alignment bench.
+- The probe notebook (`notebooks/probe.ipynb`) reproduces the encoder↔LLM alignment bench.
