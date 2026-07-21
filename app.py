@@ -28,7 +28,7 @@ import threading
 import time
 
 import numpy as np
-from flask import Flask, request, jsonify, send_file, abort
+from flask import Flask, request, jsonify, send_file, send_from_directory, abort
 
 import morph
 import probe
@@ -280,7 +280,20 @@ def _classical_mds(D: np.ndarray, dim: int = 2) -> np.ndarray:
 
 @app.get("/")
 def index():
+    frontend_index = os.path.join("frontend", "dist", "index.html")
+    if os.path.exists(frontend_index):
+        return send_file(frontend_index)
     return send_file("copilot.html")
+
+
+@app.get("/legacy")
+def legacy():
+    return send_file("copilot.html")
+
+
+@app.get("/assets/<path:filename>")
+def frontend_asset(filename):
+    return send_from_directory(os.path.join("frontend", "dist", "assets"), filename)
 
 
 @app.get("/methods")
