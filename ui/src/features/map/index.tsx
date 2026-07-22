@@ -92,6 +92,7 @@ function readScores(read: ReadEntry[] | null): Map<string, number> {
 
 export function SemanticMap(): JSX.Element {
   const activeTab = useAppStore((state) => state.activeTab);
+  const mode = useAppStore((state) => state.mode);
   const checkedClue = useAppStore((state) => state.checkedClue);
   const clueResult = useAppStore((state) => state.clue.current);
   const optionIndex = useAppStore((state) => state.clue.optionIndex);
@@ -127,10 +128,16 @@ export function SemanticMap(): JSX.Element {
   }, []);
 
   const currentOption = clueResult?.options[optionIndex] ?? null;
-  const clue = activeTab === 'clue' ? (currentOption?.word ?? null) : checkedClue;
+  const clue =
+    mode === 'operative'
+      ? null
+      : activeTab === 'clue'
+        ? (currentOption?.word ?? null)
+        : checkedClue;
   const targets = useMemo(
-    () => (activeTab === 'clue' && currentOption ? currentOption.intended : []),
-    [activeTab, currentOption],
+    () =>
+      mode === 'spymaster' && activeTab === 'clue' && currentOption ? currentOption.intended : [],
+    [activeTab, currentOption, mode],
   );
   const targetSet = useMemo(() => new Set(targets), [targets]);
   const board = useMemo(() => {
@@ -141,6 +148,10 @@ export function SemanticMap(): JSX.Element {
     } satisfies BoardPayload;
   }, [tiles]);
   const key = useMemo(() => cacheKey(board, target, clue), [board, target, clue]);
+  const tileByWord = useMemo(
+    () => new Map(tiles.map((tile) => [tile.word, tile] as const)),
+    [tiles],
+  );
 
   useEffect(() => {
     if (board.words.length === 0) {
@@ -205,17 +216,34 @@ export function SemanticMap(): JSX.Element {
     if (!space) return [];
     return Object.entries(space.coords).map(([word, coord]) => {
       const point = toPoint(coord, viewBoxWidth);
+      const tile = tileByWord.get(word);
+      const actualRole = space.roles[word] ?? board.roles[word] ?? 'neutral';
+      const displayRole =
+        mode === 'operative' && tile?.lifecycle !== 'chosen'
+          ? 'neutral'
+          : (tile?.chosenBy ?? actualRole);
+
       return {
         ...point,
         coord,
         distance: hintCoord ? distanceBetween(coord, hintCoord) : Infinity,
-        role: space.roles[word] ?? board.roles[word] ?? 'neutral',
+        role: displayRole,
         score: preferredScores.get(word) ?? fallbackScores.get(word) ?? 0,
         target: targetSet.has(word),
         word,
       };
     });
-  }, [board.roles, fallbackScores, hintCoord, preferredScores, space, targetSet, viewBoxWidth]);
+  }, [
+    board.roles,
+    fallbackScores,
+    hintCoord,
+    mode,
+    preferredScores,
+    space,
+    targetSet,
+    tileByWord,
+    viewBoxWidth,
+  ]);
 
   const farthestTargetDistance = dots
     .filter((dot) => dot.target)
@@ -234,11 +262,12 @@ export function SemanticMap(): JSX.Element {
   const activeDot = dots.find((dot) => dot.word === activeWord) ?? null;
 
   const isDanger = (dot: DotData): boolean =>
-    dot.role === 'assassin' ||
-    (Boolean(hintCoord) &&
-      dot.role !== target &&
-      farthestTargetDistance > 0 &&
-      dot.distance <= farthestTargetDistance);
+    mode === 'spymaster' &&
+    (dot.role === 'assassin' ||
+      (Boolean(hintCoord) &&
+        dot.role !== target &&
+        farthestTargetDistance > 0 &&
+        dot.distance <= farthestTargetDistance));
 
   const handleLeave = () => {
     setHoveredWord(null);
@@ -263,7 +292,12 @@ export function SemanticMap(): JSX.Element {
   };
 
   return (
-    <section className="semantic-panel" aria-labelledby="semantic-map-title" data-testid="stub-map">
+    <section
+      className="semantic-panel"
+      aria-labelledby="semantic-map-title"
+      data-testid="stub-map"
+      data-mode={mode}
+    >
       <header className="semantic-panel__header">
         <div>
           <p className="semantic-panel__eyebrow">מפת משיכה</p>
@@ -464,16 +498,22 @@ export function SemanticMap(): JSX.Element {
         className={`semantic-map__legend${legendOpen ? ' is-open' : ''}`}
         data-testid="map-legend"
       >
-        <strong>קרוב למרכז = קרוב לרמז</strong>
-        <span className="semantic-map__legend-separator" aria-hidden="true">
-          ·
-        </span>
-        {(['red', 'blue', 'neutral', 'assassin'] as const).map((role) => (
-          <span className={`semantic-map__legend-role role-${role}`} key={role}>
-            <RoleIcon role={role} /> {roleLabels[role]}
-          </span>
-        ))}
-        {!clue ? (
+        {mode === 'operative' ? (
+          <strong>המפה מציגה קרבה בלבד — צבעי הקלפים נשארים מוסתרים</strong>
+        ) : (
+          <>
+            <strong>קרוב למרכז = קרוב לרמז</strong>
+            <span className="semantic-map__legend-separator" aria-hidden="true">
+              ·
+            </span>
+            {(['red', 'blue', 'neutral', 'assassin'] as const).map((role) => (
+              <span className={`semantic-map__legend-role role-${role}`} key={role}>
+                <RoleIcon role={role} /> {roleLabels[role]}
+              </span>
+            ))}
+          </>
+        )}
+        {!clue && mode === 'spymaster' ? (
           <span className="semantic-map__legend-hintless">
             בחרו רמז או בדקו מילה כדי לראות את מרכז המשיכה
           </span>

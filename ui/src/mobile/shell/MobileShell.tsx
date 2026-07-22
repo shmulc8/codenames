@@ -1,18 +1,26 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 
 import { PanZoomCanvas } from '../board';
 import { CaptureFlow } from '../capture';
-import { MobileCheckPanel, MobileCluePanel, MobileMapPanel } from '../panels';
+import { MobileCheckPanel, MobileCluePanel, MobileMapPanel, MobileOperativePanel } from '../panels';
 import { useAppStore } from '../../state/store';
+import { MobileGameBar } from './MobileGameBar';
 import { MobileHome } from './MobileHome';
 import './shell.css';
 
-type MobileTab = 'board' | 'clue' | 'check' | 'map';
+type MobileTab = 'board' | 'clue' | 'check' | 'map' | 'operative';
+type GameMode = 'spymaster' | 'operative';
 
-const tabs: Array<{ id: MobileTab; icon: string; label: string }> = [
+const spymasterTabs: Array<{ id: MobileTab; icon: string; label: string }> = [
   { id: 'board', icon: '▦', label: 'לוח' },
   { id: 'clue', icon: '✧', label: 'רמז' },
   { id: 'check', icon: '⌕', label: 'בדיקה' },
+  { id: 'map', icon: '⁙', label: 'מפה' },
+];
+
+const operativeTabs: Array<{ id: MobileTab; icon: string; label: string }> = [
+  { id: 'board', icon: '▦', label: 'לוח' },
+  { id: 'operative', icon: '✦', label: 'ניחוש' },
   { id: 'map', icon: '⁙', label: 'מפה' },
 ];
 
@@ -24,6 +32,8 @@ function MobileGamePanel({ tab }: { tab: MobileTab }): JSX.Element {
       return <MobileCheckPanel />;
     case 'map':
       return <MobileMapPanel />;
+    case 'operative':
+      return <MobileOperativePanel />;
     case 'board':
       return <PanZoomCanvas />;
   }
@@ -31,17 +41,22 @@ function MobileGamePanel({ tab }: { tab: MobileTab }): JSX.Element {
 
 function MobileTabBar({
   activeTab,
+  mode,
   onSelect,
 }: {
   activeTab: MobileTab;
+  mode: GameMode;
   onSelect: (tab: MobileTab) => void;
 }): JSX.Element {
+  const tabs = mode === 'operative' ? operativeTabs : spymasterTabs;
+
   return (
     <nav
       className="mobile-shell__tabbar"
       data-testid="tabbar"
       role="tablist"
       aria-label="ניווט במשחק"
+      style={{ '--mobile-tab-count': tabs.length } as CSSProperties}
     >
       {tabs.map((tab) => (
         <button
@@ -67,6 +82,8 @@ function MobileTabBar({
 
 export function MobileShell(): JSX.Element {
   const screen = useAppStore((state) => state.screen);
+  const mode = useAppStore((state) => state.mode);
+  const setMode = useAppStore((state) => state.setMode);
   const setActiveTab = useAppStore((state) => state.setActiveTab);
   const [mobileTab, setMobileTab] = useState<MobileTab>('board');
   const [capturing, setCapturing] = useState(false);
@@ -76,20 +93,31 @@ export function MobileShell(): JSX.Element {
     if (tab === 'clue' || tab === 'check') setActiveTab(tab);
   }
 
+  function changeMode(nextMode: GameMode): void {
+    setMode(nextMode);
+    setMobileTab(nextMode === 'operative' ? 'operative' : 'clue');
+    if (nextMode === 'spymaster') setActiveTab('clue');
+  }
+
   return (
-    <div className="mobile mobile-shell" data-testid="mobile-shell" dir="rtl">
+    <div
+      className={`mobile mobile-shell${screen === 'game' ? ' is-game' : ''}`}
+      data-testid="mobile-shell"
+      dir="rtl"
+    >
       <MobileLandscapePrompt />
       {screen === 'setup' && capturing ? (
         <CaptureFlow onClose={() => setCapturing(false)} />
       ) : (
         <>
           {screen === 'setup' ? <MobileHeader /> : null}
+          {screen === 'game' ? <MobileGameBar onModeChange={changeMode} /> : null}
           {screen === 'setup' ? (
             <MobileHome onShoot={() => setCapturing(true)} />
           ) : (
             <MobilePanel tab={mobileTab} />
           )}
-          <MobileTabBar activeTab={mobileTab} onSelect={selectTab} />
+          <MobileTabBar activeTab={mobileTab} mode={mode} onSelect={selectTab} />
         </>
       )}
     </div>

@@ -55,8 +55,8 @@ export function BoardGrid(): JSX.Element {
     (tile) => tile.role === 'assassin' && tile.lifecycle === 'chosen',
   );
   const intendedWords = useMemo(
-    () => new Set(currentClueOption?.intended ?? []),
-    [currentClueOption],
+    () => new Set(mode === 'operative' ? [] : (currentClueOption?.intended ?? [])),
+    [currentClueOption, mode],
   );
 
   useEffect(() => {
@@ -116,44 +116,50 @@ export function BoardGrid(): JSX.Element {
       <header className="board__toolbar">
         <div>
           <p className="board__eyebrow">הלוח הפעיל</p>
-          <h2 id="board-title">בחרו צירוף מאותו צבע</h2>
+          <h2 id="board-title">
+            {mode === 'operative' ? 'בחרו קלף לניחוש' : 'בחרו צירוף מאותו צבע'}
+          </h2>
         </div>
 
         <div className="board__toolbar-actions">
-          <div className="board__remaining" aria-label="קלפי קבוצה שנותרו במשחק">
-            <span className="role-red">
-              <RoleIcon role="red" /> אדום {remaining.red}
-            </span>
-            <span className="role-blue">
-              <RoleIcon role="blue" /> כחול {remaining.blue}
-            </span>
-          </div>
-
-          <div className="board__legend" ref={legendRef}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              aria-expanded={legendOpen}
-              aria-controls="board-role-legend"
-              onClick={() => setLegendOpen((open) => !open)}
-            >
-              מקרא
-            </button>
-            {legendOpen && (
-              <div
-                id="board-role-legend"
-                className="board__legend-popover"
-                role="dialog"
-                aria-label="מקרא תפקידי הלוח"
-              >
-                {legendRoles.map((role) => (
-                  <span className={`role-${role}`} key={role}>
-                    <RoleIcon role={role} /> {roleLabel[role]}
-                  </span>
-                ))}
+          {mode === 'spymaster' ? (
+            <>
+              <div className="board__remaining" aria-label="קלפי קבוצה שנותרו במשחק">
+                <span className="role-red">
+                  <RoleIcon role="red" /> אדום {remaining.red}
+                </span>
+                <span className="role-blue">
+                  <RoleIcon role="blue" /> כחול {remaining.blue}
+                </span>
               </div>
-            )}
-          </div>
+
+              <div className="board__legend" ref={legendRef}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  aria-expanded={legendOpen}
+                  aria-controls="board-role-legend"
+                  onClick={() => setLegendOpen((open) => !open)}
+                >
+                  מקרא
+                </button>
+                {legendOpen && (
+                  <div
+                    id="board-role-legend"
+                    className="board__legend-popover"
+                    role="dialog"
+                    aria-label="מקרא תפקידי הלוח"
+                  >
+                    {legendRoles.map((role) => (
+                      <span className={`role-${role}`} key={role}>
+                        <RoleIcon role={role} /> {roleLabel[role]}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : null}
 
           <button
             type="button"
@@ -222,7 +228,7 @@ export function BoardGrid(): JSX.Element {
                 className={classes}
                 data-testid={`tile-${index}`}
                 data-word={tile.word}
-                data-role={tile.role}
+                data-role={displayRole}
                 data-lifecycle={tile.lifecycle}
                 disabled={chosen && !markingRevealed}
                 aria-pressed={selectedForClue}

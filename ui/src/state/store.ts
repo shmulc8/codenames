@@ -221,7 +221,19 @@ export const useAppStore = create<AppState>((set, get) => ({
   clearSelected: () => set({ selected: [] }),
   setRisk: (risk) => set({ risk }),
   setVocabMode: (vocabMode) => set({ vocabMode }),
-  setMode: (mode) => set({ mode }),
+  setMode: (mode) =>
+    set((state) => ({
+      mode,
+      ...(mode === 'operative'
+        ? {
+            selected: [],
+            hoverWord: null,
+            checkedClue: null,
+            activeTab: 'clue' as const,
+            clue: { ...state.clue, optionIndex: 0 },
+          }
+        : {}),
+    })),
   // Changing the team invalidates any clue on screen: it was generated for the old team,
   // so keeping it would mislabel the session log / feedback (see the cross-tab target bug).
   setTarget: (target) =>

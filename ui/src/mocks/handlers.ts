@@ -23,6 +23,12 @@ interface SpaceRequest extends WireBoardRequest {
   whiten?: boolean;
 }
 
+interface OperativeRequest extends WireBoardRequest {
+  clue: string;
+  count: number;
+  vocab_mode?: string;
+}
+
 interface FeedbackRequest {
   uid: string;
   verdict: 'up' | 'down' | 'outcome';
@@ -45,6 +51,7 @@ declare global {
     __lastSpymasterReq?: SpymasterRequest;
     __lastCheckReq?: CheckRequest;
     __lastSpaceReq?: SpaceRequest;
+    __lastOperativeReq?: OperativeRequest;
     __lastFeedback?: FeedbackRequest;
     __failFeedbackOnce?: boolean;
   }
@@ -234,6 +241,28 @@ export const handlers = [
         word: assassinEntry?.word ?? null,
         rank: assassinEntry ? read.indexOf(assassinEntry) : -1,
       },
+    });
+  }),
+
+  http.post('/api/coach/operative', async ({ request }) => {
+    const body = (await request.json()) as OperativeRequest;
+    window.__lastOperativeReq = body;
+    await delay(400);
+
+    const ranking = body.words.map((word, index) => ({
+      word,
+      sim: Math.max(-1, 0.9 - index * 0.035),
+      conf: Math.max(0, 0.95 - index * 0.03),
+      rank: index,
+    }));
+
+    return HttpResponse.json({
+      clue: body.clue,
+      count: body.count,
+      ranking,
+      picks: body.words.slice(0, body.count),
+      agreement: body.count,
+      agree_with: 'mock',
     });
   }),
 

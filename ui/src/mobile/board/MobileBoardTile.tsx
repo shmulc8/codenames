@@ -1,5 +1,5 @@
 import { RoleIcon } from '../../components/RoleIcon';
-import type { TileState } from '../../state/store';
+import { useAppStore, type TileState } from '../../state/store';
 import { roleLabel } from './board-model';
 
 interface MobileBoardTileProps {
@@ -9,20 +9,23 @@ interface MobileBoardTileProps {
 }
 
 export function MobileBoardTile({ index, selectedIndex, tile }: MobileBoardTileProps): JSX.Element {
+  const mode = useAppStore((state) => state.mode);
   const chosen = tile.lifecycle === 'chosen';
   const visualRole = chosen ? (tile.chosenBy ?? tile.role) : tile.role;
+  const hideRole = mode === 'operative' && !chosen;
+  const displayRole = hideRole ? 'neutral' : visualRole;
 
   return (
     <button
       type="button"
-      className={`mobile-board-tile role-${visualRole}${chosen ? ' is-chosen' : ''}${selectedIndex >= 0 ? ' is-selected' : ''}`}
+      className={`mobile-board-tile role-${displayRole}${chosen ? ' is-chosen' : ''}${selectedIndex >= 0 ? ' is-selected' : ''}`}
       data-mobile-tile="true"
       data-testid={`tile-${index}`}
       data-word={tile.word}
-      data-role={tile.role}
+      data-role={displayRole}
       data-lifecycle={tile.lifecycle}
       aria-pressed={selectedIndex >= 0}
-      aria-label={`${tile.word}, ${roleLabel[tile.role]}${chosen ? ', נחשף' : ''}`}
+      aria-label={`${tile.word}${hideRole ? '' : `, ${roleLabel[tile.role]}`}${chosen ? ', נחשף' : ''}`}
     >
       {chosen ? (
         <>
@@ -35,7 +38,7 @@ export function MobileBoardTile({ index, selectedIndex, tile }: MobileBoardTileP
       ) : (
         <>
           <span className="mobile-board-tile__hole" aria-hidden="true" />
-          <RoleIcon className="mobile-board-tile__role" role={tile.role} />
+          {!hideRole ? <RoleIcon className="mobile-board-tile__role" role={tile.role} /> : null}
           {selectedIndex >= 0 ? (
             <span className="mobile-board-tile__badge">{selectedIndex + 1}</span>
           ) : null}

@@ -30,6 +30,12 @@
   width: 100%;
 }
 
+/* ---- Operative tab ---- */
+.mobile-operative {
+  width: min(100%, 560px);
+  margin-inline: auto;
+}
+
 /* ---- Map tab (full-bleed) ---- */
 .mobile-map {
   flex: 1 1 auto;

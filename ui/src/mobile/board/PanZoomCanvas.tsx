@@ -10,6 +10,7 @@ import './mobile-board.css';
 
 export function PanZoomCanvas(): JSX.Element {
   const tiles = useAppStore((state) => state.tiles);
+  const mode = useAppStore((state) => state.mode);
   const selected = useAppStore((state) => state.selected);
   const [focusedWord, setFocusedWord] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'visual' | 'list'>('visual');
@@ -25,7 +26,13 @@ export function PanZoomCanvas(): JSX.Element {
       <header className="mobile-board__toolbar">
         <div>
           <h1>הלוח</h1>
-          <p>{tiles.length > 0 ? `${tiles.length} קלפים · לפי כרטיס המפתח` : 'מכינים את הלוח…'}</p>
+          <p>
+            {tiles.length > 0
+              ? mode === 'operative'
+                ? `${tiles.length} קלפים · הצבעים מוסתרים`
+                : `${tiles.length} קלפים · לפי כרטיס המפתח`
+              : 'מכינים את הלוח…'}
+          </p>
         </div>
         <div className="mobile-board__toolbar-actions">
           <div className="mobile-board__view-switch" role="group" aria-label="תצוגת הלוח">
@@ -112,9 +119,13 @@ export function PanZoomCanvas(): JSX.Element {
 
           <div className="mobile-board__footer">
             <div className="mobile-board__minimap" data-testid="minimap" aria-label="מפת הלוח">
-              {tiles.map((tile) => (
-                <span className={`role-${tile.role}`} key={tile.word} />
-              ))}
+              {tiles.map((tile) => {
+                const role =
+                  mode === 'operative' && tile.lifecycle === 'inPlay'
+                    ? 'neutral'
+                    : (tile.chosenBy ?? tile.role);
+                return <span className={`role-${role}`} key={tile.word} />;
+              })}
             </div>
           </div>
         </>
@@ -126,30 +137,34 @@ export function PanZoomCanvas(): JSX.Element {
             </div>
           ) : (
             <ul>
-              {tiles.map((tile, index) => (
-                <li key={tile.word}>
-                  <button
-                    type="button"
-                    className={`role-${tile.role}${tile.lifecycle === 'chosen' ? ' is-chosen' : ''}`}
-                    data-testid={`board-list-item-${index}`}
-                    onClick={() => setFocusedWord(tile.word)}
-                  >
-                    <span className="mobile-board__list-icon" aria-hidden="true">
-                      <RoleIcon role={tile.role} />
-                    </span>
-                    <span className="mobile-board__list-copy">
-                      <strong>{tile.word}</strong>
-                      <small>
-                        {roleLabel[tile.role]}
-                        {tile.lifecycle === 'chosen' ? ' · נחשף' : ''}
-                      </small>
-                    </span>
-                    <span className="mobile-board__list-action" aria-hidden="true">
-                      ‹
-                    </span>
-                  </button>
-                </li>
-              ))}
+              {tiles.map((tile, index) => {
+                const hideRole = mode === 'operative' && tile.lifecycle === 'inPlay';
+                const displayRole = hideRole ? 'neutral' : (tile.chosenBy ?? tile.role);
+                return (
+                  <li key={tile.word}>
+                    <button
+                      type="button"
+                      className={`role-${displayRole}${tile.lifecycle === 'chosen' ? ' is-chosen' : ''}`}
+                      data-testid={`board-list-item-${index}`}
+                      onClick={() => setFocusedWord(tile.word)}
+                    >
+                      <span className="mobile-board__list-icon" aria-hidden="true">
+                        {!hideRole ? <RoleIcon role={displayRole} /> : null}
+                      </span>
+                      <span className="mobile-board__list-copy">
+                        <strong>{tile.word}</strong>
+                        <small>
+                          {hideRole ? 'צבע מוסתר' : roleLabel[displayRole]}
+                          {tile.lifecycle === 'chosen' ? ' · נחשף' : ''}
+                        </small>
+                      </span>
+                      <span className="mobile-board__list-action" aria-hidden="true">
+                        ‹
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

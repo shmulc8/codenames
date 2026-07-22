@@ -13,6 +13,7 @@ interface MarkRevealedSheetProps {
 
 export function MarkRevealedSheet({ onClose, word }: MarkRevealedSheetProps): JSX.Element | null {
   const tile = useAppStore((state) => state.tiles.find((candidate) => candidate.word === word));
+  const mode = useAppStore((state) => state.mode);
   const selected = useAppStore((state) => state.selected.includes(word));
   const toggleLifecycle = useAppStore((state) => state.toggleLifecycle);
   const toggleSelected = useAppStore((state) => state.toggleSelected);
@@ -32,6 +33,8 @@ export function MarkRevealedSheet({ onClose, word }: MarkRevealedSheetProps): JS
 
   if (!tile) return null;
   const chosen = tile.lifecycle === 'chosen';
+  const hideRole = mode === 'operative' && !chosen;
+  const displayRole = chosen ? (tile.chosenBy ?? tile.role) : tile.role;
 
   function selectForClue(): void {
     if (tile?.role !== 'red' && tile?.role !== 'blue') {
@@ -55,12 +58,16 @@ export function MarkRevealedSheet({ onClose, word }: MarkRevealedSheetProps): JS
         <header>
           <div>
             <h2 id="mobile-sheet-title">{tile.word}</h2>
-            <p className={`role-${tile.role}`}>
-              <RoleIcon role={tile.role} /> קלף {roleLabel[tile.role]}
-            </p>
+            {hideRole ? (
+              <p>הצבע ייחשף לאחר הסימון</p>
+            ) : (
+              <p className={`role-${displayRole}`}>
+                <RoleIcon role={displayRole} /> קלף {roleLabel[displayRole]}
+              </p>
+            )}
           </div>
-          <div className={`mobile-board-sheet__preview role-${tile.role}`}>
-            <RoleIcon role={tile.role} />
+          <div className={`mobile-board-sheet__preview role-${hideRole ? 'neutral' : displayRole}`}>
+            {!hideRole ? <RoleIcon role={displayRole} /> : null}
             <strong>{tile.word}</strong>
           </div>
         </header>
@@ -68,37 +75,42 @@ export function MarkRevealedSheet({ onClose, word }: MarkRevealedSheetProps): JS
         <p className="mobile-board-sheet__status">
           {chosen ? 'הקלף כבר מחוץ למשחק' : 'עדיין במשחק · לא נחשף'}
         </p>
-        <fieldset disabled={chosen}>
-          <legend>מי לקח את הקלף? (ברירת מחדל — צבע הקלף)</legend>
-          <div className="mobile-board-sheet__roles">
-            {roles.map((role) => (
-              <button
-                type="button"
-                className={`role-${role}${chosenBy === role ? ' is-active' : ''}`}
-                data-testid={`sheet-chosenby-${role}`}
-                aria-pressed={chosenBy === role}
-                key={role}
-                onClick={() => setChosenBy(role)}
-              >
-                <RoleIcon role={role} />
-                {roleLabel[role]}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        {mode === 'spymaster' ? (
+          <fieldset disabled={chosen}>
+            <legend>מי לקח את הקלף? (ברירת מחדל — צבע הקלף)</legend>
+            <div className="mobile-board-sheet__roles">
+              {roles.map((role) => (
+                <button
+                  type="button"
+                  className={`role-${role}${chosenBy === role ? ' is-active' : ''}`}
+                  data-testid={`sheet-chosenby-${role}`}
+                  aria-pressed={chosenBy === role}
+                  key={role}
+                  onClick={() => setChosenBy(role)}
+                >
+                  <RoleIcon role={role} />
+                  {roleLabel[role]}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        ) : null}
 
         <button
           type="button"
           className="mobile-board-sheet__primary"
           data-testid="btn-mark-chosen"
           onClick={() => {
-            toggleLifecycle(tile.word, chosen ? undefined : chosenBy);
+            toggleLifecycle(
+              tile.word,
+              chosen ? undefined : mode === 'operative' ? tile.role : chosenBy,
+            );
             onClose();
           }}
         >
-          {chosen ? 'החזר למשחק' : 'סמנו כנחשפה'}
+          {chosen ? 'החזר למשחק' : mode === 'operative' ? 'חשפו את הקלף' : 'סמנו כנחשפה'}
         </button>
-        {!chosen ? (
+        {!chosen && mode === 'spymaster' ? (
           <button type="button" className="mobile-board-sheet__select" onClick={selectForClue}>
             {selected ? 'הסירו מהרמז' : 'הוסיפו לרמז'}
           </button>
