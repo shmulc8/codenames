@@ -55,7 +55,9 @@ function MobileTabBar({
           type="button"
           onClick={() => onSelect(tab.id)}
         >
-          <span className="mobile-shell__tab-icon" aria-hidden="true">{tab.icon}</span>
+          <span className="mobile-shell__tab-icon" aria-hidden="true">
+            {tab.icon}
+          </span>
           <span>{tab.label}</span>
         </button>
       ))}
@@ -111,7 +113,9 @@ function MobileLandscapePrompt(): JSX.Element {
 function MobileHeader(): JSX.Element {
   return (
     <header className="mobile-shell__header">
-      <span className="mobile-shell__mark" aria-hidden="true">⌘</span>
+      <span className="mobile-shell__mark" aria-hidden="true">
+        ⌘
+      </span>
       <span>
         <strong>קופיילוט · שם קוד</strong>
         <small>עוזר רמזים למשחק הלוח האמיתי</small>

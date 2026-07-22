@@ -1,22 +1,9 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-} from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 
 import { postSpace } from '../../api/client';
 import { RoleIcon, showToast } from '../../components';
 import { liveBoard, useAppStore } from '../../state/store';
-import type {
-  BoardPayload,
-  ReadEntry,
-  Role,
-  SpaceResponse,
-  TeamColor,
-} from '../../types/api';
+import type { BoardPayload, ReadEntry, Role, SpaceResponse, TeamColor } from '../../types/api';
 import { getRememberedCheckResult } from '../check/result-cache';
 import './styles.css';
 
@@ -64,23 +51,12 @@ function toPoint(coord: [number, number], viewBoxWidth: number): Point {
   };
 }
 
-function distanceBetween(
-  left: [number, number],
-  right: [number, number],
-): number {
+function distanceBetween(left: [number, number], right: [number, number]): number {
   return Math.hypot(left[0] - right[0], left[1] - right[1]);
 }
 
-function cacheKey(
-  board: BoardPayload,
-  target: TeamColor,
-  clue: string | null,
-): string {
-  return JSON.stringify([
-    target,
-    clue,
-    board.words.map((word) => [word, board.roles[word]]),
-  ]);
+function cacheKey(board: BoardPayload, target: TeamColor, clue: string | null): string {
+  return JSON.stringify([target, clue, board.words.map((word) => [word, board.roles[word]])]);
 }
 
 function normalizedScores(
@@ -89,10 +65,9 @@ function normalizedScores(
 ): Map<string, number> {
   if (!hint) return new Map(Object.keys(coords).map((word) => [word, 0]));
 
-  const distances = Object.entries(coords).map(([word, coord]) => [
-    word,
-    distanceBetween(coord, hint),
-  ] as const);
+  const distances = Object.entries(coords).map(
+    ([word, coord]) => [word, distanceBetween(coord, hint)] as const,
+  );
   const values = distances.map(([, distance]) => distance);
   const minimum = Math.min(...values);
   const maximum = Math.max(...values);
@@ -152,12 +127,9 @@ export function SemanticMap(): JSX.Element {
   }, []);
 
   const currentOption = clueResult?.options[optionIndex] ?? null;
-  const clue = activeTab === 'clue' ? currentOption?.word ?? null : checkedClue;
+  const clue = activeTab === 'clue' ? (currentOption?.word ?? null) : checkedClue;
   const targets = useMemo(
-    () =>
-      activeTab === 'clue' && currentOption
-        ? currentOption.intended
-        : [],
+    () => (activeTab === 'clue' && currentOption ? currentOption.intended : []),
     [activeTab, currentOption],
   );
   const targetSet = useMemo(() => new Set(targets), [targets]);
@@ -196,10 +168,9 @@ export function SemanticMap(): JSX.Element {
         .catch((error: unknown) => {
           if (requestSequence.current !== sequence) return;
           setSpace(null);
-          showToast(
-            error instanceof Error ? error.message : 'לא הצלחנו לטעון את המפה',
-            { tone: 'error' },
-          );
+          showToast(error instanceof Error ? error.message : 'לא הצלחנו לטעון את המפה', {
+            tone: 'error',
+          });
         })
         .finally(() => {
           if (requestSequence.current === sequence) setLoading(false);
@@ -292,11 +263,7 @@ export function SemanticMap(): JSX.Element {
   };
 
   return (
-    <section
-      className="semantic-panel"
-      aria-labelledby="semantic-map-title"
-      data-testid="stub-map"
-    >
+    <section className="semantic-panel" aria-labelledby="semantic-map-title" data-testid="stub-map">
       <header className="semantic-panel__header">
         <div>
           <p className="semantic-panel__eyebrow">מפת משיכה</p>
@@ -318,11 +285,7 @@ export function SemanticMap(): JSX.Element {
           data-testid="semantic-map"
           viewBox={`0 0 ${viewBoxWidth} ${VIEWBOX_SIZE}`}
           role="img"
-          aria-label={
-            clue
-              ? `מפה סמנטית עבור הרמז ${clue}`
-              : 'מפה סמנטית של מילות הלוח'
-          }
+          aria-label={clue ? `מפה סמנטית עבור הרמז ${clue}` : 'מפה סמנטית של מילות הלוח'}
         >
           <defs>
             <pattern id="semantic-grid" width="38" height="38" patternUnits="userSpaceOnUse">
@@ -395,12 +358,7 @@ export function SemanticMap(): JSX.Element {
                 onClick={() => togglePin(dot.word)}
                 onKeyDown={(event) => handleDotKeyDown(event, dot.word)}
               >
-                <circle
-                  className="semantic-map__dot-hit-area"
-                  cx={dot.x}
-                  cy={dot.y}
-                  r="20"
-                />
+                <circle className="semantic-map__dot-hit-area" cx={dot.x} cy={dot.y} r="20" />
                 {danger ? (
                   <circle
                     className={`semantic-map__danger${
@@ -429,12 +387,7 @@ export function SemanticMap(): JSX.Element {
                   {roleShapes[dot.role]}
                 </text>
                 {linked ? (
-                  <circle
-                    className="semantic-map__linked-ring"
-                    cx={dot.x}
-                    cy={dot.y}
-                    r="14"
-                  />
+                  <circle className="semantic-map__linked-ring" cx={dot.x} cy={dot.y} r="14" />
                 ) : null}
                 {showLabel ? (
                   <text
@@ -512,7 +465,9 @@ export function SemanticMap(): JSX.Element {
         data-testid="map-legend"
       >
         <strong>קרוב למרכז = קרוב לרמז</strong>
-        <span className="semantic-map__legend-separator" aria-hidden="true">·</span>
+        <span className="semantic-map__legend-separator" aria-hidden="true">
+          ·
+        </span>
         {(['red', 'blue', 'neutral', 'assassin'] as const).map((role) => (
           <span className={`semantic-map__legend-role role-${role}`} key={role}>
             <RoleIcon role={role} /> {roleLabels[role]}

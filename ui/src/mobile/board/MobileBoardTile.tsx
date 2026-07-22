@@ -8,13 +8,9 @@ interface MobileBoardTileProps {
   tile: TileState;
 }
 
-export function MobileBoardTile({
-  index,
-  selectedIndex,
-  tile,
-}: MobileBoardTileProps): JSX.Element {
+export function MobileBoardTile({ index, selectedIndex, tile }: MobileBoardTileProps): JSX.Element {
   const chosen = tile.lifecycle === 'chosen';
-  const visualRole = chosen ? tile.chosenBy ?? tile.role : tile.role;
+  const visualRole = chosen ? (tile.chosenBy ?? tile.role) : tile.role;
 
   return (
     <button
@@ -32,7 +28,9 @@ export function MobileBoardTile({
         <>
           <RoleIcon className="mobile-board-tile__agent" role={visualRole} />
           <span className="mobile-board-tile__chosen-word">{tile.word}</span>
-          <span className="mobile-board-tile__check" aria-hidden="true">✓</span>
+          <span className="mobile-board-tile__check" aria-hidden="true">
+            ✓
+          </span>
         </>
       ) : (
         <>
@@ -41,7 +39,9 @@ export function MobileBoardTile({
           {selectedIndex >= 0 ? (
             <span className="mobile-board-tile__badge">{selectedIndex + 1}</span>
           ) : null}
-          <span className="mobile-board-tile__mirror" aria-hidden="true">{tile.word}</span>
+          <span className="mobile-board-tile__mirror" aria-hidden="true">
+            {tile.word}
+          </span>
           <span className="mobile-board-tile__label">{tile.word}</span>
         </>
       )}

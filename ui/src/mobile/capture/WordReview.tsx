@@ -25,18 +25,12 @@ export function WordReview({
 }: WordReviewProps): JSX.Element {
   const canUse = wordsComplete(words);
   const hasLowConfidence = confidences.some(
-    (confidence, index) =>
-      confidence < LOW_CONFIDENCE || words[index].trim().length === 0,
+    (confidence, index) => confidence < LOW_CONFIDENCE || words[index].trim().length === 0,
   );
 
   return (
     <section className="cn-capture__review">
-      <CaptureHeader
-        step={1}
-        title="בדקו את הקליטה"
-        onClose={onClose}
-        onRetake={onRetake}
-      />
+      <CaptureHeader step={1} title="בדקו את הקליטה" onClose={onClose} onRetake={onRetake} />
 
       <div className="cn-capture__review-body">
         <span className="cn-capture__badge">⛶ זוהו 25 מילים</span>
@@ -58,9 +52,7 @@ export function WordReview({
           ))}
         </div>
 
-        <p className="cn-capture__hint">
-          👆 הקישו על מילה כדי לתקן אותה לפני שממשיכים
-        </p>
+        <p className="cn-capture__hint">👆 הקישו על מילה כדי לתקן אותה לפני שממשיכים</p>
 
         {hasLowConfidence && (
           <p className="cn-capture__warn" role="status">
@@ -77,12 +69,7 @@ export function WordReview({
         <p className="cn-capture__next-note">🔑 אחרי אישור המילים — נצלם את כרטיס המפתח (שלב 2)</p>
       </div>
 
-      <ReviewFooter
-        canUse={canUse}
-        onUse={onUse}
-        onRetake={onRetake}
-        onGallery={onGallery}
-      />
+      <ReviewFooter canUse={canUse} onUse={onUse} onRetake={onRetake} onGallery={onGallery} />
     </section>
   );
 }

@@ -23,9 +23,7 @@ export function CameraView({ step, onFile, onClose }: CameraViewProps): JSX.Elem
   const { videoRef, status, flip } = useCamera(true);
   const galleryRef = useRef<HTMLInputElement>(null);
 
-  function handleGalleryChange(
-    event: ChangeEvent<HTMLInputElement>,
-  ): void {
+  function handleGalleryChange(event: ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (file) onFile(file);
@@ -58,9 +56,7 @@ export function CameraView({ step, onFile, onClose }: CameraViewProps): JSX.Elem
         />
         {status !== 'live' ? (
           <p className="cn-capture__fallback">
-            {status === 'starting'
-              ? 'פותח מצלמה…'
-              : 'המצלמה אינה זמינה — העלו תמונה מהגלריה'}
+            {status === 'starting' ? 'פותח מצלמה…' : 'המצלמה אינה זמינה — העלו תמונה מהגלריה'}
           </p>
         ) : null}
 
@@ -69,9 +65,7 @@ export function CameraView({ step, onFile, onClose }: CameraViewProps): JSX.Elem
           <span className="cn-capture__tick cn-capture__tick--tr" aria-hidden="true" />
           <span className="cn-capture__tick cn-capture__tick--bl" aria-hidden="true" />
           <span className="cn-capture__tick cn-capture__tick--br" aria-hidden="true" />
-          {status === 'live' && (
-            <span className="cn-capture__detected">✓ זוהה לוח 5×5</span>
-          )}
+          {status === 'live' && <span className="cn-capture__detected">✓ זוהה לוח 5×5</span>}
         </div>
       </div>
 
@@ -85,7 +79,9 @@ export function CameraView({ step, onFile, onClose }: CameraViewProps): JSX.Elem
           onClick={flip}
           aria-label="הפוך מצלמה"
         >
-          <span className="cn-capture__bar-icon" aria-hidden="true">⟳</span>
+          <span className="cn-capture__bar-icon" aria-hidden="true">
+            ⟳
+          </span>
           <small>הפוך</small>
         </button>
 
@@ -97,18 +93,12 @@ export function CameraView({ step, onFile, onClose }: CameraViewProps): JSX.Elem
           aria-label="צלמו"
         />
 
-        <label
-          className="cn-capture__bar-btn cn-capture__gallery"
-          data-testid="btn-gallery"
-        >
-          <span className="cn-capture__bar-icon" aria-hidden="true">▦</span>
+        <label className="cn-capture__bar-btn cn-capture__gallery" data-testid="btn-gallery">
+          <span className="cn-capture__bar-icon" aria-hidden="true">
+            ▦
+          </span>
           <small>גלריה</small>
-          <input
-            ref={galleryRef}
-            type="file"
-            accept="image/*"
-            onChange={handleGalleryChange}
-          />
+          <input ref={galleryRef} type="file" accept="image/*" onChange={handleGalleryChange} />
         </label>
       </div>
     </section>

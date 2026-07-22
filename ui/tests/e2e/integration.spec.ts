@@ -2,11 +2,9 @@ import { expect, test } from '@playwright/test';
 
 import { fixtureBoard } from '../../src/mocks/fixtures/board';
 
-test('complete spymaster flow stays synchronized across every desktop slice', async ({
-  page,
-}) => {
+test('complete spymaster flow stays synchronized across every desktop slice', async ({ page }) => {
   await page.goto('/');
-  await page.getByTestId('btn-skip-demo').click();
+  await page.getByTestId('btn-random-board').click();
   await page.getByTestId('btn-confirm-board').click();
   await expect(page.getByTestId('board-grid')).toBeVisible();
 
@@ -31,17 +29,9 @@ test('complete spymaster flow stays synchronized across every desktop slice', as
   await page.getByTestId('btn-lifecycle-0').click();
   await page.getByTestId('btn-lifecycle-1').click();
 
-  await expect(page.getByTestId('tile-0')).toHaveAttribute(
-    'data-lifecycle',
-    'chosen',
-  );
-  await expect(page.getByTestId('tile-1')).toHaveAttribute(
-    'data-lifecycle',
-    'chosen',
-  );
-  await expect(
-    page.getByText('הלוח השתנה — הרמז חושב על לוח ישן'),
-  ).toBeVisible();
+  await expect(page.getByTestId('tile-0')).toHaveAttribute('data-lifecycle', 'chosen');
+  await expect(page.getByTestId('tile-1')).toHaveAttribute('data-lifecycle', 'chosen');
+  await expect(page.getByText('הלוח השתנה — הרמז חושב על לוח ישן')).toBeVisible();
 
   await expect
     .poll(() => page.evaluate(() => window.__lastFeedback), { timeout: 8_000 })

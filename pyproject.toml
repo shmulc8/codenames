@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codenames"
+version = "0.1.0"
+description = "Hebrew Codenames co-pilot — geometry clue engine"
+requires-python = ">=3.11"
+# Runtime dependencies stay authoritative in requirements.txt (dev) and hf_space/requirements.txt
+# (deploy); `pip install -e .` only puts the codenames package on the path — `make install` handles
+# both. This keeps editable installs from re-resolving torch/mlx/jupyter.
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [
+    ".venv",
+    ".agents",           # agent-tooling scripts (mirror of .claude/, itself git-ignored)
+    "ui",
+    "notebooks",
+    "hf_space",          # generated deploy bundle (synced from root by scripts/deploy.py)
+    "*.template.html",
+    "codenames_latent_space.html",
+]
+
+[tool.ruff.lint]
+# pycodestyle errors/warnings, pyflakes, import sorting, pyupgrade, bugbear.
+select = ["E", "W", "F", "I", "UP", "B"]
+ignore = [
+    "E501",   # line length is enforced by the formatter, not the linter
+    "B008",   # function calls in argument defaults (common, intentional here)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]              # tests set up sys.path/env before importing the engine
+"scripts/build_site.py" = ["E402"]  # sets HF_HUB_OFFLINE before importing the engine (intentional)
+# research/ and data/ are experimental scripts, not shipping code — don't hold them to the same
+# bar for naming (E741), lambdas (E731), late imports (E402), or bugbear style nits (B-series).
+"research/*" = ["E402", "E741", "E731", "B905", "B023", "B007"]
+"data/*" = ["E741", "E731", "B905", "B023", "B007"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src/codenames", "scripts"]
+mypy_path = "src"
+ignore_missing_imports = true   # numpy/flask/fasttext/hf_hub ship partial or no stubs
+warn_unused_ignores = true
+warn_redundant_casts = true
+# The codebase is partially typed; check what's annotated without forcing annotations everywhere.
+check_untyped_defs = false
+disallow_untyped_defs = false

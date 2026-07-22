@@ -21,17 +21,17 @@ import io
 import urllib.request
 from pathlib import Path
 
-
 SOURCE_URL = (
-    "https://raw.githubusercontent.com/nmrksic/attract-repel/master/"
-    "evaluation/simlex-hebrew.txt"
+    "https://raw.githubusercontent.com/nmrksic/attract-repel/master/evaluation/simlex-hebrew.txt"
 )
 OUTPUT_PATH = Path(__file__).with_name("simlex_he.tsv")
 
 
 def fetch_rows() -> list[tuple[str, str, float]]:
     """Download the trusted, fixed benchmark URL and validate its TSV rows."""
-    request = urllib.request.Request(SOURCE_URL, headers={"User-Agent": "codenames-simlex-fetch/1.0"})
+    request = urllib.request.Request(
+        SOURCE_URL, headers={"User-Agent": "codenames-simlex-fetch/1.0"}
+    )
     with urllib.request.urlopen(request, timeout=60) as response:
         text = response.read().decode("utf-8")
 

@@ -18,11 +18,7 @@ export function Panel({
   const classes = ['card', 'cn-panel', className].filter(Boolean).join(' ');
 
   return (
-    <section
-      {...props}
-      className={classes}
-      aria-labelledby={props['aria-labelledby'] ?? titleId}
-    >
+    <section {...props} className={classes} aria-labelledby={props['aria-labelledby'] ?? titleId}>
       {title ? (
         <header className="cn-panel__header">
           <h2 className="cn-panel__title" id={titleId}>

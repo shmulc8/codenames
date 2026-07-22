@@ -76,7 +76,7 @@ async function releaseClueResponse(page: Page): Promise<void> {
 }
 
 async function requestAutoClue(page: Page): Promise<void> {
-  await page.getByTestId('btn-auto-cluster').click();
+  await page.getByTestId('btn-get-clue').click();
   await expect(page.getByTestId('clue-result')).toBeVisible();
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');
 }
@@ -86,22 +86,17 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
 }) => {
   await setupFixtureBoard(page);
 
-  const focusedAction = await page.getByTestId('btn-get-clue').boundingBox();
-  const automaticAction = await page.getByTestId('btn-auto-cluster').boundingBox();
-  expect(focusedAction).not.toBeNull();
-  expect(automaticAction).not.toBeNull();
-  expect(focusedAction!.y).toBeLessThan(automaticAction!.y);
-  await expect(page.getByTestId('btn-get-clue')).toBeDisabled();
+  // With no cards selected the single action button offers the "find best combination" flow.
+  await expect(page.getByTestId('btn-get-clue')).toBeEnabled();
+  await expect(page.getByTestId('btn-get-clue')).toHaveText('מצא לי את הצירוף הכי טוב');
   await expect(page.getByTestId('target-red')).toHaveAttribute('aria-pressed', 'true');
 
   await installClueResponseGate(page);
-  await page.getByTestId('btn-auto-cluster').click();
+  await page.getByTestId('btn-get-clue').click();
   try {
     await waitForClueResponse(page);
-    await expect(
-      page.getByTestId('btn-auto-cluster').getByTestId('loading-spinner'),
-    ).toBeVisible();
-    await expect(page.getByTestId('btn-auto-cluster')).toBeDisabled();
+    await expect(page.getByTestId('btn-get-clue').getByTestId('loading-spinner')).toBeVisible();
+    await expect(page.getByTestId('btn-get-clue')).toBeDisabled();
     await expect(page.getByTestId('risk-balanced')).toBeDisabled();
   } finally {
     await releaseClueResponse(page);
@@ -110,10 +105,8 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
   await expect(page.getByTestId('clue-result')).toBeVisible();
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');
   await expect(page.getByTestId('clue-count')).toHaveText('מספר: 2');
-  await expect(page.getByTestId('clue-reason')).toContainText(
-    'הרמז מחבר היטב בין מילות המטרה',
-  );
-  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 3');
+  await expect(page.getByTestId('clue-reason')).toContainText('הרמז מחבר היטב בין מילות המטרה');
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 2');
   await expect(page.getByText(/המתנקש \(נחש\) במקום \d+ בדירוג/)).toBeVisible();
 
   const request = await page.evaluate(() => window.__lastSpymasterReq);
@@ -126,9 +119,7 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
   await expect(page.getByTestId('tile-1')).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('focused request posts the selected cluster and keyboard-selected risk', async ({
-  page,
-}) => {
+test('focused request posts the selected cluster and keyboard-selected risk', async ({ page }) => {
   await setupFixtureBoard(page);
 
   await page.evaluate((words) => {
@@ -146,9 +137,7 @@ test('focused request posts the selected cluster and keyboard-selected risk', as
   await expect(page.getByTestId('risk-bold')).toHaveAttribute('aria-pressed', 'true');
 
   await page.getByTestId('btn-get-clue').click();
-  await expect(
-    page.getByTestId('btn-get-clue').getByTestId('loading-spinner'),
-  ).toBeVisible();
+  await expect(page.getByTestId('btn-get-clue').getByTestId('loading-spinner')).toBeVisible();
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');
 
   const request = await page.evaluate(() => window.__lastSpymasterReq);
@@ -156,7 +145,9 @@ test('focused request posts the selected cluster and keyboard-selected risk', as
   expect(request?.risk).toBe('bold');
 });
 
-test('carousel wraps and renders risky and no-clue states', async ({ page }) => {
+test('carousel wraps between the two best options and renders the risky state', async ({
+  page,
+}) => {
   await setupFixtureBoard(page);
   await requestAutoClue(page);
 
@@ -191,33 +182,42 @@ test('carousel wraps and renders risky and no-clue states', async ({ page }) => 
   expect(
     Math.abs(controlPositions.previousChevronY - controlPositions.previousLabelY),
   ).toBeLessThan(1);
-  await expect(
-    page.getByTestId('btn-next-option').locator('.clue-carousel__chevron'),
-  ).toHaveText('›');
-  await expect(
-    page.getByTestId('btn-prev-option').locator('.clue-carousel__chevron'),
-  ).toHaveText('‹');
+  await expect(page.getByTestId('btn-next-option').locator('.clue-carousel__chevron')).toHaveText(
+    '›',
+  );
+  await expect(page.getByTestId('btn-prev-option').locator('.clue-carousel__chevron')).toHaveText(
+    '‹',
+  );
 
+  // Only the two strongest options are shown; wrapping backwards lands on the risky one.
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 2');
   await page.getByTestId('btn-prev-option').click();
-  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 3 מתוך 3');
-  await expect(page.getByTestId('no-clue-state')).toContainText(
-    'לא נמצא רמז בטוח. נסו אשכול אחר או רמת סיכון אחרת.',
-  );
-  await expect(page.getByTestId('no-clue-state')).toContainText(
-    "נסה רמת 'נועז' או בחר מילים אחרות",
-  );
-
-  await page.getByTestId('btn-next-option').click();
-  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 3');
-  await expect(page.getByTestId('clue-word')).toHaveText('טבע');
-
-  await page.getByTestId('btn-next-option').click();
-  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 2 מתוך 3');
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 2 מתוך 2');
   await expect(page.getByTestId('clue-word')).toHaveText('מסע');
   await expect(page.getByTestId('warning-banner')).toContainText(
     'זהירות: הרמז עלול למשוך מילה מסוכנת.',
   );
   await expect(page.getByTestId('warning-banner')).toContainText('נחש');
+
+  await page.getByTestId('btn-next-option').click();
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 2');
+  await expect(page.getByTestId('clue-word')).toHaveText('טבע');
+});
+
+test('renders the no-clue state when the engine has no safe clue', async ({ page }) => {
+  await setupFixtureBoard(page);
+  // The cautious profile is the mock's deterministic "no safe clue" path.
+  await page.getByTestId('risk-cautious').click();
+  await page.getByTestId('btn-get-clue').click();
+
+  await expect(page.getByTestId('no-clue-state')).toContainText(
+    'לא נמצא רמז בטוח. נסו אשכול אחר או רמת סיכון אחרת.',
+  );
+  await expect(page.getByTestId('no-clue-state')).toContainText(
+    "נסה רמת 'שובב' או בחר מילים אחרות",
+  );
+  // With a single refusal option there is nothing to cycle through.
+  await expect(page.getByTestId('option-counter')).toHaveCount(0);
 });
 
 test('target switch clears selection and blue-target requests use my/opp wire roles', async ({
@@ -255,18 +255,14 @@ test('target switch clears selection and blue-target requests use my/opp wire ro
   expect(request?.roles[fixtureBoard.words[24]]).toBe('assassin');
 });
 
-test('using a clue records its target in the store log and confirms usage', async ({
-  page,
-}) => {
+test('using a clue records its target in the store log and confirms usage', async ({ page }) => {
   await setupFixtureBoard(page);
   await page.getByTestId('target-blue').click();
   await requestAutoClue(page);
 
   await page.getByTestId('btn-use-clue').click();
   await expect(page.getByTestId('btn-use-clue')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByTestId('btn-use-clue')).toHaveAccessibleName(
-    'הרמז סומן לשימוש',
-  );
+  await expect(page.getByTestId('btn-use-clue')).toHaveAccessibleName('הרמז סומן לשימוש');
 
   const result = await page.evaluate(() => {
     if (!window.__store) throw new Error('The dev store hook was not installed');
@@ -296,12 +292,10 @@ test('lifecycle changes display the stale-result overlay', async ({ page }) => {
     window.__store.getState().toggleLifecycle(word);
   }, fixtureBoard.words[0]);
 
-  await expect(
-    page.getByText('הלוח השתנה — הרמז חושב על לוח ישן'),
-  ).toBeVisible();
+  await expect(page.getByText('הלוח השתנה — הרמז חושב על לוח ישן')).toBeVisible();
   await expect(page.getByText('כדאי לחשב שוב לפני שמשתמשים בו.')).toBeVisible();
   await expect(page.getByText('חשבו שוב')).toBeVisible();
-  await expect(page.getByTestId('btn-use-clue')).toBeDisabled();
+  await expect(page.getByTestId('btn-use-clue')).toBeEnabled();
 });
 
 test('a clue response is immediately stale when the live board changes in flight', async ({
@@ -310,7 +304,7 @@ test('a clue response is immediately stale when the live board changes in flight
   await setupFixtureBoard(page);
   await installClueResponseGate(page);
 
-  await page.getByTestId('btn-auto-cluster').click();
+  await page.getByTestId('btn-get-clue').click();
   try {
     await waitForClueResponse(page);
 
@@ -333,10 +327,8 @@ test('a clue response is immediately stale when the live board changes in flight
   }
 
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');
-  await expect(
-    page.getByText('הלוח השתנה — הרמז חושב על לוח ישן'),
-  ).toBeVisible();
-  await expect(page.getByTestId('btn-use-clue')).toBeDisabled();
+  await expect(page.getByText('הלוח השתנה — הרמז חושב על לוח ישן')).toBeVisible();
+  await expect(page.getByTestId('btn-use-clue')).toBeEnabled();
   await expect
     .poll(() =>
       page.evaluate(() => {
@@ -349,9 +341,7 @@ test('a clue response is immediately stale when the live board changes in flight
     .toBe(true);
 
   await page.getByText('חשבו שוב').click();
-  await expect(
-    page.getByText('הלוח השתנה — הרמז חושב על לוח ישן'),
-  ).toHaveCount(0);
+  await expect(page.getByText('הלוח השתנה — הרמז חושב על לוח ישן')).toHaveCount(0);
   await expect(page.getByTestId('btn-use-clue')).toBeEnabled();
 
   const regeneratedRequest = await page.evaluate(() => window.__lastSpymasterReq);
@@ -371,7 +361,7 @@ test.describe('backend error handling', () => {
     });
 
     await setupFixtureBoard(page);
-    await page.getByTestId('btn-auto-cluster').click();
+    await page.getByTestId('btn-get-clue').click();
 
     await expect(page.getByTestId('toast')).toBeVisible();
     await expect(page.getByTestId('toast')).toContainText('בדיקת כשל מהשרת');

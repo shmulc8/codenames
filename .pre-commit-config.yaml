@@ -1,0 +1,30 @@
+# Install once:  pipx install pre-commit && pre-commit install
+# Run on all files: pre-commit run --all-files
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=5000]
+        exclude: '^(data|hf_space/data)/'
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.22
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Frontend: run the local prettier/eslint against ui/ so staged JS/TS is checked too.
+  - repo: local
+    hooks:
+      - id: prettier-ui
+        name: prettier (ui)
+        language: system
+        files: '^ui/.*\.(ts|tsx|js|json|css)$'
+        entry: bash -c 'cd ui && npx prettier --check "$@"' --

@@ -12,16 +12,21 @@ and inflection-table propagation). See the project's legality notes for how this
 clue-legality check. Licensing/attribution: see ROOT_LEXICON_NOTICE.md.
 """
 
-import json, collections, re, unicodedata
+import collections
+import json
+import re
+import unicodedata
 
 SRC = "kaikki_hebrew.jsonl"
 
 NIQQUD = re.compile(r"[֑-ׇ]")  # cantillation + niqqud range
 FINALS = str.maketrans("ךםןףץ", "כמנפצ")
 
+
 def strip_niqqud(s):
     s = unicodedata.normalize("NFC", s)
     return NIQQUD.sub("", s)
+
 
 def norm_word(w):
     """Normalize a surface word: strip niqqud + maqaf-hyphen artifacts, strip whitespace.
@@ -32,6 +37,7 @@ def norm_word(w):
     w = w.replace("־", "").replace("-", "")
     return w
 
+
 def norm_root(r):
     """Root string like 'ר־ו־ץ' -> letters joined 'רוץ' with final-letter normalization."""
     r = strip_niqqud(r).strip()
@@ -41,6 +47,7 @@ def norm_root(r):
         letters = [c for c in r.split("-") if c]
     joined = "".join(letters) if letters else r.replace("-", "")
     return joined.translate(FINALS)
+
 
 CATRE = re.compile(r"^Hebrew terms belonging to the root (.+)$")
 FROMROOTRE = re.compile(r"from the root ([א-ת][־א-ת]*)")
@@ -57,62 +64,64 @@ n_catroot = 0
 n_fromroot = 0
 
 for d in ALL:
-        n_lines += 1
-        w = d.get("word", "")
-        if d.get("pos") == "root":
-            rk = norm_root(w)
-            for sense in d.get("senses", []) or []:
-                for der in sense.get("derived", []) or []:
-                    dw = der.get("word")
-                    if dw:
-                        root_entries.setdefault(rk, set()).add(norm_word(dw))
-            for der in d.get("derived", []) or []:
+    n_lines += 1
+    w = d.get("word", "")
+    if d.get("pos") == "root":
+        rk = norm_root(w)
+        for sense in d.get("senses", []) or []:
+            for der in sense.get("derived", []) or []:
                 dw = der.get("word")
                 if dw:
                     root_entries.setdefault(rk, set()).add(norm_word(dw))
-            n_root_pos += 1
-            continue
+        for der in d.get("derived", []) or []:
+            dw = der.get("word")
+            if dw:
+                root_entries.setdefault(rk, set()).add(norm_word(dw))
+        n_root_pos += 1
+        continue
 
-        nw = norm_word(w)
-        if not nw:
-            continue
-        for et in d.get("etymology_templates", []) or []:
-            if et.get("name") in ("he-rootbox", "he-root"):
-                args = et.get("args", {})
-                r = args.get("1")
-                if r:
-                    rk = norm_root(r)
-                    if rk:
-                        word2roots[nw].add(rk)
-                        n_rootbox += 1
-        # categories (both entry-level and per-sense) carry "Hebrew terms belonging to the
-        # root X" tags -- a much higher-yield source than the he-rootbox template alone,
-        # since it is populated by a different (broader) Wiktionary template/process.
-        allcats = list(d.get("categories") or [])
-        for sense in d.get("senses", []) or []:
-            allcats += sense.get("categories") or []
-        for c in allcats:
-            name = c.get("name") if isinstance(c, dict) else str(c)
-            m = CATRE.match(name)
-            if m:
-                rk = norm_root(m.group(1))
+    nw = norm_word(w)
+    if not nw:
+        continue
+    for et in d.get("etymology_templates", []) or []:
+        if et.get("name") in ("he-rootbox", "he-root"):
+            args = et.get("args", {})
+            r = args.get("1")
+            if r:
+                rk = norm_root(r)
                 if rk:
                     word2roots[nw].add(rk)
-                    n_catroot += 1
-        # some etymology prose explicitly names the root even when no he-rootbox template or
-        # root category was applied to this entry, e.g. "Action noun of the verb הִמְצִיא
-        # (himtsí), from the root מ־צ" -- catch it directly out of etymology_text.
-        etxt = d.get("etymology_text") or ""
-        m = FROMROOTRE.search(etxt)
+                    n_rootbox += 1
+    # categories (both entry-level and per-sense) carry "Hebrew terms belonging to the
+    # root X" tags -- a much higher-yield source than the he-rootbox template alone,
+    # since it is populated by a different (broader) Wiktionary template/process.
+    allcats = list(d.get("categories") or [])
+    for sense in d.get("senses", []) or []:
+        allcats += sense.get("categories") or []
+    for c in allcats:
+        name = c.get("name") if isinstance(c, dict) else str(c)
+        m = CATRE.match(name)
         if m:
             rk = norm_root(m.group(1))
             if rk:
                 word2roots[nw].add(rk)
-                n_fromroot += 1
-        # also collect from forms (inflected surface forms) -> same root as lemma
-        # only do this once we know the lemma's root, done in a second pass below
+                n_catroot += 1
+    # some etymology prose explicitly names the root even when no he-rootbox template or
+    # root category was applied to this entry, e.g. "Action noun of the verb הִמְצִיא
+    # (himtsí), from the root מ־צ" -- catch it directly out of etymology_text.
+    etxt = d.get("etymology_text") or ""
+    m = FROMROOTRE.search(etxt)
+    if m:
+        rk = norm_root(m.group(1))
+        if rk:
+            word2roots[nw].add(rk)
+            n_fromroot += 1
+    # also collect from forms (inflected surface forms) -> same root as lemma
+    # only do this once we know the lemma's root, done in a second pass below
 
-print(f"lines={n_lines} root_pos_entries={n_root_pos} rootbox_hits={n_rootbox} catroot_hits={n_catroot} fromroot_hits={n_fromroot}")
+print(
+    f"lines={n_lines} root_pos_entries={n_root_pos} rootbox_hits={n_rootbox} catroot_hits={n_catroot} fromroot_hits={n_fromroot}"
+)
 print(f"distinct words with direct root (via he-rootbox on own entry): {len(word2roots)}")
 print(f"distinct roots seen as pos=='root' entries: {len(root_entries)}")
 
@@ -125,6 +134,7 @@ for rk, ws in root_entries.items():
             added += 1
 print(f"additional (word,root) pairs added from root-entry 'derived' lists: {added}")
 print(f"TOTAL distinct words with >=1 root: {len(word2roots)}")
+
 
 def propagate_forms():
     """Propagate each entry's own root(s) to all its inflected surface forms listed in
@@ -147,6 +157,7 @@ def propagate_forms():
                 if len(word2roots[fw]) > before:
                     added += 1
     return added
+
 
 # Run forms-propagation BEFORE affix-chasing so base words like ספר -- which only pick up a
 # root via a homograph's inflected-form collision (see propagate_forms docstring) -- are
@@ -184,7 +195,7 @@ for round_ in range(2):
                     break
             if word2roots.get(nw):
                 break
-    print(f"round {round_+1}: affix/derivation base-chasing added roots for {chased} more words")
+    print(f"round {round_ + 1}: affix/derivation base-chasing added roots for {chased} more words")
 
 print(f"TOTAL after affix-chasing: {len(word2roots)}")
 

@@ -9,7 +9,7 @@ import './log.css';
 const riskLabel: Record<Risk, string> = {
   cautious: 'זהיר',
   balanced: 'מאוזן',
-  bold: 'נועז',
+  bold: 'שובב',
 };
 
 const timeFormatter = new Intl.DateTimeFormat('he-IL', {
@@ -17,7 +17,15 @@ const timeFormatter = new Intl.DateTimeFormat('he-IL', {
   minute: '2-digit',
 });
 
-function LogEntry({ entry, index, repeated }: { entry: UsedClue; index: number; repeated: boolean }): JSX.Element {
+function LogEntry({
+  entry,
+  index,
+  repeated,
+}: {
+  entry: UsedClue;
+  index: number;
+  repeated: boolean;
+}): JSX.Element {
   return (
     <article className="session-log__entry" data-testid={`log-entry-${index}`}>
       <header className="session-log__entry-header">
@@ -42,7 +50,9 @@ function LogEntry({ entry, index, repeated }: { entry: UsedClue; index: number; 
       {entry.intended.length > 0 ? (
         <div className="session-log__intended" aria-label="מילות המטרה">
           {entry.intended.map((word) => (
-            <span className="tag tag-outline" key={word}>{word}</span>
+            <span className="tag tag-outline" key={word}>
+              {word}
+            </span>
           ))}
         </div>
       ) : null}
@@ -95,8 +105,12 @@ export function SessionLog(): JSX.Element {
             onClick={() => setOpen((value) => !value)}
           >
             <span>יומן רמזים</span>
-            <span className="session-log__total" aria-label={`${log.length} רמזים`}>{log.length}</span>
-            <span className="session-log__chevron" aria-hidden="true">⌄</span>
+            <span className="session-log__total" aria-label={`${log.length} רמזים`}>
+              {log.length}
+            </span>
+            <span className="session-log__chevron" aria-hidden="true">
+              ⌄
+            </span>
           </button>
         }
       >

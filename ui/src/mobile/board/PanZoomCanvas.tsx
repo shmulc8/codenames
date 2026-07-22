@@ -80,7 +80,11 @@ export function PanZoomCanvas(): JSX.Element {
           >
             {tiles.length === 0 ? (
               <div className="mobile-board__loading" role="status">
-                <span className="cn-loading-spinner" data-testid="loading-spinner" aria-hidden="true" />
+                <span
+                  className="cn-loading-spinner"
+                  data-testid="loading-spinner"
+                  aria-hidden="true"
+                />
                 טוענים את קלפי הלוח…
               </div>
             ) : (
@@ -88,7 +92,9 @@ export function PanZoomCanvas(): JSX.Element {
                 className="mobile-board__transform"
                 data-board-transform="true"
                 data-at-fit={panZoom.atFit ? 'true' : 'false'}
-                style={{ transform: `translate3d(${panZoom.transform.x}px, ${panZoom.transform.y}px, 0) scale(${panZoom.transform.scale})` }}
+                style={{
+                  transform: `translate3d(${panZoom.transform.x}px, ${panZoom.transform.y}px, 0) scale(${panZoom.transform.scale})`,
+                }}
               >
                 <div className="mobile-board__grid">
                   {tiles.map((tile, index) => (
@@ -115,32 +121,36 @@ export function PanZoomCanvas(): JSX.Element {
       ) : (
         <div className="mobile-board__list" data-testid="board-card-list">
           {tiles.length === 0 ? (
-            <div className="mobile-board__list-empty" role="status">טוענים את קלפי הלוח…</div>
+            <div className="mobile-board__list-empty" role="status">
+              טוענים את קלפי הלוח…
+            </div>
           ) : (
-          <ul>
-            {tiles.map((tile, index) => (
-              <li key={tile.word}>
-                <button
-                  type="button"
-                  className={`role-${tile.role}${tile.lifecycle === 'chosen' ? ' is-chosen' : ''}`}
-                  data-testid={`board-list-item-${index}`}
-                  onClick={() => setFocusedWord(tile.word)}
-                >
-                  <span className="mobile-board__list-icon" aria-hidden="true">
-                    <RoleIcon role={tile.role} />
-                  </span>
-                  <span className="mobile-board__list-copy">
-                    <strong>{tile.word}</strong>
-                    <small>
-                      {roleLabel[tile.role]}
-                      {tile.lifecycle === 'chosen' ? ' · נחשף' : ''}
-                    </small>
-                  </span>
-                  <span className="mobile-board__list-action" aria-hidden="true">‹</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+            <ul>
+              {tiles.map((tile, index) => (
+                <li key={tile.word}>
+                  <button
+                    type="button"
+                    className={`role-${tile.role}${tile.lifecycle === 'chosen' ? ' is-chosen' : ''}`}
+                    data-testid={`board-list-item-${index}`}
+                    onClick={() => setFocusedWord(tile.word)}
+                  >
+                    <span className="mobile-board__list-icon" aria-hidden="true">
+                      <RoleIcon role={tile.role} />
+                    </span>
+                    <span className="mobile-board__list-copy">
+                      <strong>{tile.word}</strong>
+                      <small>
+                        {roleLabel[tile.role]}
+                        {tile.lifecycle === 'chosen' ? ' · נחשף' : ''}
+                      </small>
+                    </span>
+                    <span className="mobile-board__list-action" aria-hidden="true">
+                      ‹
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}

@@ -3,10 +3,8 @@ import type { Role } from '../../types/api';
 export const ROLE_CYCLE: Role[] = ['red', 'blue', 'neutral', 'assassin'];
 
 export const EMPTY_WORDS = (): string[] => Array.from({ length: 25 }, () => '');
-export const EMPTY_CONFIDENCE = (): number[] =>
-  Array.from({ length: 25 }, () => 100);
-export const EMPTY_ROLES = (): Role[] =>
-  Array.from({ length: 25 }, () => 'neutral');
+export const EMPTY_CONFIDENCE = (): number[] => Array.from({ length: 25 }, () => 100);
+export const EMPTY_ROLES = (): Role[] => Array.from({ length: 25 }, () => 'neutral');
 
 export function roleCounts(roles: Role[]): Record<Role, number> {
   return roles.reduce<Record<Role, number>>(
@@ -19,12 +17,8 @@ export function roleCounts(roles: Role[]): Record<Role, number> {
 // neutrals and exactly 1 assassin.
 export function isValidKey(roles: Role[]): boolean {
   const counts = roleCounts(roles);
-  const [larger, smaller] = [counts.red, counts.blue].sort(
-    (left, right) => right - left,
-  );
-  return (
-    larger === 9 && smaller === 8 && counts.neutral === 7 && counts.assassin === 1
-  );
+  const [larger, smaller] = [counts.red, counts.blue].sort((left, right) => right - left);
+  return larger === 9 && smaller === 8 && counts.neutral === 7 && counts.assassin === 1;
 }
 
 export function nextRole(role: Role): Role {

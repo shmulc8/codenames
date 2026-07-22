@@ -60,11 +60,13 @@ export function showToast(
 }
 
 function handleToastEvent(event: Event): void {
-  const detail = (event as CustomEvent<{
-    duration?: number;
-    message?: string;
-    tone?: ToastTone;
-  }>).detail;
+  const detail = (
+    event as CustomEvent<{
+      duration?: number;
+      message?: string;
+      tone?: ToastTone;
+    }>
+  ).detail;
 
   if (detail?.message) {
     showToast(detail.message, {

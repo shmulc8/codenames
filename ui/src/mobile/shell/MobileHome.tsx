@@ -28,10 +28,9 @@ function RandomBoardButton(): JSX.Element {
       }
       setBoard(deal.words, deal.roles);
     } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי',
-        { tone: 'error' },
-      );
+      showToast(error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי', {
+        tone: 'error',
+      });
     } finally {
       setLoading(false);
     }

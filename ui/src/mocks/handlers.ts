@@ -154,6 +154,26 @@ function mockSpymasterResponse(board: SpymasterRequest) {
     note: 'לא נמצא רמז בטוח. נסו אשכול אחר או רמת סיכון אחרת.',
   };
 
+  // The cautious profile is the deterministic "no safe clue" path: the engine's best
+  // option is itself a refusal, so the panel renders the no-clue state.
+  if (board.risk === 'cautious') {
+    return {
+      options: [noClueOption],
+      picked: 0,
+      clue: noClueOption.word,
+      count: noClueOption.count,
+      intended: noClueOption.intended,
+      reason: noClueOption.reason,
+      read: noClueOption.read,
+      leak: noClueOption.leak,
+      assassin: noClueOption.assassin,
+      no_clue: true,
+      risky: false,
+      safe: 0,
+      note: noClueOption.note,
+    };
+  }
+
   return {
     options: [cleanOption, riskyOption, noClueOption],
     picked: 0,

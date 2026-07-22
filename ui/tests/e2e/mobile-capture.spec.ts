@@ -84,9 +84,7 @@ test.describe('mobile capture flow', () => {
     expect(tiles.map((tile) => tile.role)).toEqual(VALID_ROLES);
   });
 
-  test('role grid cycles on tap and blocks confirm until the key is 9·8·7·1', async ({
-    page,
-  }) => {
+  test('role grid cycles on tap and blocks confirm until the key is 9·8·7·1', async ({ page }) => {
     await advanceToKeyReview(page);
 
     const capture = page.locator('.cn-capture');
@@ -144,9 +142,7 @@ test.describe('mobile capture flow', () => {
     await expect(page.getByTestId('review-grid')).toBeVisible();
   });
 
-  test('an OCR failure surfaces a Hebrew toast and keeps the camera usable', async ({
-    page,
-  }) => {
+  test('an OCR failure surfaces a Hebrew toast and keeps the camera usable', async ({ page }) => {
     await installFailingBoardRecognizer(page);
     await openCapture(page);
     await pickGallery(page);

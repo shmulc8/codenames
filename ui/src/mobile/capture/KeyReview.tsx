@@ -37,23 +37,14 @@ export function KeyReview({
 
   return (
     <section className="cn-capture__review">
-      <CaptureHeader
-        step={2}
-        title="בדקו את המפתח"
-        onClose={onClose}
-        onRetake={onRetake}
-      />
+      <CaptureHeader step={2} title="בדקו את המפתח" onClose={onClose} onRetake={onRetake} />
 
       <div className="cn-capture__review-body">
         <div className="cn-capture__key-status">
           <span className={`cn-capture__key-flag ${valid ? 'is-valid' : ''}`}>
             {valid ? '9·8·7·1 מפתח תקין' : 'חלוקת המפתח עדיין לא 9·8·7·1'}
           </span>
-          <button
-            type="button"
-            className="btn btn-secondary cn-capture__rotate"
-            onClick={onRotate}
-          >
+          <button type="button" className="btn btn-secondary cn-capture__rotate" onClick={onRotate}>
             סובב ↻
           </button>
         </div>
@@ -85,12 +76,7 @@ export function KeyReview({
         <p className="cn-capture__hint">👆 הקישו על תא כדי להחליף תפקיד</p>
       </div>
 
-      <ReviewFooter
-        canUse={valid}
-        onUse={onUse}
-        onRetake={onRetake}
-        onGallery={onGallery}
-      />
+      <ReviewFooter canUse={valid} onUse={onUse} onRetake={onRetake} onGallery={onGallery} />
     </section>
   );
 }

@@ -8,7 +8,11 @@
   overflow: auto;
   color: var(--cn-text);
   background:
-    radial-gradient(circle at 50% 12%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 36%),
+    radial-gradient(
+      circle at 50% 12%,
+      color-mix(in srgb, var(--color-accent) 8%, transparent),
+      transparent 36%
+    ),
     var(--cn-app-bg);
   font-family: var(--font-hebrew);
   padding: max(env(safe-area-inset-top), var(--space-4)) var(--space-4)
@@ -40,7 +44,7 @@
   max-width: 28ch;
   margin: 0;
   color: var(--cn-text-muted);
-  font-size: .88rem;
+  font-size: 0.88rem;
 }
 
 @media (orientation: portrait) {
@@ -256,7 +260,9 @@
   border-radius: var(--radius-md);
   font: 500 11px/1.2 var(--font-hebrew);
   cursor: pointer;
-  transition: color 140ms ease, background-color 140ms ease;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease;
 }
 
 .mobile .mobile-shell__tabbar button.is-active {
@@ -274,8 +280,8 @@
   }
 
   .mobile.mobile-shell {
-    padding: var(--space-3) calc(84px + env(safe-area-inset-right))
-      var(--space-3) max(env(safe-area-inset-left), var(--space-3));
+    padding: var(--space-3) calc(84px + env(safe-area-inset-right)) var(--space-3)
+      max(env(safe-area-inset-left), var(--space-3));
   }
 
   .mobile .mobile-shell__header {
@@ -315,8 +321,7 @@
     min-height: 100svh;
     grid-template-columns: 1fr;
     grid-template-rows: repeat(4, minmax(44px, 1fr));
-    padding: env(safe-area-inset-top) env(safe-area-inset-right)
-      env(safe-area-inset-bottom) 4px;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) 4px;
     border-block-start: 0;
     border-inline-start: 1px solid var(--color-divider);
     box-shadow: -10px 0 28px color-mix(in srgb, var(--cn-board-void) 70%, transparent);

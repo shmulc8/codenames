@@ -40,12 +40,7 @@ export function CaptureHeader({
     <header className="cn-capture__header">
       <div className="cn-capture__header-row">
         {leading === 'flash' ? (
-          <button
-            type="button"
-            className="cn-capture__icon-btn"
-            aria-label="פלאש"
-            title="פלאש"
-          >
+          <button type="button" className="cn-capture__icon-btn" aria-label="פלאש" title="פלאש">
             ⚡
           </button>
         ) : (
@@ -66,11 +61,7 @@ export function CaptureHeader({
         </div>
 
         {onRetake ? (
-          <button
-            type="button"
-            className="cn-capture__header-link"
-            onClick={onRetake}
-          >
+          <button type="button" className="cn-capture__header-link" onClick={onRetake}>
             צילום מחדש →
           </button>
         ) : (
@@ -88,7 +79,9 @@ export function CaptureHeader({
 
       <div className="cn-capture__steps" role="list" aria-label="שלבי הצילום">
         <StepBadge index={1} active={step === 1} label="מילים" />
-        <span className="cn-capture__step-sep" aria-hidden="true">←</span>
+        <span className="cn-capture__step-sep" aria-hidden="true">
+          ←
+        </span>
         <StepBadge index={2} active={step === 2} label="כרטיס מפתח" />
       </div>
     </header>

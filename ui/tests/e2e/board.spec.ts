@@ -4,7 +4,7 @@ import { fixtureBoard } from '../../src/mocks/fixtures/board';
 
 async function setupDemoBoard(page: Page): Promise<void> {
   await page.goto('/');
-  await page.getByTestId('btn-skip-demo').click();
+  await page.getByTestId('btn-random-board').click();
   await page.getByTestId('btn-confirm-board').click();
   await expect(page.getByTestId('board-grid')).toBeVisible();
 }
@@ -33,7 +33,9 @@ test.describe('BoardGrid', () => {
     expect(tile!.width).toBeLessThanOrEqual(160);
   });
 
-  test('renders all absolute roles with canonical attributes and game counters', async ({ page }) => {
+  test('renders all absolute roles with canonical attributes and game counters', async ({
+    page,
+  }) => {
     await setupDemoBoard(page);
 
     await expect(page.getByTestId(/^tile-\d+$/)).toHaveCount(25);
@@ -44,10 +46,7 @@ test.describe('BoardGrid', () => {
         'data-role',
         fixtureBoard.roles[word],
       );
-      await expect(page.getByTestId(`tile-${index}`)).toHaveAttribute(
-        'data-lifecycle',
-        'inPlay',
-      );
+      await expect(page.getByTestId(`tile-${index}`)).toHaveAttribute('data-lifecycle', 'inPlay');
       await expect(page.getByTestId(`btn-lifecycle-${index}`)).toBeVisible();
     }
 
@@ -77,20 +76,18 @@ test.describe('BoardGrid', () => {
     await expect(page.getByTestId('tile-0')).toBeFocused();
   });
 
-  test('rejects cross-color and non-team selections with the contract messages', async ({ page }) => {
+  test('rejects cross-color and non-team selections with the contract messages', async ({
+    page,
+  }) => {
     await setupDemoBoard(page);
 
     await page.getByTestId('tile-0').click();
     await page.getByTestId('tile-9').click();
-    await expect(page.getByTestId('toast')).toContainText(
-      'אפשר לבחור רק קלפים בצבע אחד',
-    );
+    await expect(page.getByTestId('toast')).toContainText('אפשר לבחור רק קלפים בצבע אחד');
     expect((await readBoardState(page)).selected).toEqual([fixtureBoard.words[0]]);
 
     await page.getByTestId('tile-17').click();
-    await expect(page.getByTestId('toast')).toContainText(
-      'אפשר לבחור רק קלפים של קבוצה',
-    );
+    await expect(page.getByTestId('toast')).toContainText('אפשר לבחור רק קלפים של קבוצה');
     expect((await readBoardState(page)).selected).toEqual([fixtureBoard.words[0]]);
   });
 
@@ -98,9 +95,9 @@ test.describe('BoardGrid', () => {
     await setupDemoBoard(page);
 
     await page.getByTestId('tile-3').hover();
-    await expect.poll(async () => (await readBoardState(page)).hoverWord).toBe(
-      fixtureBoard.words[3],
-    );
+    await expect
+      .poll(async () => (await readBoardState(page)).hoverWord)
+      .toBe(fixtureBoard.words[3]);
     await page.getByTestId('btn-reset-game').hover();
     await expect.poll(async () => (await readBoardState(page)).hoverWord).toBeNull();
   });
@@ -134,7 +131,9 @@ test.describe('BoardGrid', () => {
     });
   });
 
-  test('mark-revealed mode makes covered cards visible and removes them from hint requests', async ({ page }) => {
+  test('mark-revealed mode makes covered cards visible and removes them from hint requests', async ({
+    page,
+  }) => {
     await setupDemoBoard(page);
 
     await page.getByTestId('btn-mark-revealed').click();
@@ -144,8 +143,9 @@ test.describe('BoardGrid', () => {
     await expect(page.getByTestId('chip-chosenby-0')).toBeVisible();
 
     const liveWords = await page.evaluate(() =>
-      window.__store?.getState().tiles
-        .filter((tile) => tile.lifecycle === 'inPlay')
+      window.__store
+        ?.getState()
+        .tiles.filter((tile) => tile.lifecycle === 'inPlay')
         .map((tile) => tile.word),
     );
     expect(liveWords).not.toContain(fixtureBoard.words[0]);
@@ -165,7 +165,9 @@ test.describe('BoardGrid', () => {
     await expect(page.getByText('המתנקש נחשף — סוף משחק', { exact: true })).toBeVisible();
   });
 
-  test('replaces the board in place without confirmation or navigating to setup', async ({ page }) => {
+  test('replaces the board in place without confirmation or navigating to setup', async ({
+    page,
+  }) => {
     await setupDemoBoard(page);
 
     await page.getByTestId('btn-lifecycle-0').click();

@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 export async function setupDemoBoard(page: Page): Promise<void> {
   await page.goto('/');
-  await page.getByTestId('btn-skip-demo').click();
+  await page.getByTestId('btn-random-board').click();
   await page.getByTestId('btn-confirm-board').click();
   await expect(page.getByTestId('board-grid')).toBeVisible();
 }

@@ -4,12 +4,14 @@ import type {
   ClueOption,
   DealResponse,
   FeedbackPayload,
+  OperativeResponse,
   ReadEntry,
   Risk,
   Role,
   SpaceResponse,
   SpymasterResponse,
   TeamColor,
+  VocabMode,
   WireRole,
 } from '../types/api';
 
@@ -36,15 +38,13 @@ interface WireClueOption extends Omit<ClueOption, 'read' | 'leak'> {
   leak: WireReadEntry[];
 }
 
-interface WireSpymasterResponse
-  extends Omit<SpymasterResponse, 'options' | 'read' | 'leak'> {
+interface WireSpymasterResponse extends Omit<SpymasterResponse, 'options' | 'read' | 'leak'> {
   options: WireClueOption[];
   read?: WireReadEntry[];
   leak?: WireReadEntry[];
 }
 
-interface WireCheckResponse
-  extends Omit<CheckResponse, 'read' | 'first_danger'> {
+interface WireCheckResponse extends Omit<CheckResponse, 'read' | 'first_danger'> {
   read: WireReadEntry[];
   first_danger: WireReadEntry | null;
 }
@@ -79,19 +79,13 @@ function fromWireRole(role: WireRole, target: TeamColor): Role {
   return role;
 }
 
-function toWire(
-  roles: Record<string, Role>,
-  target: TeamColor,
-): Record<string, WireRole> {
+function toWire(roles: Record<string, Role>, target: TeamColor): Record<string, WireRole> {
   return Object.fromEntries(
     Object.entries(roles).map(([word, role]) => [word, toWireRole(role, target)]),
   );
 }
 
-function fromWire(
-  roles: Record<string, WireRole>,
-  target: TeamColor,
-): Record<string, Role> {
+function fromWire(roles: Record<string, WireRole>, target: TeamColor): Record<string, Role> {
   return Object.fromEntries(
     Object.entries(roles).map(([word, role]) => [word, fromWireRole(role, target)]),
   );
@@ -146,10 +140,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw new ApiError('הבקשה ארכה יותר מדי זמן', 0);
     }
-    throw new ApiError(
-      error instanceof Error ? error.message : 'לא ניתן להתחבר לשרת',
-      0,
-    );
+    throw new ApiError(error instanceof Error ? error.message : 'לא ניתן להתחבר לשרת', 0);
   } finally {
     window.clearTimeout(timeout);
   }
@@ -172,6 +163,7 @@ export async function postSpymaster(
   target: TeamColor,
   focus?: string[],
   risk?: Risk,
+  vocabMode?: VocabMode,
 ): Promise<SpymasterResponse> {
   const response = await request<WireSpymasterResponse>('/api/coach/spymaster', {
     method: 'POST',
@@ -180,6 +172,7 @@ export async function postSpymaster(
       roles: toWire(board.roles, target),
       ...(focus?.length ? { focus } : {}),
       ...(risk ? { risk } : {}),
+      ...(vocabMode ? { vocab_mode: vocabMode } : {}),
     }),
   });
 
@@ -188,13 +181,30 @@ export async function postSpymaster(
   return {
     ...summary,
     options: options.map((option) => mapClueOption(option, target)),
-    ...(read
-      ? { read: read.map((entry) => mapReadEntry(entry, target)) }
-      : {}),
-    ...(leak
-      ? { leak: leak.map((entry) => mapReadEntry(entry, target)) }
-      : {}),
+    ...(read ? { read: read.map((entry) => mapReadEntry(entry, target)) } : {}),
+    ...(leak ? { leak: leak.map((entry) => mapReadEntry(entry, target)) } : {}),
   };
+}
+
+export function postOperative(
+  board: BoardPayload,
+  clue: string,
+  count: number,
+  vocabMode?: VocabMode,
+): Promise<OperativeResponse> {
+  // The guesser view is role-blind: the response ranks words by clue proximity with no roles,
+  // so no wire→app role mapping is needed on the way back. Roles are sent only so the engine can
+  // build the board (they don't affect the ranking); the target choice here is arbitrary.
+  return request<OperativeResponse>('/api/coach/operative', {
+    method: 'POST',
+    body: JSON.stringify({
+      words: board.words,
+      roles: toWire(board.roles, 'red'),
+      clue,
+      count,
+      ...(vocabMode ? { vocab_mode: vocabMode } : {}),
+    }),
+  });
 }
 
 export async function postCheck(
@@ -214,9 +224,7 @@ export async function postCheck(
   return {
     ...response,
     read: response.read.map((entry) => mapReadEntry(entry, target)),
-    first_danger: response.first_danger
-      ? mapReadEntry(response.first_danger, target)
-      : null,
+    first_danger: response.first_danger ? mapReadEntry(response.first_danger, target) : null,
   };
 }
 

@@ -76,9 +76,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps): JSX.Element {
       const cells = await getRecognizers().recognizeBoard(file);
       if (attempt !== boardAttempt.current) return;
       setWords(coerceWords(cells.map((cell) => cell.word)));
-      setConfidences(
-        Array.from({ length: 25 }, (_, index) => cells[index]?.confidence ?? 0),
-      );
+      setConfidences(Array.from({ length: 25 }, (_, index) => cells[index]?.confidence ?? 0));
       setPhase('review');
     } catch (error) {
       if (attempt !== boardAttempt.current) return;
@@ -151,18 +149,14 @@ export function CaptureFlow({ onClose }: CaptureFlowProps): JSX.Element {
   function confirmKey(): void {
     if (!isValidKey(roles)) return;
     const normalized = normalizedWords(words);
-    const roleMap = Object.fromEntries(
-      normalized.map((word, index) => [word, roles[index]]),
-    );
+    const roleMap = Object.fromEntries(normalized.map((word, index) => [word, roles[index]]));
     setBoard(normalized, roleMap);
     onClose();
   }
 
   return (
     <div className="mobile cn-capture" dir="rtl">
-      {phase === 'camera' && (
-        <CameraView step={step} onFile={handleCameraFile} onClose={onClose} />
-      )}
+      {phase === 'camera' && <CameraView step={step} onFile={handleCameraFile} onClose={onClose} />}
       {phase === 'review' && step === 1 && (
         <WordReview
           words={words}

@@ -8,11 +8,7 @@ import { useAppStore } from '../../state/store';
 import { showToast } from '../../state/toast';
 import type { Role } from '../../types/api';
 import { classifyKeyCard, rotateRolesClockwise } from './keyCard';
-import {
-  recognizeBoard,
-  subscribeToOcrProgress,
-  warmOcrWorker,
-} from './ocr';
+import { recognizeBoard, subscribeToOcrProgress, warmOcrWorker } from './ocr';
 import './photo.css';
 
 const EMPTY_WORDS = Array.from({ length: 25 }, () => '');
@@ -27,6 +23,11 @@ const roleLabel: Record<Role, string> = {
 };
 
 type InputMode = 'manual' | 'photo';
+// Photo/OCR board capture is still being finished — gated off in production, on in
+// dev/tests (VITE_ENABLE_OCR=1). Manual entry + random deal stay the default setup path.
+const OCR_ENABLED =
+  import.meta.env.VITE_ENABLE_OCR === '1' || import.meta.env.VITE_ENABLE_OCR === 'true';
+
 type OcrState = 'warming' | 'ready' | 'recognizing' | 'success' | 'error';
 
 function filePreview(file: File): string {
@@ -60,10 +61,17 @@ function SetupModeIcon({ name }: { name: 'camera' | 'cube' | 'keyboard' }): JSX.
 
 export function PhotoSetup(): JSX.Element {
   const setBoard = useAppStore((state) => state.setBoard);
+  const tiles = useAppStore((state) => state.tiles);
   const [mode, setMode] = useState<InputMode>('manual');
-  const [words, setWords] = useState([...EMPTY_WORDS]);
-  const [confidences, setConfidences] = useState([...EMPTY_CONFIDENCE]);
-  const [roles, setRoles] = useState<Role[]>([...EMPTY_ROLES]);
+  const [words, setWords] = useState(() =>
+    tiles.length > 0 ? tiles.map((tile) => tile.word) : [...EMPTY_WORDS],
+  );
+  const [confidences, setConfidences] = useState(() =>
+    tiles.length > 0 ? tiles.map(() => 100) : [...EMPTY_CONFIDENCE],
+  );
+  const [roles, setRoles] = useState<Role[]>(() =>
+    tiles.length > 0 ? tiles.map((tile) => tile.role) : [...EMPTY_ROLES],
+  );
   const [ocrState, setOcrState] = useState<OcrState>('warming');
   const [ocrProgress, setOcrProgress] = useState(0);
   const [keyBusy, setKeyBusy] = useState(false);
@@ -74,8 +82,11 @@ export function PhotoSetup(): JSX.Element {
   const [keyPreview, setKeyPreview] = useState<string | null>(null);
   const boardOcrAttempt = useRef(0);
   const keyCardAttempt = useRef(0);
+  const didInit = useRef(false);
+  const dealAttempt = useRef(0);
 
   useEffect(() => {
+    if (!OCR_ENABLED) return;
     let active = true;
     const unsubscribe = subscribeToOcrProgress(({ progress }) => {
       setOcrProgress(Math.round(progress * 100));
@@ -95,20 +106,28 @@ export function PhotoSetup(): JSX.Element {
     };
   }, []);
 
-  useEffect(() => () => {
-    if (boardPreview) URL.revokeObjectURL(boardPreview);
-  }, [boardPreview]);
+  useEffect(
+    () => () => {
+      if (boardPreview) URL.revokeObjectURL(boardPreview);
+    },
+    [boardPreview],
+  );
 
-  useEffect(() => () => {
-    if (keyPreview) URL.revokeObjectURL(keyPreview);
-  }, [keyPreview]);
+  useEffect(
+    () => () => {
+      if (keyPreview) URL.revokeObjectURL(keyPreview);
+    },
+    [keyPreview],
+  );
 
   const counts = useMemo(
     () =>
-      roles.reduce<Record<Role, number>>(
-        (total, role) => ({ ...total, [role]: total[role] + 1 }),
-        { red: 0, blue: 0, neutral: 0, assassin: 0 },
-      ),
+      roles.reduce<Record<Role, number>>((total, role) => ({ ...total, [role]: total[role] + 1 }), {
+        red: 0,
+        blue: 0,
+        neutral: 0,
+        assassin: 0,
+      }),
     [roles],
   );
   const validKey =
@@ -117,9 +136,12 @@ export function PhotoSetup(): JSX.Element {
     counts.assassin === 1;
 
   async function loadDemo(): Promise<void> {
+    const attempt = ++dealAttempt.current;
     setDemoBusy(true);
     try {
       const deal = await getDeal();
+      // A slow initial deal must not overwrite the grid if the user already switched to manual.
+      if (attempt !== dealAttempt.current) return;
       setMode('manual');
       setWords([...deal.words]);
       setRoles(deal.words.map((word) => deal.roles[word] ?? 'neutral'));
@@ -127,13 +149,33 @@ export function PhotoSetup(): JSX.Element {
       setValidation(null);
       setRandomLoaded(true);
     } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי',
-        { tone: 'error' },
-      );
+      if (attempt !== dealAttempt.current) return;
+      showToast(error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי', {
+        tone: 'error',
+      });
     } finally {
-      setDemoBusy(false);
+      if (attempt === dealAttempt.current) setDemoBusy(false);
     }
+  }
+
+  // Most users just want to play, so a fresh setup starts on a random board. Returning to
+  // fix an existing board (tiles already present) keeps that board instead.
+  useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
+    if (tiles.length === 0) void loadDemo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Clear the grid so the user can type their own board from scratch.
+  function startManualEntry(): void {
+    dealAttempt.current += 1;
+    setMode('manual');
+    setWords([...EMPTY_WORDS]);
+    setRoles([...EMPTY_ROLES]);
+    setConfidences([...EMPTY_CONFIDENCE]);
+    setRandomLoaded(false);
+    setValidation(null);
   }
 
   async function handleBoardFile(file: File): Promise<void> {
@@ -153,10 +195,9 @@ export function PhotoSetup(): JSX.Element {
       setWords([...EMPTY_WORDS]);
       setConfidences(Array.from({ length: 25 }, () => 0));
       setOcrState('error');
-      showToast(
-        `${error instanceof Error ? error.message : 'הזיהוי נכשל'} — אפשר להקליד ידנית`,
-        { tone: 'error' },
-      );
+      showToast(`${error instanceof Error ? error.message : 'הזיהוי נכשל'} — אפשר להקליד ידנית`, {
+        tone: 'error',
+      });
     }
   }
 
@@ -193,9 +234,7 @@ export function PhotoSetup(): JSX.Element {
     setRoles((current) => {
       const next = [...current];
       const currentIndex = roleOrder.indexOf(current[index]);
-      next[index] = roleOrder[
-        (currentIndex + direction + roleOrder.length) % roleOrder.length
-      ];
+      next[index] = roleOrder[(currentIndex + direction + roleOrder.length) % roleOrder.length];
       return next;
     });
   }
@@ -206,6 +245,9 @@ export function PhotoSetup(): JSX.Element {
   }
 
   function updateWord(index: number, value: string): void {
+    // Typing means the user is entering their own board — cancel any in-flight deal so a
+    // late random result cannot overwrite what they typed.
+    dealAttempt.current += 1;
     if (ocrState === 'recognizing') {
       boardOcrAttempt.current += 1;
       setOcrState('ready');
@@ -241,9 +283,7 @@ export function PhotoSetup(): JSX.Element {
     if (firstEmpty >= 0) {
       setValidation('צריך למלא את כל 25 המילים לפני שממשיכים');
       window.requestAnimationFrame(() => {
-        document.querySelector<HTMLInputElement>(
-          `[data-testid="ocr-cell-${firstEmpty}"]`,
-        )?.focus();
+        document.querySelector<HTMLInputElement>(`[data-testid="ocr-cell-${firstEmpty}"]`)?.focus();
       });
       return;
     }
@@ -253,17 +293,19 @@ export function PhotoSetup(): JSX.Element {
       );
       setValidation('כל מילה צריכה להופיע פעם אחת בלבד');
       window.requestAnimationFrame(() => {
-        document.querySelector<HTMLInputElement>(
-          `[data-testid="ocr-cell-${duplicateIndex}"]`,
-        )?.focus();
+        document
+          .querySelector<HTMLInputElement>(`[data-testid="ocr-cell-${duplicateIndex}"]`)
+          ?.focus();
       });
+      return;
+    }
+    if (!validKey) {
+      setValidation('חלוקת המפתח חייבת להיות 9·8·7·1 לפני שמתחילים');
       return;
     }
 
     setValidation(null);
-    const roleMap = Object.fromEntries(
-      normalized.map((word, index) => [word, roles[index]]),
-    );
+    const roleMap = Object.fromEntries(normalized.map((word, index) => [word, roles[index]]));
     setBoard(normalized, roleMap);
   }
 
@@ -277,30 +319,35 @@ export function PhotoSetup(): JSX.Element {
         <div className="photo-setup__modes" role="group" aria-label="אופן הזנת הלוח">
           <button
             type="button"
-            className={mode === 'manual' ? 'is-active' : undefined}
-            aria-pressed={mode === 'manual'}
-            onClick={() => setMode('manual')}
-          >
-            <SetupModeIcon name="keyboard" />
-            <span>הזנה ידנית</span>
-          </button>
-          <button
-            type="button"
-            className={mode === 'photo' ? 'is-active' : undefined}
-            aria-pressed={mode === 'photo'}
-            onClick={() => setMode('photo')}
-          >
-            <SetupModeIcon name="camera" />
-            <span>מתמונה</span>
-          </button>
-          <button
-            type="button"
-            data-testid="btn-skip-demo"
+            data-testid="btn-random-board"
+            className={randomLoaded ? 'is-active' : undefined}
+            aria-pressed={randomLoaded}
             disabled={demoBusy}
             onClick={() => void loadDemo()}
           >
             <SetupModeIcon name="cube" />
             <span>{demoBusy ? 'טוען לוח…' : randomLoaded ? 'הגרילו שוב' : 'אקראי'}</span>
+          </button>
+          {OCR_ENABLED && (
+            <button
+              type="button"
+              className={mode === 'photo' ? 'is-active' : undefined}
+              aria-pressed={mode === 'photo'}
+              onClick={() => setMode('photo')}
+            >
+              <SetupModeIcon name="camera" />
+              <span>מתמונה</span>
+            </button>
+          )}
+          <button
+            type="button"
+            data-testid="btn-manual-entry"
+            className={mode === 'manual' && !randomLoaded ? 'is-active' : undefined}
+            aria-pressed={mode === 'manual' && !randomLoaded}
+            onClick={startManualEntry}
+          >
+            <SetupModeIcon name="keyboard" />
+            <span>הזנה ידנית</span>
           </button>
         </div>
       </header>
@@ -325,11 +372,7 @@ export function PhotoSetup(): JSX.Element {
                 </span>
               ))}
             </div>
-            <button
-              className="btn btn-secondary"
-              type="button"
-              onClick={rotateRoles}
-            >
+            <button className="btn btn-secondary" type="button" onClick={rotateRoles}>
               סובב ↻
             </button>
           </div>
@@ -401,96 +444,104 @@ export function PhotoSetup(): JSX.Element {
           </button>
         </section>
 
-        <aside className={`photo-setup__uploads ${mode === 'photo' ? 'is-emphasized' : ''}`}>
-          <h2>יש תמונה של הלוח?</h2>
-          <p>גררו לכאן צילום מהטלפון, או בחרו קובץ. תמיד תוכלו לתקן את הזיהוי.</p>
+        {OCR_ENABLED && (
+          <aside className={`photo-setup__uploads ${mode === 'photo' ? 'is-emphasized' : ''}`}>
+            <h2>יש תמונה של הלוח?</h2>
+            <p>גררו לכאן צילום מהטלפון, או בחרו קובץ. תמיד תוכלו לתקן את הזיהוי.</p>
 
-          <label
-            className="photo-setup__drop-zone"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault();
-              const file = event.dataTransfer.files[0];
-              if (file?.type.startsWith('image/')) void handleBoardFile(file);
-            }}
-          >
-            {boardPreview ? (
-              <img src={boardPreview} alt="תצוגה מקדימה של צילום הלוח" />
-            ) : (
-              <span className="photo-setup__upload-icon" aria-hidden="true">↥</span>
-            )}
-            <strong>{boardPreview ? 'בחרו צילום אחר' : 'גררו תמונה או בחרו מהמחשב'}</strong>
-            <small>JPG · PNG · WEBP</small>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              data-testid="photo-input-board"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void handleBoardFile(file);
+            <label
+              className="photo-setup__drop-zone"
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                const file = event.dataTransfer.files[0];
+                if (file?.type.startsWith('image/')) void handleBoardFile(file);
               }}
-            />
-          </label>
+            >
+              {boardPreview ? (
+                <img src={boardPreview} alt="תצוגה מקדימה של צילום הלוח" />
+              ) : (
+                <span className="photo-setup__upload-icon" aria-hidden="true">
+                  ↥
+                </span>
+              )}
+              <strong>{boardPreview ? 'בחרו צילום אחר' : 'גררו תמונה או בחרו מהמחשב'}</strong>
+              <small>JPG · PNG · WEBP</small>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                data-testid="photo-input-board"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void handleBoardFile(file);
+                }}
+              />
+            </label>
 
-          <button
-            type="button"
-            className="btn btn-ghost photo-setup__skip"
-            onClick={() => {
-              boardOcrAttempt.current += 1;
-              setWords([...EMPTY_WORDS]);
-              setConfidences([...EMPTY_CONFIDENCE]);
-              setOcrState('ready');
-            }}
-          >
-            דלגו על צילום הלוח — הקלידו ידנית
-          </button>
-
-          <div className={`photo-setup__ocr-status is-${ocrState}`} role="status">
-            {(ocrState === 'warming' || ocrState === 'recognizing') && (
-              <span data-testid="loading-spinner" className="photo-setup__spinner" />
-            )}
-            {ocrState === 'warming' && `טוען מנוע זיהוי… ${ocrProgress ? `${ocrProgress}%` : ''}`}
-            {ocrState === 'ready' && 'מנוע הזיהוי מוכן'}
-            {ocrState === 'recognizing' && `מזהה את מילות הלוח… ${ocrProgress}%`}
-            {ocrState === 'success' && 'הזיהוי הושלם — בדקו תאים המסומנים בצהוב'}
-            {ocrState === 'error' && 'הזיהוי לא זמין כרגע — רשת ההקלדה מוכנה לשימוש'}
-          </div>
-
-          <label className="photo-setup__key-upload">
-            <span>
-              <strong>צילום כרטיס המפתח</strong>
-              <small>{keyBusy ? 'מזהה צבעים…' : 'הצבעים ייכנסו לרשת ויישארו ניתנים לתיקון'}</small>
-            </span>
-            {keyPreview && <img src={keyPreview} alt="תצוגה מקדימה של כרטיס המפתח" />}
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              data-testid="photo-input-key"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void handleKeyFile(file);
+            <button
+              type="button"
+              className="btn btn-ghost photo-setup__skip"
+              onClick={() => {
+                boardOcrAttempt.current += 1;
+                setWords([...EMPTY_WORDS]);
+                setConfidences([...EMPTY_CONFIDENCE]);
+                setOcrState('ready');
               }}
-            />
-          </label>
+            >
+              דלגו על צילום הלוח — הקלידו ידנית
+            </button>
 
-          <button
-            type="button"
-            className="btn btn-ghost photo-setup__skip"
-            onClick={() => {
-              invalidateKeyClassification();
-              setRoles([...EMPTY_ROLES]);
-            }}
-          >
-            דלגו על צילום המפתח — סמנו ידנית
-          </button>
+            <div className={`photo-setup__ocr-status is-${ocrState}`} role="status">
+              {(ocrState === 'warming' || ocrState === 'recognizing') && (
+                <span data-testid="loading-spinner" className="photo-setup__spinner" />
+              )}
+              {ocrState === 'warming' && `טוען מנוע זיהוי… ${ocrProgress ? `${ocrProgress}%` : ''}`}
+              {ocrState === 'ready' && 'מנוע הזיהוי מוכן'}
+              {ocrState === 'recognizing' && `מזהה את מילות הלוח… ${ocrProgress}%`}
+              {ocrState === 'success' && 'הזיהוי הושלם — בדקו תאים המסומנים בצהוב'}
+              {ocrState === 'error' && 'הזיהוי לא זמין כרגע — רשת ההקלדה מוכנה לשימוש'}
+            </div>
 
-          <div className="photo-setup__manual-note">
-            <span aria-hidden="true">▣</span>
-            <p><strong>אין מצלמה במחשב?</strong> זו הסיבה שהזנה ידנית היא ברירת המחדל.</p>
-          </div>
-        </aside>
+            <label className="photo-setup__key-upload">
+              <span>
+                <strong>צילום כרטיס המפתח</strong>
+                <small>
+                  {keyBusy ? 'מזהה צבעים…' : 'הצבעים ייכנסו לרשת ויישארו ניתנים לתיקון'}
+                </small>
+              </span>
+              {keyPreview && <img src={keyPreview} alt="תצוגה מקדימה של כרטיס המפתח" />}
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                data-testid="photo-input-key"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void handleKeyFile(file);
+                }}
+              />
+            </label>
+
+            <button
+              type="button"
+              className="btn btn-ghost photo-setup__skip"
+              onClick={() => {
+                invalidateKeyClassification();
+                setRoles([...EMPTY_ROLES]);
+              }}
+            >
+              דלגו על צילום המפתח — סמנו ידנית
+            </button>
+
+            <div className="photo-setup__manual-note">
+              <span aria-hidden="true">▣</span>
+              <p>
+                <strong>אין מצלמה במחשב?</strong> זו הסיבה שהזנה ידנית היא ברירת המחדל.
+              </p>
+            </div>
+          </aside>
+        )}
       </div>
     </section>
   );

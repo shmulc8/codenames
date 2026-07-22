@@ -13,16 +13,16 @@ generation. Prints the best profile per risk with its metrics and writes them fo
   HF_HUB_OFFLINE=1 FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin EMBED_ONLY=1 \\
     .venv/bin/python -m research.tune_clue --boards 24 --configs 40 --out data/tuned_profiles.json
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import random
 
-import app
-import probe
+from codenames import app, probe
+from codenames.guesser import make_guesser
 from research import bench_clue
-from guesser import make_guesser
 
 GRID = {
     "m": [2, 3, 4],
@@ -61,8 +61,11 @@ def evaluate(profile: dict, risk: str, boards: list, guesser) -> dict:
 
 
 def objective(summary: dict, risk: str) -> float:
-    return (summary["gained"] - W_ASSASSIN * summary["assassin"]
-            - W_SAFE[risk] * (1 - summary["safe_turn"]))
+    return (
+        summary["gained"]
+        - W_ASSASSIN * summary["assassin"]
+        - W_SAFE[risk] * (1 - summary["safe_turn"])
+    )
 
 
 def main():
@@ -92,18 +95,28 @@ def main():
             obj = objective(summ, risk)
             if obj > best_obj:
                 best_obj, best_cfg, best_sum = obj, cfg, summ
-            print(f"  [{risk}] {i + 1:>2}/{len(configs)} obj={obj:+.3f} "
-                  f"gained={summ['gained']:.2f} safe={summ['safe_turn']:.2f} "
-                  f"asn={summ['assassin']:.2f} m={cfg['m']} sm={cfg['safe_margin']}", flush=True)
-        out[risk] = {"profile": best_cfg, "metrics": best_sum, "objective": round(best_obj, 4),
-                     "baseline_metrics": baseline, "baseline_objective": round(objective(baseline, risk), 4)}
+            print(
+                f"  [{risk}] {i + 1:>2}/{len(configs)} obj={obj:+.3f} "
+                f"gained={summ['gained']:.2f} safe={summ['safe_turn']:.2f} "
+                f"asn={summ['assassin']:.2f} m={cfg['m']} sm={cfg['safe_margin']}",
+                flush=True,
+            )
+        out[risk] = {
+            "profile": best_cfg,
+            "metrics": best_sum,
+            "objective": round(best_obj, 4),
+            "baseline_metrics": baseline,
+            "baseline_objective": round(objective(baseline, risk), 4),
+        }
         b = out[risk]
         print(f"\n== {risk} BEST obj={b['objective']} (baseline {b['baseline_objective']}) ==")
         print(f"   profile: {best_cfg}")
-        print(f"   gained {best_sum['gained']:.2f} (base {baseline['gained']:.2f})  "
-              f"safe {best_sum['safe_turn']:.2f} (base {baseline['safe_turn']:.2f})  "
-              f"asn {best_sum['assassin']:.2f}  over_claim {best_sum['over_claim']:.2f} "
-              f"(base {baseline['over_claim']:.2f})\n")
+        print(
+            f"   gained {best_sum['gained']:.2f} (base {baseline['gained']:.2f})  "
+            f"safe {best_sum['safe_turn']:.2f} (base {baseline['safe_turn']:.2f})  "
+            f"asn {best_sum['assassin']:.2f}  over_claim {best_sum['over_claim']:.2f} "
+            f"(base {baseline['over_claim']:.2f})\n"
+        )
 
     with open(args.out, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=2)

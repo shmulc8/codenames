@@ -1,4 +1,4 @@
 interface:
-  display_name: "React Grab"
-  short_description: "Hands-free loop that turns browser React Grab selections into agent tasks automatically"
-  default_prompt: "Use $react-grab to watch for React Grab selections and act on each new grab automatically until the user says stop."
+  display_name: 'React Grab'
+  short_description: 'Hands-free loop that turns browser React Grab selections into agent tasks automatically'
+  default_prompt: 'Use $react-grab to watch for React Grab selections and act on each new grab automatically until the user says stop.'

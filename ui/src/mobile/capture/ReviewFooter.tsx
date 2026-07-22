@@ -13,9 +13,7 @@ export function ReviewFooter({
   onRetake,
   onGallery,
 }: ReviewFooterProps): JSX.Element {
-  function handleGalleryChange(
-    event: ChangeEvent<HTMLInputElement>,
-  ): void {
+  function handleGalleryChange(event: ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (file) onGallery(file);

@@ -40,14 +40,10 @@ from pathlib import Path
 
 import numpy as np
 
-
 CANONICAL_SOURCE_URL = (
-    "https://conceptnet.s3.amazonaws.com/downloads/2019/numberbatch/"
-    "numberbatch-19.08.txt.gz"
+    "https://conceptnet.s3.amazonaws.com/downloads/2019/numberbatch/numberbatch-19.08.txt.gz"
 )
-HEBREW_SUBSET_URL = (
-    "https://zenodo.org/records/4911598/files/numberbatch-19.08-he.zip?download=1"
-)
+HEBREW_SUBSET_URL = "https://zenodo.org/records/4911598/files/numberbatch-19.08-he.zip?download=1"
 ZIP_MEMBER = "numberbatch-19.08-he.bin"
 HERE = Path(__file__).resolve().parent
 VOCAB_PATH = HERE / "numberbatch_he_vocab.json"
@@ -89,7 +85,9 @@ def load_word2vec_binary(stream: io.BufferedReader) -> tuple[list[str], np.ndarr
 
 def download_subset(destination: Path) -> None:
     """Fetch the fixed, allowlisted source URL; no caller-controlled URL is used."""
-    request = urllib.request.Request(HEBREW_SUBSET_URL, headers={"User-Agent": "codenames-numberbatch-builder/1"})
+    request = urllib.request.Request(
+        HEBREW_SUBSET_URL, headers={"User-Agent": "codenames-numberbatch-builder/1"}
+    )
     with urllib.request.urlopen(request, timeout=60) as response, destination.open("wb") as output:
         shutil.copyfileobj(response, output)
 
@@ -118,7 +116,9 @@ def build() -> tuple[int, int]:
     return len(words), vectors.shape[1]
 
 
-def print_nearest_neighbors(words: list[str], vectors: np.ndarray, queries: tuple[str, ...]) -> None:
+def print_nearest_neighbors(
+    words: list[str], vectors: np.ndarray, queries: tuple[str, ...]
+) -> None:
     """Print cosine nearest neighbors for a small, source-vocabulary sanity check."""
     word_to_row = {word: row for row, word in enumerate(words)}
     for query in queries:
@@ -130,9 +130,12 @@ def print_nearest_neighbors(words: list[str], vectors: np.ndarray, queries: tupl
         similarities[row] = -np.inf
         nearest = np.argpartition(-similarities, 5)[:5]
         nearest = nearest[np.argsort(-similarities[nearest])]
-        print("nearest " + query + ": " + ", ".join(
-            f"{words[index]} ({similarities[index]:.4f})" for index in nearest
-        ))
+        print(
+            "nearest "
+            + query
+            + ": "
+            + ", ".join(f"{words[index]} ({similarities[index]:.4f})" for index in nearest)
+        )
 
 
 if __name__ == "__main__":

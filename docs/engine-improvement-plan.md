@@ -35,7 +35,7 @@ re-derive these; build on them.
 
 **Legality (shoresh / shared-root):** `morph.roots()` + `data/word2root.json` (Wiktionary
 lexicon) + a **fastText cosine gate θ=0.30** (`probe.ROOT_TRANSPARENCY_THETA`). Regression:
-`python test_legality.py` (encoder-independent; must stay green).
+`python tests/test_legality.py` (encoder-independent; must stay green).
 
 **Vocabulary:** `probe.clue_vocab_band(n, lo, hi, pos, source_n)` slices
 `data/content_master_v2_30000.json` (rows `[lemma, count, pos]`). `app.py:180` builds the
@@ -178,10 +178,10 @@ path untouched** until §4 promotion. Eval harnesses import `make_exp_encoder`, 
 1. Register the winning encoder in `probe.ENCODERS` + a new `kind` branch in
    `probe.make_encoder` (and vocab change in `app.py` if Phase D wins).
 2. **If the winner replaces fastText as the legality/spymaster encoder, RECALIBRATE θ**
-   (`ROOT_TRANSPARENCY_THETA`, calibrated on fastText cosines) and update `test_legality.py`'s
+(`ROOT_TRANSPARENCY_THETA`, calibrated on fastText cosines) and update `tests/test_legality.py`'s
    measured cosines.
 3. Mirror all changed serving files + new runtime data into `hf_space/` and `hf_space/data/`.
-4. Run `test_legality.py` (green), `bench_feedback.py`, `bench_recovery.py` on the promoted
+4. Run `tests/test_legality.py` (green), `bench_feedback.py`, `bench_recovery.py` on the promoted
    config. Deploy via the `codenames-deploy` skill.
 
 ---
@@ -191,7 +191,7 @@ path untouched** until §4 promotion. Eval harnesses import `make_exp_encoder`, 
   (`probe.py`/`app.py`/`deck_he.py`/`morph.py`/`hf_space/`) until §4.
 - Never fabricate datasets — if a download fails, say so.
 - L2-normalize every encoder's output; NaN (not zero) for OOV.
-- Keep `test_legality.py` green.
+- Keep `tests/test_legality.py` green.
 - Any LLM/agent coding sub-work should use a strong model (operator's codex config uses
   `gpt-5.6-terra`).
 

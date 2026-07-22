@@ -1,18 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 import { fixtureBoard } from '../../src/mocks/fixtures/board';
-import {
-  MOBILE_LANDSCAPE,
-  MOBILE_PORTRAIT,
-  openMobileShell,
-} from '../support/mobile-shell';
+import { MOBILE_LANDSCAPE, MOBILE_PORTRAIT, openMobileShell } from '../support/mobile-shell';
 
 test.describe('mobile app shell', () => {
   test.use({ hasTouch: true });
 
-  test('requires landscape before setup or gameplay is available', async ({
-    page,
-  }) => {
+  test('requires landscape before setup or gameplay is available', async ({ page }) => {
     await openMobileShell(page, MOBILE_PORTRAIT);
 
     await expect(page.getByTestId('mobile-landscape-prompt')).toBeVisible();
@@ -25,9 +19,7 @@ test.describe('mobile app shell', () => {
     await expect(page.getByTestId('tabbar')).toBeVisible();
   });
 
-  test('shows the camera-first home and four accessible navigation tabs', async ({
-    page,
-  }) => {
+  test('shows the camera-first home and four accessible navigation tabs', async ({ page }) => {
     await openMobileShell(page);
 
     await expect(page.getByTestId('mobile-home')).toBeVisible();
@@ -89,9 +81,7 @@ test.describe('mobile app shell', () => {
     await page.getByTestId('tab-clue').click();
     await expect(page.getByTestId('stub-clue')).toBeVisible();
     await expect(page.getByTestId('tab-clue')).toHaveAttribute('aria-selected', 'true');
-    await expect
-      .poll(() => page.evaluate(() => window.__store?.getState().activeTab))
-      .toBe('clue');
+    await expect.poll(() => page.evaluate(() => window.__store?.getState().activeTab)).toBe('clue');
 
     await page.getByTestId('tab-check').click();
     await expect(page.getByTestId('stub-check')).toBeVisible();
@@ -108,9 +98,7 @@ test.describe('mobile app shell', () => {
     expect(await page.evaluate(() => window.__store?.getState().activeTab)).toBe('check');
   });
 
-  test('deals a random board with loading feedback and enters the game', async ({
-    page,
-  }) => {
+  test('deals a random board with loading feedback and enters the game', async ({ page }) => {
     await openMobileShell(page);
     await page.evaluate(() => {
       const realFetch = window.fetch.bind(window);
@@ -126,14 +114,11 @@ test.describe('mobile app shell', () => {
     });
 
     await page.getByTestId('btn-random').click();
-    await expect(
-      page.getByTestId('btn-random').getByTestId('loading-spinner'),
-    ).toBeVisible();
+    await expect(page.getByTestId('btn-random').getByTestId('loading-spinner')).toBeVisible();
     await expect(page.getByTestId('btn-random')).toBeDisabled();
 
     await page.evaluate(() => {
-      const release = (window as Window & { __releaseMobileDeal?: () => void })
-        .__releaseMobileDeal;
+      const release = (window as Window & { __releaseMobileDeal?: () => void }).__releaseMobileDeal;
       if (!release) throw new Error('The deal gate was not installed');
       release();
     });
@@ -190,10 +175,7 @@ test.describe('mobile app shell', () => {
     expect(box?.width).toBeLessThanOrEqual(90);
     expect(box?.height).toBeGreaterThanOrEqual(380);
     await expect(rail.getByRole('tab')).toHaveCount(4);
-    await expect(page.getByTestId('tab-board')).toHaveCSS(
-      'transition-duration',
-      '0s',
-    );
+    await expect(page.getByTestId('tab-board')).toHaveCSS('transition-duration', '0s');
   });
 });
 

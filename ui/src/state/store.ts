@@ -9,6 +9,7 @@ import type {
   Role,
   SpymasterResponse,
   TeamColor,
+  VocabMode,
 } from '../types/api';
 
 export interface TileState {
@@ -33,11 +34,13 @@ export interface UsedClue {
 
 export interface AppState {
   screen: 'setup' | 'game';
+  mode: 'spymaster' | 'operative';
   activeTab: 'clue' | 'check';
   tiles: TileState[];
   selected: string[];
   hoverWord: string | null;
   risk: Risk;
+  vocabMode: VocabMode;
   target: TeamColor;
   checkedClue: string | null;
   clue: {
@@ -53,6 +56,8 @@ export interface AppState {
   selectSuggested(words: string[], target: TeamColor): void;
   clearSelected(): void;
   setRisk(risk: Risk): void;
+  setVocabMode(mode: VocabMode): void;
+  setMode(mode: 'spymaster' | 'operative'): void;
   setTarget(color: TeamColor): void;
   setActiveTab(tab: 'clue' | 'check'): void;
   setCheckedClue(word: string | null): void;
@@ -61,6 +66,7 @@ export interface AppState {
   setClueResult(result: SpymasterResponse | null, stale?: boolean): void;
   setOptionIndex(index: number): void;
   useCurrentClue(): void;
+  editBoard(): void;
   resetGame(): void;
 }
 
@@ -71,6 +77,8 @@ type StateValues = Omit<
   | 'selectSuggested'
   | 'clearSelected'
   | 'setRisk'
+  | 'setVocabMode'
+  | 'setMode'
   | 'setTarget'
   | 'setActiveTab'
   | 'setCheckedClue'
@@ -79,16 +87,19 @@ type StateValues = Omit<
   | 'setClueResult'
   | 'setOptionIndex'
   | 'useCurrentClue'
+  | 'editBoard'
   | 'resetGame'
 >;
 
 const initialValues = (): StateValues => ({
   screen: 'setup',
+  mode: 'spymaster',
   activeTab: 'clue',
   tiles: [],
   selected: [],
   hoverWord: null,
   risk: 'balanced',
+  vocabMode: 'curated',
   target: 'red',
   checkedClue: null,
   clue: {
@@ -124,14 +135,10 @@ export const liveBoard = (state: AppState): BoardPayload => {
   };
 };
 
-export const boardsMatch = (
-  left: BoardPayload,
-  right: BoardPayload,
-): boolean =>
+export const boardsMatch = (left: BoardPayload, right: BoardPayload): boolean =>
   left.words.length === right.words.length &&
   left.words.every(
-    (word, index) =>
-      word === right.words[index] && left.roles[word] === right.roles[word],
+    (word, index) => word === right.words[index] && left.roles[word] === right.roles[word],
   );
 
 export const selectedColor = (state: AppState): TeamColor | null => {
@@ -182,9 +189,18 @@ export const useAppStore = create<AppState>((set, get) => ({
       return;
     }
 
+    // Picking the first card of the other team implicitly flips the target; that must
+    // invalidate any on-screen clue (it was generated for the previous team).
+    const flips = state.selected.length === 0 && tile.role !== state.target;
     set({
       selected: [...state.selected, word],
-      target: state.selected.length === 0 ? tile.role : state.target,
+      target: flips ? tile.role : state.target,
+      ...(flips
+        ? {
+            checkedClue: null,
+            clue: { ...state.clue, current: null, optionIndex: 0, stale: false },
+          }
+        : {}),
     });
   },
 
@@ -204,7 +220,17 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   clearSelected: () => set({ selected: [] }),
   setRisk: (risk) => set({ risk }),
-  setTarget: (target) => set({ target, selected: [] }),
+  setVocabMode: (vocabMode) => set({ vocabMode }),
+  setMode: (mode) => set({ mode }),
+  // Changing the team invalidates any clue on screen: it was generated for the old team,
+  // so keeping it would mislabel the session log / feedback (see the cross-tab target bug).
+  setTarget: (target) =>
+    set((state) => ({
+      target,
+      selected: [],
+      checkedClue: null,
+      clue: { ...state.clue, current: null, optionIndex: 0, stale: false },
+    })),
   setActiveTab: (activeTab) => set({ activeTab }),
   setCheckedClue: (checkedClue) => set({ checkedClue }),
   setHoverWord: (hoverWord) => set({ hoverWord }),
@@ -252,14 +278,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   setClueResult: (current, stale = false) =>
     set((state) => {
       const picked = current?.picked ?? 0;
-      const optionIndex =
-        current && picked >= 0 && picked < current.options.length ? picked : 0;
+      const optionIndex = current && picked >= 0 && picked < current.options.length ? picked : 0;
 
       return { clue: { ...state.clue, current, optionIndex, stale } };
     }),
 
-  setOptionIndex: (optionIndex) =>
-    set((state) => ({ clue: { ...state.clue, optionIndex } })),
+  setOptionIndex: (optionIndex) => set((state) => ({ clue: { ...state.clue, optionIndex } })),
 
   useCurrentClue: () => {
     const state = get();
@@ -275,7 +299,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       target: state.target,
       option,
       board: fullBoard(state),
-      revealedAfter: [],
+      // Seed with cards already marked revealed so the natural reveal-then-mark-used
+      // order still attributes the outcome (otherwise pre-heart reveals are lost).
+      revealedAfter: state.tiles
+        .filter((tile) => tile.lifecycle === 'chosen')
+        .map((tile) => ({ word: tile.word, chosenBy: tile.chosenBy ?? tile.role })),
       outcomeSent: false,
     };
 
@@ -284,6 +312,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       log: [...state.log, used],
     });
   },
+
+  // Return to the setup screen for an in-game correction WITHOUT wiping the board — PhotoSetup
+  // pre-fills its fields from the current tiles so a misread word/role can be fixed.
+  editBoard: () => set({ screen: 'setup' }),
 
   resetGame: () => set(initialValues()),
 }));

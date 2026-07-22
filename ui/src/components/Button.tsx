@@ -23,9 +23,7 @@ export function Button({
   variant = 'primary',
   ...props
 }: ButtonProps): JSX.Element {
-  const classes = ['btn', 'cn-button', variantClass[variant], className]
-    .filter(Boolean)
-    .join(' ');
+  const classes = ['btn', 'cn-button', variantClass[variant], className].filter(Boolean).join(' ');
 
   return (
     <button
@@ -38,13 +36,8 @@ export function Button({
     >
       <span className="cn-button__content">{children}</span>
       {loading ? (
-        <span
-          className="cn-loading-spinner"
-          data-testid="loading-spinner"
-          aria-hidden="true"
-        />
+        <span className="cn-loading-spinner" data-testid="loading-spinner" aria-hidden="true" />
       ) : null}
     </button>
   );
 }
-

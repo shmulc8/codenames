@@ -16,62 +16,42 @@ async function bootMobileGame(page: Page): Promise<void> {
 }
 
 test.describe('mobile clue/check/map tabs', () => {
-  test('clue tab mounts CluePanel, exposes loading, and produces option 0', async ({
-    page,
-  }) => {
+  test('clue tab mounts CluePanel, exposes loading, and produces option 0', async ({ page }) => {
     await bootMobileGame(page);
 
     // Single-column re-layout of the reused desktop CluePanel.
     await expect(page.getByTestId('tabbar')).toBeVisible();
     await expect(page.getByTestId('target-color')).toBeVisible();
     await expect(page.getByTestId('btn-get-clue')).toBeVisible();
-    await expect(page.getByTestId('btn-get-clue')).toBeDisabled();
-    await expect(page.getByTestId('target-red')).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect(page.getByTestId('btn-get-clue')).toBeEnabled();
+    await expect(page.getByTestId('btn-get-clue')).toHaveText('מצא לי את הצירוף הכי טוב');
+    await expect(page.getByTestId('target-red')).toHaveAttribute('aria-pressed', 'true');
 
-    await page.getByTestId('btn-auto-cluster').click();
-    await expect(
-      page.getByTestId('btn-auto-cluster').getByTestId('loading-spinner'),
-    ).toBeVisible();
+    await page.getByTestId('btn-get-clue').click();
+    await expect(page.getByTestId('btn-get-clue').getByTestId('loading-spinner')).toBeVisible();
 
     await expect(page.getByTestId('clue-result')).toBeVisible();
     await expect(page.getByTestId('clue-word')).toHaveText('טבע');
     await expect(page.getByTestId('clue-count')).toHaveText('מספר: 2');
-    await expect(page.getByTestId('clue-reason')).toContainText(
-      'הרמז מחבר היטב בין מילות המטרה',
-    );
-    await expect(page.getByTestId('option-counter')).toHaveText(
-      'אפשרות 1 מתוך 3',
-    );
+    await expect(page.getByTestId('clue-reason')).toContainText('הרמז מחבר היטב בין מילות המטרה');
+    await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 2');
 
     const request = await page.evaluate(() => window.__lastSpymasterReq);
     expect(request?.focus).toBeUndefined();
     expect(request?.risk).toBe('balanced');
 
-    const selected = await page.evaluate(
-      () => window.__store?.getState().selected,
-    );
+    const selected = await page.evaluate(() => window.__store?.getState().selected);
     expect(selected).toEqual(fixtureBoard.words.slice(0, 2));
   });
 
-  test('risk and target changes post correct wire roles from the clue tab', async ({
-    page,
-  }) => {
+  test('risk and target changes post correct wire roles from the clue tab', async ({ page }) => {
     await bootMobileGame(page);
 
     await page.getByTestId('risk-bold').click();
-    await expect(page.getByTestId('risk-bold')).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect(page.getByTestId('risk-bold')).toHaveAttribute('aria-pressed', 'true');
 
     await page.getByTestId('target-blue').click();
-    await expect(page.getByTestId('target-blue')).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect(page.getByTestId('target-blue')).toHaveAttribute('aria-pressed', 'true');
 
     await requestAutoClue(page);
 
@@ -103,25 +83,18 @@ test.describe('mobile clue/check/map tabs', () => {
     await expect(clueCard.getByTestId('feedback-sent')).toBeVisible();
   });
 
-  test('session log is reachable from the clue tab and records a used clue', async ({
-    page,
-  }) => {
+  test('session log is reachable from the clue tab and records a used clue', async ({ page }) => {
     await bootMobileGame(page);
     await requestAutoClue(page);
 
     await page.getByTestId('btn-use-clue').click();
-    await expect(page.getByTestId('btn-use-clue')).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect(page.getByTestId('btn-use-clue')).toHaveAttribute('aria-pressed', 'true');
 
     await expect(page.getByTestId('session-log')).toBeVisible();
     await expect(page.getByTestId('log-entry-0')).toContainText('טבע');
   });
 
-  test('map tab renders a dot for every live word plus the hint node', async ({
-    page,
-  }) => {
+  test('map tab renders a dot for every live word plus the hint node', async ({ page }) => {
     await bootMobileGame(page);
     await requestAutoClue(page);
 
@@ -136,64 +109,37 @@ test.describe('mobile clue/check/map tabs', () => {
     expect(mapFrame.height).toBeLessThanOrEqual(321);
     expect(mapFrame.width / mapFrame.height).toBeGreaterThan(1.1);
 
-    await expect(page.getByTestId('semantic-map').getByRole('button')).toHaveCount(
-      25,
-    );
-    await expect(page.getByTestId('map-dot-אריה')).toHaveAttribute(
-      'data-role',
-      'red',
-    );
-    await expect(page.getByTestId('map-dot-ים')).toHaveAttribute(
-      'data-role',
-      'blue',
-    );
-    await expect(page.getByTestId('map-dot-נחש')).toHaveAttribute(
-      'data-role',
-      'assassin',
-    );
+    await expect(page.getByTestId('semantic-map').getByRole('button')).toHaveCount(25);
+    await expect(page.getByTestId('map-dot-אריה')).toHaveAttribute('data-role', 'red');
+    await expect(page.getByTestId('map-dot-ים')).toHaveAttribute('data-role', 'blue');
+    await expect(page.getByTestId('map-dot-נחש')).toHaveAttribute('data-role', 'assassin');
     await expect(page.getByTestId('map-hint-node')).toContainText('טבע');
     await expect(page.locator('.semantic-panel__header h2')).toBeHidden();
     await expect(page.locator('.semantic-panel__clue')).toBeVisible();
-    await expect(page.locator('.semantic-panel__clue')).toHaveCSS(
-      'position',
-      'absolute',
-    );
+    await expect(page.locator('.semantic-panel__clue')).toHaveCSS('position', 'absolute');
     await expect(page.getByTestId('map-legend')).toBeHidden();
-    await expect(page.getByTestId('map-legend-toggle')).toHaveAttribute(
-      'aria-expanded',
-      'false',
-    );
+    await expect(page.getByTestId('map-legend-toggle')).toHaveAttribute('aria-expanded', 'false');
 
     await page.getByTestId('map-legend-toggle').click();
     await expect(page.getByTestId('map-legend')).toBeVisible();
-    await expect(page.getByTestId('map-legend')).toContainText(
-      'קרוב למרכז = קרוב לרמז',
-    );
+    await expect(page.getByTestId('map-legend')).toContainText('קרוב למרכז = קרוב לרמז');
 
-    await expect
-      .poll(() => page.evaluate(() => window.__lastSpaceReq?.clue))
-      .toBe('טבע');
+    await expect.poll(() => page.evaluate(() => window.__lastSpaceReq?.clue)).toBe('טבע');
     const request = await page.evaluate(() => window.__lastSpaceReq);
     expect(request?.words).toEqual(fixtureBoard.words);
   });
 
-  test('map dot ↔ tile highlight stays bidirectional through store.hoverWord', async ({
-    page,
-  }) => {
+  test('map dot ↔ tile highlight stays bidirectional through store.hoverWord', async ({ page }) => {
     await bootMobileGame(page);
     await requestAutoClue(page);
     await openMobileTab(page, 'map');
     await expect(page.getByTestId('map-dot-אריה')).toBeVisible();
 
     await page.getByTestId('map-dot-אריה').hover();
-    await expect
-      .poll(() => page.evaluate(() => window.__store?.getState().hoverWord))
-      .toBe('אריה');
+    await expect.poll(() => page.evaluate(() => window.__store?.getState().hoverWord)).toBe('אריה');
   });
 
-  test('check tab mounts CheckPanel and renders the ranked list', async ({
-    page,
-  }) => {
+  test('check tab mounts CheckPanel and renders the ranked list', async ({ page }) => {
     await bootMobileGame(page);
 
     await openMobileTab(page, 'check');
@@ -215,9 +161,7 @@ test.describe('mobile clue/check/map tabs', () => {
 test.describe('mobile error handling', () => {
   test.use({ serviceWorkers: 'block' });
 
-  test('surfaces a clue backend failure as the canonical toast', async ({
-    page,
-  }) => {
+  test('surfaces a clue backend failure as the canonical toast', async ({ page }) => {
     await page.route('**/api/coach/spymaster', async (route) => {
       await route.fulfill({
         status: 500,
@@ -230,7 +174,7 @@ test.describe('mobile error handling', () => {
     await setFixtureBoard(page);
     await expect(page.getByTestId('target-color')).toBeVisible();
 
-    await page.getByTestId('btn-auto-cluster').click();
+    await page.getByTestId('btn-get-clue').click();
 
     await expect(page.getByTestId('toast')).toBeVisible();
     await expect(page.getByTestId('toast')).toContainText('בדיקת כשל מהשרת');
@@ -259,7 +203,7 @@ test.describe('desktop regression — mobile panels stay out of the desktop app'
 
     // Desktop clue slice is unchanged.
     await expect(page.getByTestId('tab-clue')).toBeVisible();
-    await page.getByTestId('btn-auto-cluster').click();
+    await page.getByTestId('btn-get-clue').click();
     await expect(page.getByTestId('clue-result')).toBeVisible();
     await expect(page.getByTestId('clue-word')).toHaveText('טבע');
 

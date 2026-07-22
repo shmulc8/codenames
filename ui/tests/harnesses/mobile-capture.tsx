@@ -8,8 +8,7 @@ let root: Root | null = null;
 
 function shouldMountMobileCapture(): boolean {
   const params = new URLSearchParams(window.location.search);
-  return params.get('mobile') === '1'
-    && window.matchMedia('(max-width: 820px)').matches;
+  return params.get('mobile') === '1' && window.matchMedia('(max-width: 820px)').matches;
 }
 
 function unmountMobileCapture(): void {

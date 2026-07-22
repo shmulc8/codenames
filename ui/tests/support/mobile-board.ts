@@ -9,12 +9,8 @@ export async function mountMobileBoard(page: Page): Promise<void> {
     type: 'module',
     content: "void import('/tests/harnesses/mobile-board.tsx')",
   });
-  await page.waitForFunction(
-    () =>
-      Boolean(
-        (window as Window & { __mobileBoardReady?: boolean })
-          .__mobileBoardReady,
-      ),
+  await page.waitForFunction(() =>
+    Boolean((window as Window & { __mobileBoardReady?: boolean }).__mobileBoardReady),
   );
 }
 

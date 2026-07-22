@@ -12,14 +12,15 @@ groups (AUC ≈ 0.5) is not trustworthy as a benchmark oracle.
   HF_HUB_OFFLINE=1 FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin \\
     .venv/bin/python -m research.bench_guesser --guesser ensemble
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 from statistics import mean
 
-import probe
-from guesser import make_guesser
+from codenames import probe
+from codenames.guesser import make_guesser
 
 ENEMY = {"opp", "assassin"}
 
@@ -27,8 +28,10 @@ ENEMY = {"opp", "assassin"}
 def load_feedback() -> list[dict]:
     try:
         from huggingface_hub import hf_hub_download
-        path = hf_hub_download("shmulc/codenames-feedback", "data/feedback.jsonl",
-                               repo_type="dataset")
+
+        path = hf_hub_download(
+            "shmulc/codenames-feedback", "data/feedback.jsonl", repo_type="dataset"
+        )
     except Exception:
         path = "feedback/feedback.jsonl"
     rows = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
@@ -87,17 +90,23 @@ def main():
         stats[r["verdict"]].append(rec)
         leaks[r["verdict"]].append(1.0 if leak else 0.0)
         if args.verbose:
-            print(f"  {r['verdict']:4s} {r['clue']:8s} rec={rec:.2f} leak={int(leak)} "
-                  f"top{count}={topk}  intended={intended}")
+            print(
+                f"  {r['verdict']:4s} {r['clue']:8s} rec={rec:.2f} leak={int(leak)} "
+                f"top{count}={topk}  intended={intended}"
+            )
 
     print(f"\n{'group':6s} {'n':>3s} {'mean_recovery':>14s} {'enemy_leak_rate':>16s}")
     for v in ("up", "down"):
         s, l = stats[v], leaks[v]
-        print(f"{v:6s} {len(s):>3d} {mean(s) if s else float('nan'):>14.3f} "
-              f"{mean(l) if l else float('nan'):>16.3f}")
+        print(
+            f"{v:6s} {len(s):>3d} {mean(s) if s else float('nan'):>14.3f} "
+            f"{mean(l) if l else float('nan'):>16.3f}"
+        )
     print(f"\nseparation AUC (recovery, 👍 over 👎): {auc(stats['up'], stats['down']):.3f}")
-    print(f"separation AUC (safety,   👍 over 👎): "
-          f"{auc([1 - x for x in leaks['up']], [1 - x for x in leaks['down']]):.3f}")
+    print(
+        f"separation AUC (safety,   👍 over 👎): "
+        f"{auc([1 - x for x in leaks['up']], [1 - x for x in leaks['down']]):.3f}"
+    )
     print("(0.5 = no better than chance; higher = the guesser tracks human judgment)")
 
 

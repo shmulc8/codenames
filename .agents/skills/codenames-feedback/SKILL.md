@@ -13,7 +13,7 @@ the local `feedback/feedback.jsonl` is only a seed/mirror, so always query HF.
 ## Run
 
 ```bash
-python .Codex/skills/codenames-feedback/scripts/pull_feedback.py
+python .agents/skills/codenames-feedback/scripts/pull_feedback.py
 ```
 
 Requires an HF token with read access to the dataset (the stored `~/.cache/huggingface/token`

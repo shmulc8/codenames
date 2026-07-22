@@ -8,16 +8,16 @@ Point `--profiles` at tune_clue's output; omit it to re-measure the shipped prof
     .venv/bin/python -m research.validate_profiles --profiles data/tuned_profiles.json \\
       --boards 40 --seed 900 --guesser ensemble
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import random
 
-import app
-import probe
+from codenames import app, probe
+from codenames.guesser import make_guesser
 from research import bench_clue
-from guesser import make_guesser
 
 METRICS = ["served_rate", "gained", "recovery", "safe_turn", "assassin", "over_claim", "mean_count"]
 

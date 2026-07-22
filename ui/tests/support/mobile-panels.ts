@@ -28,7 +28,7 @@ export async function openMobileTab(
 }
 
 export async function requestAutoClue(page: Page): Promise<void> {
-  await page.getByTestId('btn-auto-cluster').click();
+  await page.getByTestId('btn-get-clue').click();
   await expect(page.getByTestId('clue-result')).toBeVisible();
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');
 }

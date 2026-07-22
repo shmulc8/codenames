@@ -17,11 +17,14 @@ test('captures a fake-camera frame and sends it to board review', async ({ page 
   await expect(page.getByTestId('btn-shutter')).toBeVisible();
   await expect
     .poll(() =>
-      page.locator('video').evaluate((video: HTMLVideoElement) =>
-        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
-        && video.videoWidth > 0
-        && video.videoHeight > 0,
-      ),
+      page
+        .locator('video')
+        .evaluate(
+          (video: HTMLVideoElement) =>
+            video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+            video.videoWidth > 0 &&
+            video.videoHeight > 0,
+        ),
     )
     .toBe(true);
 

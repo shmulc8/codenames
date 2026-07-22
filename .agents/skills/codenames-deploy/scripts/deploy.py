@@ -4,6 +4,7 @@ Run from the repo root:
     python .claude/skills/codenames-deploy/scripts/deploy.py [file ...]   # paths relative to hf_space/
 Defaults to the app/engine files most changes touch. Needs an HF token with write access.
 """
+
 import sys
 
 REPO_ID = "shmulc/hebrew-codenames-copilot"
@@ -15,6 +16,7 @@ def main(argv) -> int:
     msg = "Update " + ", ".join(files)
 
     from huggingface_hub import HfApi
+
     api = HfApi()
     print(f"deploying to {REPO_ID}: {files}")
     url = api.upload_folder(

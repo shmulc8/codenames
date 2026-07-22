@@ -88,14 +88,10 @@ export async function releaseOcr(page: Page): Promise<void> {
 }
 
 /** Read the current board tiles from the shared dev store hook. */
-export async function readTiles(
-  page: Page,
-): Promise<Array<{ word: string; role: string }>> {
+export async function readTiles(page: Page): Promise<Array<{ word: string; role: string }>> {
   return page.evaluate(() => {
     if (!window.__store) throw new Error('The dev store hook was not installed');
-    return window.__store
-      .getState()
-      .tiles.map((tile) => ({ word: tile.word, role: tile.role }));
+    return window.__store.getState().tiles.map((tile) => ({ word: tile.word, role: tile.role }));
   });
 }
 
@@ -114,8 +110,5 @@ export async function correctBoardWords(page: Page): Promise<void> {
 }
 
 export async function expectStepBadgeActive(page: Page, step: 1 | 2): Promise<void> {
-  await expect(page.getByTestId(`capture-step-${step}`)).toHaveAttribute(
-    'aria-current',
-    'step',
-  );
+  await expect(page.getByTestId(`capture-step-${step}`)).toHaveAttribute('aria-current', 'step');
 }

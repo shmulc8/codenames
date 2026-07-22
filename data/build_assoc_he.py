@@ -21,8 +21,7 @@ import urllib.request
 from pathlib import Path
 
 SOURCE_URL = (
-    "https://web.archive.org/web/20201112022046id_/"
-    "http://alfonseca.org/pubs/ws353simrel.tar.gz"
+    "https://web.archive.org/web/20201112022046id_/http://alfonseca.org/pubs/ws353simrel.tar.gz"
 )
 OUTPUT_PATH = Path(__file__).resolve().parent / "assoc_he.tsv"
 

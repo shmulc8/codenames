@@ -1,17 +1,32 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type {
-  MutableRefObject,
-  PointerEvent as ReactPointerEvent,
-  RefObject,
-} from 'react';
+import type { MutableRefObject, PointerEvent as ReactPointerEvent, RefObject } from 'react';
 
 import { BOARD_HEIGHT, BOARD_WIDTH, CARD_WIDTH } from './board-model';
 
-interface Point { x: number; y: number }
-interface TransformState { fitScale: number; scale: number; x: number; y: number }
-interface PrimaryGesture extends Point { moved: boolean; word: string | null }
-interface PinchGesture { anchor: Point; distance: number; scale: number }
-interface LastTap { at: number; point: Point; word: string }
+interface Point {
+  x: number;
+  y: number;
+}
+interface TransformState {
+  fitScale: number;
+  scale: number;
+  x: number;
+  y: number;
+}
+interface PrimaryGesture extends Point {
+  moved: boolean;
+  word: string | null;
+}
+interface PinchGesture {
+  anchor: Point;
+  distance: number;
+  scale: number;
+}
+interface LastTap {
+  at: number;
+  point: Point;
+  word: string;
+}
 
 interface GestureContext {
   applyTransform(next: TransformState): void;
@@ -44,9 +59,7 @@ function fitFor(viewport: HTMLDivElement): TransformState {
   const widthScale = Math.max(0.1, (viewport.clientWidth - 16) / BOARD_WIDTH);
   const heightScale = Math.max(0.1, (viewport.clientHeight - 16) / BOARD_HEIGHT);
   const landscape = viewport.clientWidth > viewport.clientHeight;
-  const fitScale = landscape
-    ? Math.min(widthScale, 1)
-    : Math.min(widthScale, heightScale, 1);
+  const fitScale = landscape ? Math.min(widthScale, 1) : Math.min(widthScale, heightScale, 1);
   return {
     fitScale,
     scale: fitScale,
@@ -79,14 +92,21 @@ function constrain(viewport: HTMLDivElement, next: TransformState, soft: boolean
   };
 }
 
-function handlePointerDown(context: GestureContext, event: ReactPointerEvent<HTMLDivElement>): void {
+function handlePointerDown(
+  context: GestureContext,
+  event: ReactPointerEvent<HTMLDivElement>,
+): void {
   const viewport = context.viewport.current;
   if (!viewport) return;
   window.clearTimeout(context.settleTimer.current);
   const point = { x: event.clientX, y: event.clientY };
   context.pointers.current.set(event.pointerId, point);
   context.setGesturing(true);
-  try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* synthetic pointer */ }
+  try {
+    event.currentTarget.setPointerCapture(event.pointerId);
+  } catch {
+    /* synthetic pointer */
+  }
 
   if (context.pointers.current.size === 1) {
     const tile = (event.target as HTMLElement).closest<HTMLElement>('[data-mobile-tile="true"]');
@@ -116,18 +136,32 @@ function handlePinch(context: GestureContext, viewport: HTMLDivElement): boolean
   const rect = viewport.getBoundingClientRect();
   const current = context.transform.current;
   const maxScale = Math.max(current.fitScale, viewport.clientWidth / CARD_WIDTH);
-  const scale = Math.min(maxScale, Math.max(current.fitScale,
-    context.pinch.current.scale * distance(first, second) / context.pinch.current.distance));
-  context.applyTransform(constrain(viewport, {
-    ...current,
-    scale,
-    x: center.x - rect.left - context.pinch.current.anchor.x * scale,
-    y: center.y - rect.top - context.pinch.current.anchor.y * scale,
-  }, true));
+  const scale = Math.min(
+    maxScale,
+    Math.max(
+      current.fitScale,
+      (context.pinch.current.scale * distance(first, second)) / context.pinch.current.distance,
+    ),
+  );
+  context.applyTransform(
+    constrain(
+      viewport,
+      {
+        ...current,
+        scale,
+        x: center.x - rect.left - context.pinch.current.anchor.x * scale,
+        y: center.y - rect.top - context.pinch.current.anchor.y * scale,
+      },
+      true,
+    ),
+  );
   return true;
 }
 
-function handlePointerMove(context: GestureContext, event: ReactPointerEvent<HTMLDivElement>): void {
+function handlePointerMove(
+  context: GestureContext,
+  event: ReactPointerEvent<HTMLDivElement>,
+): void {
   const viewport = context.viewport.current;
   if (!viewport || !context.pointers.current.has(event.pointerId)) return;
   const point = { x: event.clientX, y: event.clientY };
@@ -137,18 +171,24 @@ function handlePointerMove(context: GestureContext, event: ReactPointerEvent<HTM
   const dx = point.x - context.primary.current.x;
   const dy = point.y - context.primary.current.y;
   if (Math.hypot(dx, dy) >= TAP_DISTANCE) context.primary.current.moved = true;
-  context.applyTransform(constrain(viewport, {
-    ...context.transform.current,
-    x: context.panOrigin.current.x + dx,
-    y: context.panOrigin.current.y + dy,
-  }, true));
+  context.applyTransform(
+    constrain(
+      viewport,
+      {
+        ...context.transform.current,
+        x: context.panOrigin.current.x + dx,
+        y: context.panOrigin.current.y + dy,
+      },
+      true,
+    ),
+  );
 }
 
 function zoomToPoint(context: GestureContext, point: Point): void {
   const viewport = context.viewport.current;
   const current = context.transform.current;
   if (!viewport) return;
-  if (current.scale > current.fitScale + .02) {
+  if (current.scale > current.fitScale + 0.02) {
     context.resetToFit();
     return;
   }
@@ -159,26 +199,34 @@ function zoomToPoint(context: GestureContext, point: Point): void {
     x: (local.x - current.x) / current.scale,
     y: (local.y - current.y) / current.scale,
   };
-  context.applyTransform(constrain(viewport, {
-    ...current,
-    scale: nextScale,
-    x: local.x - boardPoint.x * nextScale,
-    y: local.y - boardPoint.y * nextScale,
-  }, false));
+  context.applyTransform(
+    constrain(
+      viewport,
+      {
+        ...current,
+        scale: nextScale,
+        x: local.x - boardPoint.x * nextScale,
+        y: local.y - boardPoint.y * nextScale,
+      },
+      false,
+    ),
+  );
 }
 
 function settlePan(context: GestureContext, viewport: HTMLDivElement): void {
-  const settle = (): void => context.applyTransform(constrain(viewport, context.transform.current, false));
+  const settle = (): void =>
+    context.applyTransform(constrain(viewport, context.transform.current, false));
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) settle();
   else context.settleTimer.current = window.setTimeout(settle, 180);
 }
 
 function handleTap(context: GestureContext, point: Point, word: string): void {
   const previous = context.lastTap.current;
-  const isDoubleTap = previous
-    && previous.word === word
-    && Date.now() - previous.at < 320
-    && distance(previous.point, point) < 24;
+  const isDoubleTap =
+    previous &&
+    previous.word === word &&
+    Date.now() - previous.at < 320 &&
+    distance(previous.point, point) < 24;
   if (isDoubleTap) {
     window.clearTimeout(context.tapTimer.current);
     zoomToPoint(context, point);
@@ -242,19 +290,34 @@ export function usePanZoom(viewport: RefObject<HTMLDivElement>, onTap: (word: st
     if (viewport.current) applyTransform(fitFor(viewport.current));
   }, [applyTransform, viewport]);
   useFitObserver(viewport, resetToFit);
-  useEffect(() => () => {
-    window.clearTimeout(settleTimer.current);
-    window.clearTimeout(tapTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      window.clearTimeout(settleTimer.current);
+      window.clearTimeout(tapTimer.current);
+    },
+    [],
+  );
 
   const context: GestureContext = {
-    applyTransform, lastTap, onTap, panOrigin, pinch, pointers, primary,
-    resetToFit, setGesturing, settleTimer, tapTimer, transform: transformRef, viewport,
+    applyTransform,
+    lastTap,
+    onTap,
+    panOrigin,
+    pinch,
+    pointers,
+    primary,
+    resetToFit,
+    setGesturing,
+    settleTimer,
+    tapTimer,
+    transform: transformRef,
+    viewport,
   };
   const fit = viewport.current ? fitFor(viewport.current) : transform;
-  const atFit = Math.abs(transform.scale - fit.scale) < .001
-    && Math.abs(transform.x - fit.x) < .1
-    && Math.abs(transform.y - fit.y) < .1;
+  const atFit =
+    Math.abs(transform.scale - fit.scale) < 0.001 &&
+    Math.abs(transform.x - fit.x) < 0.1 &&
+    Math.abs(transform.y - fit.y) < 0.1;
 
   return {
     atFit,

@@ -3,10 +3,7 @@ interface ProcessingOverlayProps {
   label: string;
 }
 
-export function ProcessingOverlay({
-  progress,
-  label,
-}: ProcessingOverlayProps): JSX.Element {
+export function ProcessingOverlay({ progress, label }: ProcessingOverlayProps): JSX.Element {
   return (
     <div className="cn-capture__processing" role="status">
       <span className="cn-capture__spinner" data-testid="loading-spinner" />

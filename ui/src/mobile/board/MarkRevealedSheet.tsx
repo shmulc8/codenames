@@ -20,7 +20,7 @@ export function MarkRevealedSheet({ onClose, word }: MarkRevealedSheetProps): JS
 
   useEffect(() => {
     if (tile) setChosenBy(tile.chosenBy ?? tile.role);
-  }, [tile?.chosenBy, tile?.role, tile?.word]);
+  }, [tile]);
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent): void => {
@@ -55,7 +55,9 @@ export function MarkRevealedSheet({ onClose, word }: MarkRevealedSheetProps): JS
         <header>
           <div>
             <h2 id="mobile-sheet-title">{tile.word}</h2>
-            <p className={`role-${tile.role}`}><RoleIcon role={tile.role} /> קלף {roleLabel[tile.role]}</p>
+            <p className={`role-${tile.role}`}>
+              <RoleIcon role={tile.role} /> קלף {roleLabel[tile.role]}
+            </p>
           </div>
           <div className={`mobile-board-sheet__preview role-${tile.role}`}>
             <RoleIcon role={tile.role} />
@@ -101,7 +103,9 @@ export function MarkRevealedSheet({ onClose, word }: MarkRevealedSheetProps): JS
             {selected ? 'הסירו מהרמז' : 'הוסיפו לרמז'}
           </button>
         ) : null}
-        <button type="button" className="mobile-board-sheet__cancel" onClick={onClose}>ביטול</button>
+        <button type="button" className="mobile-board-sheet__cancel" onClick={onClose}>
+          ביטול
+        </button>
       </section>
     </div>
   );

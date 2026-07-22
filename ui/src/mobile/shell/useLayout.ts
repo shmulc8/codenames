@@ -20,10 +20,7 @@ function subscribe(onChange: () => void): () => void {
     return () => undefined;
   }
 
-  const queries = [
-    window.matchMedia(NARROW_QUERY),
-    window.matchMedia(COARSE_POINTER_QUERY),
-  ];
+  const queries = [window.matchMedia(NARROW_QUERY), window.matchMedia(COARSE_POINTER_QUERY)];
   queries.forEach((query) => query.addEventListener('change', onChange));
   window.addEventListener('resize', onChange);
 

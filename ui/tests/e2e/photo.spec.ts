@@ -14,6 +14,13 @@ async function cycleKeyCell(page: Page, index: number, times: number): Promise<v
   }
 }
 
+// Assign the canonical 9·8·7·1 key: cells 0–8 red, 9–16 blue, 17–23 neutral, 24 assassin.
+async function assignValidKey(page: Page): Promise<void> {
+  for (let index = 0; index < 9; index += 1) await cycleKeyCell(page, index, 2);
+  for (let index = 9; index < 17; index += 1) await cycleKeyCell(page, index, 3);
+  await cycleKeyCell(page, 24, 1);
+}
+
 async function openPageWithDelayedOcrWorker(browser: Browser): Promise<{
   page: Page;
   releaseWorker: () => void;
@@ -73,22 +80,27 @@ async function openPageWithDelayedKeyImage(browser: Browser): Promise<Page> {
     };
 
     window.Image = function DelayedImage(width?: number, height?: number) {
-      const image = width === undefined
-        ? new NativeImage()
-        : height === undefined
-          ? new NativeImage(width)
-          : new NativeImage(width, height);
-      image.addEventListener('load', (event) => {
-        event.stopImmediatePropagation();
-        testWindow.__keyImageLoads += 1;
-        const onload = image.onload;
-        if (onload) {
-          pendingLoads.push(() => {
-            testWindow.__keyImageReleases += 1;
-            onload.call(image, new Event('load'));
-          });
-        }
-      }, { capture: true, once: true });
+      const image =
+        width === undefined
+          ? new NativeImage()
+          : height === undefined
+            ? new NativeImage(width)
+            : new NativeImage(width, height);
+      image.addEventListener(
+        'load',
+        (event) => {
+          event.stopImmediatePropagation();
+          testWindow.__keyImageLoads += 1;
+          const onload = image.onload;
+          if (onload) {
+            pendingLoads.push(() => {
+              testWindow.__keyImageReleases += 1;
+              onload.call(image, new Event('load'));
+            });
+          }
+        },
+        { capture: true, once: true },
+      );
       return image;
     } as typeof Image;
 
@@ -112,6 +124,8 @@ test.describe('PhotoSetup', () => {
   test('starts in the RTL manual correction flow with all canonical controls', async ({ page }) => {
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.getByTestId('setup-screen')).toBeVisible();
+    // Setup defaults to a random board; switch to manual entry to inspect the empty editor.
+    await page.getByTestId('btn-manual-entry').click();
     await expect(page.getByRole('button', { name: 'הזנה ידנית' })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -126,10 +140,7 @@ test.describe('PhotoSetup', () => {
 
     await expect(page.getByTestId('photo-input-board')).toHaveAttribute('type', 'file');
     await expect(page.getByTestId('photo-input-board')).toHaveAttribute('accept', 'image/*');
-    await expect(page.getByTestId('photo-input-board')).toHaveAttribute(
-      'capture',
-      'environment',
-    );
+    await expect(page.getByTestId('photo-input-board')).toHaveAttribute('capture', 'environment');
     await expect(page.getByTestId('photo-input-key')).toHaveAttribute('type', 'file');
     await expect(page.getByTestId('photo-input-key')).toHaveAttribute('accept', 'image/*');
     await expect(page.getByTestId('btn-confirm-board')).toBeEnabled();
@@ -140,7 +151,10 @@ test.describe('PhotoSetup', () => {
     ).toBeVisible();
   });
 
-  test('Tab and Enter move directly between word inputs while arrow keys change roles', async ({ page }) => {
+  test('Tab and Enter move directly between word inputs while arrow keys change roles', async ({
+    page,
+  }) => {
+    await page.getByTestId('btn-manual-entry').click();
     const first = page.getByTestId('ocr-cell-0');
     const second = page.getByTestId('ocr-cell-1');
     const third = page.getByTestId('ocr-cell-2');
@@ -155,18 +169,13 @@ test.describe('PhotoSetup', () => {
     await expect(third).toBeFocused();
 
     await page.keyboard.press('ArrowDown');
-    await expect(page.getByTestId('key-cell-2')).toHaveAttribute(
-      'aria-label',
-      /תפקיד מתנקש/,
-    );
+    await expect(page.getByTestId('key-cell-2')).toHaveAttribute('aria-label', /תפקיד מתנקש/);
     await page.keyboard.press('ArrowUp');
-    await expect(page.getByTestId('key-cell-2')).toHaveAttribute(
-      'aria-label',
-      /תפקיד ניטרלי/,
-    );
+    await expect(page.getByTestId('key-cell-2')).toHaveAttribute('aria-label', /תפקיד ניטרלי/);
   });
 
   test('validates all 25 words, uniqueness, and focuses the offending cell', async ({ page }) => {
+    await page.getByTestId('btn-manual-entry').click();
     await page.getByTestId('btn-confirm-board').click();
     await expect(page.getByText('צריך למלא את כל 25 המילים לפני שממשיכים')).toBeVisible();
     await expect(page.getByTestId('ocr-cell-0')).toBeFocused();
@@ -178,6 +187,7 @@ test.describe('PhotoSetup', () => {
     await expect(page.getByTestId('ocr-cell-24')).toBeFocused();
 
     await page.getByTestId('ocr-cell-24').fill(fixtureBoard.words[24]);
+    await assignValidKey(page);
     await page.getByTestId('btn-confirm-board').click();
     await expect(page.getByTestId('board-grid')).toBeVisible();
 
@@ -189,18 +199,12 @@ test.describe('PhotoSetup', () => {
     expect(result).toEqual({ screen: 'game', words: fixtureBoard.words });
   });
 
-  test('supports manual key assignment and accepts the valid 9·8·7·1 distribution', async ({ page }) => {
+  test('supports manual key assignment and accepts the valid 9·8·7·1 distribution', async ({
+    page,
+  }) => {
+    await page.getByTestId('btn-manual-entry').click();
     await fillWords(page);
-
-    // All cells begin neutral. neutral -> assassin -> red.
-    for (let index = 0; index < 9; index += 1) {
-      await cycleKeyCell(page, index, 2);
-    }
-    // neutral -> assassin -> red -> blue.
-    for (let index = 9; index < 17; index += 1) {
-      await cycleKeyCell(page, index, 3);
-    }
-    await cycleKeyCell(page, 24, 1);
+    await assignValidKey(page);
 
     await expect(page.getByText('9·8·7·1 מפתח תקין')).toBeVisible();
     await page.getByTestId('btn-confirm-board').click();
@@ -218,23 +222,26 @@ test.describe('PhotoSetup', () => {
     ]);
   });
 
-  test('rotates the key clockwise and permits an intentionally incomplete key', async ({ page }) => {
+  test('rotates the key clockwise and blocks an incomplete key', async ({ page }) => {
+    await page.getByTestId('btn-manual-entry').click();
     await fillWords(page);
-    await cycleKeyCell(page, 0, 1);
+    await cycleKeyCell(page, 0, 1); // cell 0 (top-right, RTL) -> assassin
     await page.getByText('סובב ↻', { exact: true }).click();
+    // Clockwise: the assassin moves from the top-right (index 0) to the bottom-right
+    // (index 20); index 0 becomes neutral.
+    await expect(page.getByTestId('key-cell-0')).toHaveAccessibleName(/ניטרלי/);
+    await expect(page.getByTestId('key-cell-20')).toHaveAccessibleName(/מתנקש/);
 
+    // The key is still not 9·8·7·1, so confirming must be blocked — no game starts.
     await expect(page.getByText('חלוקת המפתח עדיין לא 9·8·7·1')).toBeVisible();
     await page.getByTestId('btn-confirm-board').click();
-
-    const result = await page.evaluate(() => {
-      if (!window.__store) throw new Error('The dev store hook was not installed');
-      const tiles = window.__store.getState().tiles;
-      return { first: tiles[0]?.role, fifth: tiles[4]?.role };
-    });
-    expect(result).toEqual({ first: 'neutral', fifth: 'assassin' });
+    await expect(page.getByTestId('setup-screen')).toBeVisible();
+    await expect(page.getByText('חלוקת המפתח חייבת להיות 9·8·7·1 לפני שמתחילים')).toBeVisible();
   });
 
-  test('loads random boards into the editor and allows rerolling before confirmation', async ({ page }) => {
+  test('loads random boards into the editor and allows rerolling before confirmation', async ({
+    page,
+  }) => {
     await page.evaluate(() => {
       const realFetch = window.fetch.bind(window);
       let release!: () => void;
@@ -248,8 +255,8 @@ test.describe('PhotoSetup', () => {
       };
     });
 
-    await page.getByTestId('btn-skip-demo').click();
-    await expect(page.getByTestId('btn-skip-demo')).toBeDisabled();
+    await page.getByTestId('btn-random-board').click();
+    await expect(page.getByTestId('btn-random-board')).toBeDisabled();
     await expect(page.getByText('טוען לוח…', { exact: true })).toBeVisible();
     await page.evaluate(() => {
       const release = (window as Window & { __releaseDealForTest?: () => void })
@@ -262,14 +269,11 @@ test.describe('PhotoSetup', () => {
     await expect(page.getByTestId('board-grid')).toHaveCount(0);
     await expect(page.getByTestId('ocr-cell-0')).toHaveValue(fixtureBoard.words[0]);
     await expect(page.getByTestId('key-cell-0')).toHaveAttribute('aria-label', /תפקיד אדום/);
-    await expect(page.getByTestId('key-cell-24')).toHaveAttribute(
-      'aria-label',
-      /תפקיד מתנקש/,
-    );
-    await expect(page.getByTestId('btn-skip-demo')).toContainText('הגרילו שוב');
+    await expect(page.getByTestId('key-cell-24')).toHaveAttribute('aria-label', /תפקיד מתנקש/);
+    await expect(page.getByTestId('btn-random-board')).toContainText('הגרילו שוב');
     await expect(page.locator('.photo-setup__word-mirror')).toHaveCount(25);
 
-    await page.getByTestId('btn-skip-demo').click();
+    await page.getByTestId('btn-random-board').click();
     await expect(page.getByTestId('setup-screen')).toBeVisible();
     await page.getByTestId('btn-confirm-board').click();
     await expect(page.getByTestId('board-grid')).toBeVisible();
@@ -288,13 +292,15 @@ test.describe('PhotoSetup', () => {
       };
     });
 
-    await page.getByTestId('btn-skip-demo').click();
+    await page.getByTestId('btn-random-board').click();
     await expect(page.getByTestId('toast')).toContainText('לא הצלחנו לטעון לוח אקראי');
-    await expect(page.getByTestId('btn-skip-demo')).toBeEnabled();
+    await expect(page.getByTestId('btn-random-board')).toBeEnabled();
     await expect(page.getByTestId('setup-screen')).toBeVisible();
   });
 
-  test('starts OCR from a board image without making recognition deterministic', async ({ page }) => {
+  test('starts OCR from a board image without making recognition deterministic', async ({
+    page,
+  }) => {
     const onePixelPng = Buffer.from(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
       'base64',
@@ -315,7 +321,9 @@ test.describe('PhotoSetup', () => {
     await expect(page.getByTestId('ocr-grid')).toBeVisible();
   });
 
-  test('manual skip preserves corrections when an in-flight OCR result arrives late', async ({ browser }) => {
+  test('manual skip preserves corrections when an in-flight OCR result arrives late', async ({
+    browser,
+  }) => {
     const { page, releaseWorker } = await openPageWithDelayedOcrWorker(browser);
     const onePixelPng = Buffer.from(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
@@ -333,9 +341,17 @@ test.describe('PhotoSetup', () => {
     await page.getByTestId('ocr-cell-0').fill('בדיקה');
     releaseWorker();
 
-    await expect.poll(() => page.evaluate(() => (
-      window as Window & { __ocrRecognizeResolutions?: number }
-    ).__ocrRecognizeResolutions ?? 0), { timeout: 20_000 }).toBe(1);
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () =>
+              (window as Window & { __ocrRecognizeResolutions?: number })
+                .__ocrRecognizeResolutions ?? 0,
+          ),
+        { timeout: 20_000 },
+      )
+      .toBe(1);
     await expect(page.getByTestId('ocr-cell-0')).toHaveValue('בדיקה');
     await expect(page.getByText('מנוע הזיהוי מוכן', { exact: true })).toBeVisible();
     await expect(page.getByTestId('toast')).toHaveCount(0);
@@ -361,9 +377,17 @@ test.describe('PhotoSetup', () => {
     await expect(page.getByText('מנוע הזיהוי מוכן', { exact: true })).toBeVisible();
     releaseWorker();
 
-    await expect.poll(() => page.evaluate(() => (
-      window as Window & { __ocrRecognizeResolutions?: number }
-    ).__ocrRecognizeResolutions ?? 0), { timeout: 20_000 }).toBe(1);
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () =>
+              (window as Window & { __ocrRecognizeResolutions?: number })
+                .__ocrRecognizeResolutions ?? 0,
+          ),
+        { timeout: 20_000 },
+      )
+      .toBe(1);
     await expect(page.getByTestId('ocr-cell-0')).toHaveValue('בדיקה');
     await expect(page.getByText('מנוע הזיהוי מוכן', { exact: true })).toBeVisible();
     await expect(page.getByTestId('toast')).toHaveCount(0);
@@ -382,9 +406,11 @@ test.describe('PhotoSetup', () => {
       mimeType: 'image/svg+xml',
       buffer: redKeyCard,
     });
-    await expect.poll(() => page.evaluate(() => (
-      window as Window & { __keyImageLoads?: number }
-    ).__keyImageLoads ?? 0)).toBe(1);
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as Window & { __keyImageLoads?: number }).__keyImageLoads ?? 0),
+      )
+      .toBe(1);
     await expect(page.getByText('מזהה צבעים…', { exact: true })).toBeVisible();
 
     await page.getByText('דלגו על צילום המפתח — סמנו ידנית', { exact: true }).click();
@@ -392,23 +418,26 @@ test.describe('PhotoSetup', () => {
     await expect(page.getByTestId('key-cell-0')).toHaveAttribute('aria-label', /תפקיד מתנקש/);
 
     await page.evaluate(() => {
-      const release = (window as Window & { __releaseKeyImage?: () => void })
-        .__releaseKeyImage;
+      const release = (window as Window & { __releaseKeyImage?: () => void }).__releaseKeyImage;
       if (!release) throw new Error('Key image gate was not installed');
       release();
     });
 
-    await expect.poll(() => page.evaluate(() => (
-      window as Window & { __keySamples?: number }
-    ).__keySamples ?? 0)).toBe(25);
-    const roleLabels = await page.getByTestId(/^key-cell-\d+$/).evaluateAll((cells) =>
-      cells.map((cell) => cell.getAttribute('aria-label')),
-    );
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as Window & { __keySamples?: number }).__keySamples ?? 0),
+      )
+      .toBe(25);
+    const roleLabels = await page
+      .getByTestId(/^key-cell-\d+$/)
+      .evaluateAll((cells) => cells.map((cell) => cell.getAttribute('aria-label')));
     expect(roleLabels[0]).toContain('תפקיד מתנקש');
     expect(roleLabels.slice(1)).toHaveLength(24);
     expect(roleLabels.slice(1).every((label) => label?.includes('תפקיד ניטרלי'))).toBe(true);
     await expect(page.getByTestId('toast')).toHaveCount(0);
-    await expect(page.getByText('הצבעים ייכנסו לרשת ויישארו ניתנים לתיקון', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('הצבעים ייכנסו לרשת ויישארו ניתנים לתיקון', { exact: true }),
+    ).toBeVisible();
     await expect(page.getByAltText('תצוגה מקדימה של כרטיס המפתח')).toBeVisible();
 
     const counters = await page.evaluate(() => {
@@ -426,8 +455,11 @@ test.describe('PhotoSetup', () => {
     await page.context().close();
   });
 
-  test('direct key correction cancels an in-flight key-card classification', async ({ browser }) => {
+  test('direct key correction cancels an in-flight key-card classification', async ({
+    browser,
+  }) => {
     const page = await openPageWithDelayedKeyImage(browser);
+    await page.getByTestId('btn-manual-entry').click(); // reset the random default to an empty, all-neutral grid
     const redKeyCard = Buffer.from(
       '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#b04548"/></svg>',
     );
@@ -437,28 +469,33 @@ test.describe('PhotoSetup', () => {
       mimeType: 'image/svg+xml',
       buffer: redKeyCard,
     });
-    await expect.poll(() => page.evaluate(() => (
-      window as Window & { __keyImageLoads?: number }
-    ).__keyImageLoads ?? 0)).toBe(1);
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as Window & { __keyImageLoads?: number }).__keyImageLoads ?? 0),
+      )
+      .toBe(1);
     await expect(page.getByText('מזהה צבעים…', { exact: true })).toBeVisible();
 
     await page.getByTestId('key-cell-0').click();
     await expect(page.getByTestId('key-cell-0')).toHaveAttribute('aria-label', /תפקיד מתנקש/);
-    await expect(page.getByText('הצבעים ייכנסו לרשת ויישארו ניתנים לתיקון', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('הצבעים ייכנסו לרשת ויישארו ניתנים לתיקון', { exact: true }),
+    ).toBeVisible();
 
     await page.evaluate(() => {
-      const release = (window as Window & { __releaseKeyImage?: () => void })
-        .__releaseKeyImage;
+      const release = (window as Window & { __releaseKeyImage?: () => void }).__releaseKeyImage;
       if (!release) throw new Error('Key image gate was not installed');
       release();
     });
 
-    await expect.poll(() => page.evaluate(() => (
-      window as Window & { __keySamples?: number }
-    ).__keySamples ?? 0)).toBe(25);
-    const roleLabels = await page.getByTestId(/^key-cell-\d+$/).evaluateAll((cells) =>
-      cells.map((cell) => cell.getAttribute('aria-label')),
-    );
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as Window & { __keySamples?: number }).__keySamples ?? 0),
+      )
+      .toBe(25);
+    const roleLabels = await page
+      .getByTestId(/^key-cell-\d+$/)
+      .evaluateAll((cells) => cells.map((cell) => cell.getAttribute('aria-label')));
     expect(roleLabels[0]).toContain('תפקיד מתנקש');
     expect(roleLabels.slice(1)).toHaveLength(24);
     expect(roleLabels.slice(1).every((label) => label?.includes('תפקיד ניטרלי'))).toBe(true);

@@ -15,7 +15,7 @@ export FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin
 ## 1. Legality regression (fast, model-free — run this on every change)
 
 ```bash
-python test_legality.py
+python tests/test_legality.py
 ```
 
 Locks in the shared-root + transparency-gate behaviour (the `מדע`/`מדען` bug, the opaque
@@ -40,7 +40,7 @@ clues) — read them as trends, not pass/fail.
 ## 3. Verify the live Space (after a deploy)
 
 ```bash
-python .Codex/skills/codenames-qa/scripts/verify_live.py
+python .agents/skills/codenames-qa/scripts/verify_live.py
 ```
 
 POSTs to the deployed endpoints and asserts: `מדען` illegal next to `מדע`, `מלחמה` legal next to
