@@ -22,7 +22,7 @@ import './styles.css';
 
 const VIEWBOX_SIZE = 600;
 const MAP_PADDING = 46;
-const MAP_SURFACE_INSET = 1;
+const MAP_SURFACE_INSET = 0;
 const REQUEST_DEBOUNCE_MS = 400;
 
 const roleLabels: Record<Role, string> = {
@@ -338,7 +338,6 @@ export function SemanticMap(): JSX.Element {
             y={MAP_SURFACE_INSET}
             width={viewBoxWidth - MAP_SURFACE_INSET * 2}
             height={VIEWBOX_SIZE - MAP_SURFACE_INSET * 2}
-            rx="16"
           />
           <rect
             className="semantic-map__grid"
@@ -346,7 +345,6 @@ export function SemanticMap(): JSX.Element {
             y={MAP_SURFACE_INSET}
             width={viewBoxWidth - MAP_SURFACE_INSET * 2}
             height={VIEWBOX_SIZE - MAP_SURFACE_INSET * 2}
-            rx="16"
           />
 
           {hintPoint

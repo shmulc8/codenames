@@ -76,7 +76,7 @@ test.describe('semantic map', () => {
     }
   });
 
-  test('centers a readable, bounded semantic canvas', async ({ page }) => {
+  test('fills the semantic frame without an inner rounded square', async ({ page }) => {
     await setBoard(page, true);
     await waitForMap(page);
 
@@ -92,19 +92,17 @@ test.describe('semantic map', () => {
       if (!frame || !map || !background || !grid) {
         throw new Error('Semantic map surface was not rendered');
       }
-      const frameStyle = getComputedStyle(frame);
       const frameRect = frame.getBoundingClientRect();
       const mapRect = map.getBoundingClientRect();
       const backgroundRect = background.getBoundingClientRect();
       const gridRect = grid.getBoundingClientRect();
-      const contentLeft = frameRect.left + parseFloat(frameStyle.paddingLeft);
-      const contentRight = frameRect.right - parseFloat(frameStyle.paddingRight);
       return {
-        available: contentRight - contentLeft,
         background: backgroundRect.width,
-        endGutter: contentRight - mapRect.right,
-        map: mapRect.width,
-        startGutter: mapRect.left - contentLeft,
+        frameHeight: frameRect.height,
+        frameWidth: frameRect.width,
+        mapHeight: mapRect.height,
+        mapWidth: mapRect.width,
+        radius: background.rx.baseVal.value,
         surfaceBottom: mapRect.bottom - gridRect.bottom,
         surfaceLeft: gridRect.left - mapRect.left,
         surfaceRight: mapRect.right - gridRect.right,
@@ -112,10 +110,10 @@ test.describe('semantic map', () => {
       };
     });
 
-    expect(sizes.map).toBeLessThanOrEqual(736);
-    expect(sizes.map).toBeLessThanOrEqual(sizes.available);
-    expect(Math.abs(sizes.startGutter - sizes.endGutter)).toBeLessThan(2);
-    expect(Math.abs(sizes.map - sizes.background)).toBeLessThan(3);
+    expect(Math.abs(sizes.mapWidth - sizes.frameWidth)).toBeLessThan(2);
+    expect(Math.abs(sizes.mapHeight - sizes.frameHeight)).toBeLessThan(2);
+    expect(Math.abs(sizes.mapWidth - sizes.background)).toBeLessThan(3);
+    expect(sizes.radius).toBe(0);
     expect(sizes.surfaceBottom).toBeGreaterThanOrEqual(0);
     expect(sizes.surfaceLeft).toBeGreaterThanOrEqual(0);
     expect(sizes.surfaceRight).toBeGreaterThanOrEqual(0);
