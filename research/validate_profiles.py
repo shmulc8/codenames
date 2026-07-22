@@ -15,9 +15,8 @@ import argparse
 import json
 import random
 
-import app
-import probe
-from guesser import make_guesser
+from codenames import app, probe
+from codenames.guesser import make_guesser
 from research import bench_clue
 
 METRICS = ["served_rate", "gained", "recovery", "safe_turn", "assassin", "over_claim", "mean_count"]

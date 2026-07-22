@@ -29,7 +29,7 @@ import random
 import re
 from statistics import mean
 
-import probe
+from codenames import probe
 
 SPY_ENC = (
     "fasttext"  # the spymaster geometry (Hebrew word-similarity champion: 100% on a triplet probe)
@@ -99,7 +99,7 @@ def evaluate(clue, board, A, do_judge):
     }
 
 
-from exp_encoders import make_exp_encoder
+from codenames.exp_encoders import make_exp_encoder
 
 
 def main():

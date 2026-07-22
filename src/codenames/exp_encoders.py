@@ -17,7 +17,9 @@ from pathlib import Path
 
 import numpy as np
 
-DATA = Path(__file__).resolve().parent / "data"
+from . import DATA_DIR
+
+DATA = Path(DATA_DIR)
 SERVILE_PREFIXES = frozenset("הובכלמש")
 
 
@@ -83,7 +85,7 @@ class BlendEncoder:
 
     def __init__(self, w_ft: float, w_nb: float) -> None:
         self.model_id = f"blend_ft_{w_ft}_nb_{w_nb}"
-        from probe import make_encoder
+        from .probe import make_encoder
 
         self.ft = make_encoder("fasttext")
         self.nb = NumberbatchEncoder()
@@ -111,7 +113,7 @@ def make_exp_encoder(key: str):
             w_ft = float(parts[1])
             w_nb = float(parts[2])
             return BlendEncoder(w_ft, w_nb)
-    from probe import make_encoder
+    from .probe import make_encoder
 
     return make_encoder(key)
 

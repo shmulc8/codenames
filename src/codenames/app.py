@@ -34,8 +34,7 @@ import time
 import numpy as np
 from flask import Flask, abort, jsonify, request, send_file, send_from_directory
 
-import morph
-import probe
+from . import PROJECT_ROOT, morph, probe
 
 app = Flask(__name__)
 
@@ -362,13 +361,18 @@ def _classical_mds(D: np.ndarray, dim: int = 2) -> np.ndarray:
 # Pages
 # --------------------------------------------------------------------------- #
 
-WEBAPP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "webapp")
+# Served assets live at the project root (see codenames/__init__.py), alongside data/ — the
+# webapp build and the static HTML — resolved absolutely so serving is cwd-independent.
+WEBAPP = os.path.join(PROJECT_ROOT, "webapp")
+_COPILOT_HTML = os.path.join(PROJECT_ROOT, "copilot.html")
+_METHODS_HTML = os.path.join(PROJECT_ROOT, "methods.html")
+_GAME_HTML = os.path.join(PROJECT_ROOT, "codenames_latent_space.html")
 
 
 @app.get("/")
 def index():
     spa = os.path.join(WEBAPP, "index.html")
-    return send_file(spa) if os.path.exists(spa) else send_file("copilot.html")
+    return send_file(spa) if os.path.exists(spa) else send_file(_COPILOT_HTML)
 
 
 @app.get("/assets/<path:asset>")
@@ -378,19 +382,19 @@ def spa_assets(asset):
 
 @app.get("/classic")
 def classic():
-    return send_file("copilot.html")
+    return send_file(_COPILOT_HTML)
 
 
 @app.get("/methods")
 def methods():
-    return send_file("methods.html")
+    return send_file(_METHODS_HTML)
 
 
 @app.get("/game")
 def game():
-    if not os.path.exists("codenames_latent_space.html"):
+    if not os.path.exists(_GAME_HTML):
         return ("הדף הזה אינו זמין בגרסה הציבורית.", 404)
-    return send_file("codenames_latent_space.html")
+    return send_file(_GAME_HTML)
 
 
 @app.get("/api/health")
@@ -866,8 +870,6 @@ if __name__ == "__main__":
     if os.environ.get("WARMUP", "").lower() in ("1", "true", "yes"):
         app.logger.info("warming up geometry assets ...")
         geo_assets("curated")  # load fastText + embed the clue vocab before serving
-        import morph
-
         morph.lemmas(["מילה"])  # preload DictaBERT-lex (legality) so the first clue isn't slow
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "7860"))

@@ -33,10 +33,10 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-import morph
-from deck_he import DECK
+from . import DATA_DIR, morph
+from .deck_he import DECK
 
-DATA = os.path.join(os.path.dirname(__file__), "data")
+DATA = DATA_DIR
 
 # --------------------------------------------------------------------------- #
 # The bench
@@ -46,7 +46,7 @@ ENCODERS = {
     # Static subword vectors — the literature-recommended baseline for Hebrew
     # (morphology/OOV); often competitive with contextual encoders for bare-word
     # association. Handles OOV via subwords.
-    "fasttext": dict(kind="fasttext", path=os.path.join(DATA, "cc.he.300.bin")),
+    "fasttext": dict(kind="fasttext", path=os.path.join(DATA, "cc.he.300.fp16.bin")),
     # Concatenated L2-normalized blend of fastText and ConceptNet Numberbatch.
     "blend_0.5_0.5": dict(kind="blend", w_ft=0.5, w_nb=0.5),
     "blend_0.7_0.3": dict(kind="blend", w_ft=0.7, w_nb=0.3),
@@ -166,17 +166,19 @@ class CompressedFastTextEncoder:
 
 def make_encoder(key: str):
     if key == "numberbatch" or key.startswith("blend_"):
-        from exp_encoders import make_exp_encoder
+        from .exp_encoders import make_exp_encoder
 
         return make_exp_encoder(key)
     cfg = ENCODERS[key]
     if cfg["kind"] == "fasttext":
-        # Deploy uses the compressed model when FASTTEXT_COMPRESSED points at one; local dev
-        # falls back to the full cc.he.300.bin.
-        comp = os.environ.get("FASTTEXT_COMPRESSED")
-        if comp:
-            return CompressedFastTextEncoder(comp)
-        return FastTextEncoder(cfg["path"])
+        # The compressed fp16 model (geometrically loss-free vs the full cc.he.300.bin, ~250 MB
+        # incl. its .vectors.npy sidecar) is the standard model everywhere — the full 7 GB model
+        # is not required. FASTTEXT_COMPRESSED can point at a different compressed model; a full
+        # .bin can still be loaded explicitly via cfg["path"] + FastTextEncoder if one is present.
+        comp = os.environ.get("FASTTEXT_COMPRESSED", cfg["path"])
+        if comp.endswith(".bin") and "fp16" not in comp and os.path.exists(comp):
+            return FastTextEncoder(comp)
+        return CompressedFastTextEncoder(comp)
     return Encoder(cfg["model_id"])
 
 

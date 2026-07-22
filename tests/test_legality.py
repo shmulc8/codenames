@@ -8,13 +8,7 @@ clue is ever served) lives in the manual run_flow harness.
 Run: python tests/test_legality.py
 """
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-import morph
-import probe
+from codenames import morph, probe
 
 THETA = probe.ROOT_TRANSPARENCY_THETA
 

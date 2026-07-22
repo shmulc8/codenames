@@ -2,6 +2,7 @@ FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app/src \
     HF_HOME=/app/hf_cache \
     TRANSFORMERS_OFFLINE=1 \
     EMBED_ONLY=1 \
@@ -28,4 +29,4 @@ RUN HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 python -c "from transformers import 
 COPY . .
 
 EXPOSE 7860
-CMD ["python", "app.py"]
+CMD ["python", "-m", "codenames.app"]

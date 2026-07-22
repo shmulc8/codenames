@@ -6,7 +6,7 @@ recovery benchmark. Runs N_BOARDS boards per trial, maximising a composite
 objective:  0.5 * recovery + 0.3 * safe_rate + 0.2 * (assassin_rank / 25)
 
 Usage:
-    PYTHONPATH=. FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin HF_HUB_OFFLINE=1 \
+    FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin HF_HUB_OFFLINE=1 \
         .venv/bin/python -m research.optuna_tune --trials 60 --boards 15
 """
 
@@ -22,8 +22,8 @@ import random
 import numpy as np
 import optuna
 
-from exp_encoders import make_exp_encoder
-from probe import (
+from codenames.exp_encoders import make_exp_encoder
+from codenames.probe import (
     LLM_FAST,
     Clue,
     HebrewLLM,

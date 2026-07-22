@@ -19,7 +19,7 @@ from typing import Protocol
 import numpy as np
 from scipy.stats import spearmanr
 
-from exp_encoders import make_exp_encoder
+from codenames.exp_encoders import make_exp_encoder
 
 DEFAULT_DATA = Path(__file__).resolve().parents[1] / "data" / "simlex_he.tsv"
 

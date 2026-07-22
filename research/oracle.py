@@ -20,7 +20,7 @@ import random
 import urllib.request
 from statistics import mean
 
-import probe
+from codenames import probe
 from research import bench
 
 SERVER = "http://127.0.0.1:7860"
