@@ -19,8 +19,8 @@ import argparse
 import json
 from statistics import mean
 
-import probe
-from guesser import make_guesser
+from codenames import probe
+from codenames.guesser import make_guesser
 
 ENEMY = {"opp", "assassin"}
 

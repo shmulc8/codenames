@@ -10,16 +10,14 @@ import argparse
 import json
 import os
 import random
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import openai
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-import probe
-from app import serve_clue
+from codenames import probe
+from codenames.app import serve_clue
 
 
 @dataclass(frozen=True)

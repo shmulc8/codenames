@@ -20,8 +20,8 @@ import time
 
 import numpy as np
 
-from exp_encoders import make_exp_encoder
-from probe import (
+from codenames.exp_encoders import make_exp_encoder
+from codenames.probe import (
     LLM_FAST,
     HebrewLLM,
     clue_vocab_band,

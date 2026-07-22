@@ -19,6 +19,8 @@ import re
 import threading
 import unicodedata
 
+from . import DATA_DIR
+
 _LEX_ID = "dicta-il/dictabert-lex"
 _MORPH_ID = "dicta-il/dictabert-morph"
 _lock = threading.Lock()
@@ -150,7 +152,7 @@ def root_sig(word: str) -> str:
 # It is the primary shared-root source for clue legality; `root_sig` above stays as the
 # fallback for words the lexicon does not cover.
 
-_ROOT_LEXICON_PATH = os.path.join(os.path.dirname(__file__), "data", "word2root.json")
+_ROOT_LEXICON_PATH = os.path.join(DATA_DIR, "word2root.json")
 _NIQQUD = re.compile(r"[֑-ׇ]")  # cantillation + niqqud range
 _PUNCT = re.compile(r"[׳׳'\"“”‘’`]")
 _FINAL_FORMS = str.maketrans("ךםןףץ", "כמנפצ")

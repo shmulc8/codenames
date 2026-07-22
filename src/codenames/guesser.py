@@ -24,7 +24,7 @@ import os
 
 import numpy as np
 
-import probe
+from . import PROJECT_ROOT, probe
 
 # fastText is the only strong Hebrew associator on hand; qwen3-embed is architecturally
 # independent of the spymaster geometry and dilutes the circularity of sharing fastText.
@@ -92,7 +92,7 @@ _PROVIDERS = {
 
 def _load_dotenv() -> None:
     """Populate os.environ from a repo-root .env (never overrides an existing var)."""
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    path = os.path.join(PROJECT_ROOT, ".env")
     if not os.path.exists(path):
         return
     with open(path, encoding="utf-8") as fh:

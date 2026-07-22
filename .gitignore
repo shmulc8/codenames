@@ -16,11 +16,7 @@ hf_space/data/cc.he.300.*
 
 # Generated deploy bundle: hf_space/ code is synced from the repo root by scripts/deploy.py
 # (single source of truth) and the UI is built into hf_space/webapp/ — none of it is committed.
-hf_space/app.py
-hf_space/probe.py
-hf_space/morph.py
-hf_space/exp_encoders.py
-hf_space/deck_he.py
+hf_space/src/
 hf_space/copilot.html
 hf_space/methods.html
 hf_space/webapp/
@@ -47,6 +43,10 @@ runs/
 /data/gemini*_eval_results.json
 /data/optuna_results.json
 /data/novita_eval_results.json
+/data/bench_clue_*.json
+
+# Local runtime feedback log (real feedback lives in the HF dataset)
+feedback/*.jsonl
 
 # Scratch / backup artifacts
 *.backup.json

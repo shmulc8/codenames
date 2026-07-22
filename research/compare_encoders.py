@@ -12,7 +12,7 @@ import time
 
 import numpy as np
 
-from probe import (
+from codenames.probe import (
     LLM_FAST,
     HebrewLLM,
     encoder_rank,

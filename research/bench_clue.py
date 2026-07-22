@@ -29,9 +29,8 @@ import json
 import math
 import random
 
-import app
-import probe
-from guesser import make_guesser
+from codenames import app, probe
+from codenames.guesser import make_guesser
 
 ENEMY = {"opp", "assassin"}
 

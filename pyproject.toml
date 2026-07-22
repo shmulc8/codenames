@@ -1,6 +1,21 @@
-# Tooling configuration for the Hebrew Codenames co-pilot.
-# Dependencies are NOT declared here — requirements.txt (dev) and hf_space/requirements.txt (deploy)
-# remain authoritative. This file holds the lint / format / type-check config only.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codenames"
+version = "0.1.0"
+description = "Hebrew Codenames co-pilot — geometry clue engine"
+requires-python = ">=3.11"
+# Runtime dependencies stay authoritative in requirements.txt (dev) and hf_space/requirements.txt
+# (deploy); `pip install -e .` only puts the codenames package on the path — `make install` handles
+# both. This keeps editable installs from re-resolving torch/mlx/jupyter.
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.ruff]
 line-length = 100
@@ -33,7 +48,8 @@ ignore = [
 
 [tool.mypy]
 python_version = "3.12"
-files = ["app.py", "probe.py", "morph.py", "deck_he.py", "exp_encoders.py", "guesser.py", "scripts"]
+files = ["src/codenames", "scripts"]
+mypy_path = "src"
 ignore_missing_imports = true   # numpy/flask/fasttext/hf_hub ship partial or no stubs
 warn_unused_ignores = true
 warn_redundant_casts = true

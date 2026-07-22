@@ -23,6 +23,7 @@ help:
 install:
 	python3 -m venv .venv
 	$(PYTHON) -m pip install -r requirements.txt
+	$(PYTHON) -m pip install -e .
 
 test:
 	FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin $(PYTHON) tests/test_legality.py
@@ -42,7 +43,7 @@ typecheck:
 check: lint format-check test
 
 serve:
-	HF_HUB_OFFLINE=1 $(PYTHON) app.py
+	HF_HUB_OFFLINE=1 $(PYTHON) -m codenames.app
 
 build-site:
 	HF_HUB_OFFLINE=1 $(PYTHON) scripts/build_site.py

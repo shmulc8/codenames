@@ -9,7 +9,9 @@ standard Codenames-AI setup (Koyyalagunta et al. 2021).
 import json
 import os
 
-_p = os.path.join(os.path.dirname(__file__), "data", "yaeldau_hebrew.json")
+from . import DATA_DIR
+
+_p = os.path.join(DATA_DIR, "yaeldau_hebrew.json")
 with open(_p, encoding="utf-8") as f:
     _raw = json.load(f)
 

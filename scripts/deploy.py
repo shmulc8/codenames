@@ -27,12 +27,14 @@ REPO_ID = "shmulc/hebrew-codenames-copilot"
 # NOTE: data/ is deliberately NOT mirrored — hf_space/data/ carries a prod-curated subset that
 # intentionally differs from the dev root/data (trimmed vocab / freq list), so it stays committed.
 SHARED = [
-    # engine modules
-    "app.py",
-    "probe.py",
-    "morph.py",
-    "exp_encoders.py",
-    "deck_he.py",
+    # engine package (imported as `codenames` — Dockerfile sets PYTHONPATH=/app/src)
+    "src/codenames/__init__.py",
+    "src/codenames/app.py",
+    "src/codenames/probe.py",
+    "src/codenames/morph.py",
+    "src/codenames/exp_encoders.py",
+    "src/codenames/deck_he.py",
+    "src/codenames/guesser.py",
     # served HTML
     "copilot.html",
     "methods.html",

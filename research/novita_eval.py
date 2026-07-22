@@ -21,8 +21,7 @@ import urllib.error
 import urllib.request
 from statistics import mean
 
-import app
-import probe
+from codenames import app, probe
 
 PROVIDERS = {
     "novita": ("https://api.novita.ai/openai/v1/chat/completions", "NOVITA_API_KEY", "tencent/hy3"),

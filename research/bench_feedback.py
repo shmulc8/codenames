@@ -16,8 +16,8 @@ import os
 os.environ.setdefault("FASTTEXT_COMPRESSED", "data/cc.he.300.fp16.bin")
 import numpy as np
 
-import probe
-from probe import Board
+from codenames import probe
+from codenames.probe import Board
 
 # risk profiles mirror app.RISK_PROFILES (generation knobs only)
 RISK = {
