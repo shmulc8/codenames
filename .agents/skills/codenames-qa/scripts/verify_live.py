@@ -14,7 +14,7 @@ import urllib.error
 import urllib.request
 
 os.environ.setdefault("FASTTEXT_COMPRESSED", "data/cc.he.300.fp16.bin")
-sys.path.insert(0, os.getcwd())  # run from the repo root so `import probe` resolves
+# codenames is pip-installed (pip install -e .), so the engine imports directly
 DEFAULT_BASE = "https://shmulc-hebrew-codenames-copilot.hf.space"
 
 
@@ -64,7 +64,7 @@ def main() -> int:
         )
 
     print("== spymaster ==")
-    import probe
+    from codenames import probe
 
     b = probe.sample_board(random.Random(1))
     for risk in ("cautious", "balanced", "bold"):
