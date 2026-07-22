@@ -61,6 +61,7 @@ export function OperativePanel(): JSX.Element {
 
     setLoading(true);
     setError(null);
+    setResult(null);
     try {
       const board = liveBoard(useAppStore.getState());
       const response = await postOperative(board, clue, count, vocabMode);

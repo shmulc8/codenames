@@ -235,7 +235,7 @@
 .mobile .mobile-shell__mode button,
 .mobile .mobile-shell__gamebar-actions button,
 .mobile .mobile-shell__gamebar-actions a {
-  min-height: 36px;
+  min-height: 44px;
   border: 0;
   background: transparent;
   color: var(--cn-text-muted);
@@ -263,7 +263,7 @@
 
 .mobile .mobile-shell__gamebar-actions button,
 .mobile .mobile-shell__gamebar-actions a {
-  min-width: 36px;
+  min-width: 44px;
   padding-inline: var(--space-2);
   display: inline-grid;
   place-items: center;
