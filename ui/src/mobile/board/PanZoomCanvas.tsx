@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { RoleIcon } from '../../components/RoleIcon';
 import { useAppStore } from '../../state/store';
@@ -8,26 +8,12 @@ import { MobileBoardTile } from './MobileBoardTile';
 import { usePanZoom } from './usePanZoom';
 import './mobile-board.css';
 
-function isMobileViewport(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
-}
-
-export function PanZoomCanvas(): JSX.Element | null {
+export function PanZoomCanvas(): JSX.Element {
   const tiles = useAppStore((state) => state.tiles);
   const selected = useAppStore((state) => state.selected);
-  const [mobile, setMobile] = useState(isMobileViewport);
   const [focusedWord, setFocusedWord] = useState<string | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const panZoom = usePanZoom(viewportRef, setFocusedWord);
-
-  useEffect(() => {
-    const query = window.matchMedia('(max-width: 767px)');
-    const update = (): void => setMobile(query.matches);
-    query.addEventListener('change', update);
-    return () => query.removeEventListener('change', update);
-  }, []);
-
-  if (!mobile) return null;
 
   const assassinRevealed = tiles.some(
     (tile) => tile.role === 'assassin' && tile.lifecycle === 'chosen',

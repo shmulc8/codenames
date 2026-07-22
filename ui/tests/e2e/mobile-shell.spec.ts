@@ -151,6 +151,25 @@ test.describe('mobile app shell', () => {
   });
 });
 
+test.describe('coarse-pointer tablet', () => {
+  test.use({
+    hasTouch: true,
+    viewport: { width: 1024, height: 768 },
+  });
+
+  test('keeps the mobile board available above the phone breakpoint', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate((board) => {
+      if (!window.__store) throw new Error('The dev store hook was not installed');
+      window.__store.getState().setBoard(board.words, board.roles);
+    }, fixtureBoard);
+
+    await expect(page.getByTestId('mobile-shell')).toBeVisible();
+    await expect(page.getByTestId('board-canvas')).toBeVisible();
+    await expect(page.getByTestId(/^tile-\d+$/)).toHaveCount(25);
+  });
+});
+
 test.describe('desktop regression', () => {
   test('keeps the mobile shell absent and the desktop layout mounted', async ({ page }) => {
     await page.setViewportSize({ width: 1320, height: 900 });
