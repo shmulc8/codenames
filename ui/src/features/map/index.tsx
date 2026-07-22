@@ -127,6 +127,7 @@ export function SemanticMap(): JSX.Element {
   const [space, setSpace] = useState<SpaceResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [hoveredWord, setHoveredWord] = useState<string | null>(null);
+  const [legendOpen, setLegendOpen] = useState(false);
   const [pinnedWord, setPinnedWord] = useState<string | null>(null);
   const [viewBoxWidth, setViewBoxWidth] = useState(VIEWBOX_SIZE);
   const mapRef = useRef<SVGSVGElement>(null);
@@ -493,7 +494,23 @@ export function SemanticMap(): JSX.Element {
         ) : null}
       </div>
 
-      <div className="semantic-map__legend" data-testid="map-legend">
+      <button
+        type="button"
+        className="semantic-map__legend-toggle"
+        data-testid="map-legend-toggle"
+        aria-controls="semantic-map-legend"
+        aria-expanded={legendOpen}
+        onClick={() => setLegendOpen((open) => !open)}
+      >
+        <span aria-hidden="true">ⓘ</span>
+        {legendOpen ? 'סגירת מקרא' : 'מקרא'}
+      </button>
+
+      <div
+        id="semantic-map-legend"
+        className={`semantic-map__legend${legendOpen ? ' is-open' : ''}`}
+        data-testid="map-legend"
+      >
         <strong>קרוב למרכז = קרוב לרמז</strong>
         <span className="semantic-map__legend-separator" aria-hidden="true">·</span>
         {(['red', 'blue', 'neutral', 'assassin'] as const).map((role) => (

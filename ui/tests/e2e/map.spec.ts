@@ -70,6 +70,9 @@ test.describe('semantic map', () => {
     );
 
     const legend = page.getByTestId('map-legend');
+    await expect(page.locator('.semantic-panel__header h2')).toBeVisible();
+    await expect(page.getByTestId('map-legend-toggle')).toBeHidden();
+    await expect(legend).toBeVisible();
     await expect(legend).toContainText('קרוב למרכז = קרוב לרמז');
     for (const role of ['אדום', 'כחול', 'ניטרלי', 'מתנקש']) {
       await expect(legend).toContainText(role);
@@ -113,6 +116,8 @@ test.describe('semantic map', () => {
     expect(Math.abs(sizes.mapWidth - sizes.frameWidth)).toBeLessThan(2);
     expect(Math.abs(sizes.mapHeight - sizes.frameHeight)).toBeLessThan(2);
     expect(Math.abs(sizes.mapWidth - sizes.background)).toBeLessThan(3);
+    expect(sizes.frameHeight).toBeLessThanOrEqual(385);
+    expect(sizes.frameWidth / sizes.frameHeight).toBeGreaterThanOrEqual(1.6);
     expect(sizes.radius).toBe(0);
     expect(sizes.surfaceBottom).toBeGreaterThanOrEqual(0);
     expect(sizes.surfaceLeft).toBeGreaterThanOrEqual(0);

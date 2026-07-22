@@ -35,18 +35,88 @@
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
+  align-items: flex-start;
 }
 
 .mobile-map .semantic-panel {
-  flex: 1 1 auto;
+  position: relative;
+  flex: 0 0 auto;
   border-radius: 0;
   border-inline: none;
   box-shadow: none;
 }
 
+.mobile-map .semantic-panel__header {
+  position: absolute;
+  z-index: 3;
+  inset: 0 0 auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.mobile-map .semantic-panel__header > div {
+  display: none;
+}
+
+.mobile-map .semantic-panel__clue {
+  position: absolute;
+  inset-block-start: var(--space-3);
+  inset-inline-start: var(--space-3);
+  max-width: calc(100vw - 7rem);
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--color-accent-400) 48%, var(--color-divider));
+  background: color-mix(in srgb, var(--cn-sheet) 92%, transparent);
+  box-shadow: var(--shadow-md);
+  text-overflow: ellipsis;
+  pointer-events: auto;
+}
+
+.mobile-map .semantic-map__frame {
+  height: clamp(16rem, 38svh, 20rem);
+  flex: 0 0 clamp(16rem, 38svh, 20rem);
+}
+
 .mobile-map .semantic-map__legend {
+  position: absolute;
+  z-index: 4;
+  inset-inline: var(--space-3);
+  inset-block-end: 4.15rem;
+  display: none;
   flex-wrap: wrap;
   row-gap: var(--space-2);
+  max-height: min(15rem, 42svh);
+  overflow: auto;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--cn-sheet) 96%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+
+.mobile-map .semantic-map__legend.is-open {
+  display: flex;
+}
+
+.mobile-map .semantic-map__legend-toggle {
+  position: absolute;
+  z-index: 5;
+  inset-inline-end: var(--space-3);
+  inset-block-end: var(--space-3);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: .55rem .85rem;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cn-sheet) 92%, transparent);
+  box-shadow: var(--shadow-md);
+  color: var(--cn-text-muted);
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 700;
 }
 
 .mobile .mobile-shell__content--map {

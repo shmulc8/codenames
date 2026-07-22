@@ -1,4 +1,5 @@
 import { SemanticMap } from '../../features/map';
+import './panels.css';
 
 /**
  * Full-bleed re-layout of the reused desktop `SemanticMap` on its own mobile

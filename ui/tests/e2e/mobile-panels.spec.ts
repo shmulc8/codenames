@@ -128,6 +128,13 @@ test.describe('mobile clue/check/map tabs', () => {
     await openMobileTab(page, 'map');
     await expect(page.getByTestId('semantic-map')).toBeVisible();
     await expect(page.getByTestId('map-dot-אריה')).toBeVisible();
+    const mapFrame = await page.locator('.semantic-map__frame').evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return { height: rect.height, width: rect.width };
+    });
+    expect(mapFrame.height).toBeGreaterThanOrEqual(256);
+    expect(mapFrame.height).toBeLessThanOrEqual(321);
+    expect(mapFrame.width / mapFrame.height).toBeGreaterThan(1.1);
 
     await expect(page.getByTestId('semantic-map').getByRole('button')).toHaveCount(
       25,
@@ -145,6 +152,20 @@ test.describe('mobile clue/check/map tabs', () => {
       'assassin',
     );
     await expect(page.getByTestId('map-hint-node')).toContainText('טבע');
+    await expect(page.locator('.semantic-panel__header h2')).toBeHidden();
+    await expect(page.locator('.semantic-panel__clue')).toBeVisible();
+    await expect(page.locator('.semantic-panel__clue')).toHaveCSS(
+      'position',
+      'absolute',
+    );
+    await expect(page.getByTestId('map-legend')).toBeHidden();
+    await expect(page.getByTestId('map-legend-toggle')).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+
+    await page.getByTestId('map-legend-toggle').click();
+    await expect(page.getByTestId('map-legend')).toBeVisible();
     await expect(page.getByTestId('map-legend')).toContainText(
       'קרוב למרכז = קרוב לרמז',
     );
