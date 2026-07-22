@@ -11,10 +11,10 @@ every change** on an association-aware metric before keeping it.
 Repo: `/Users/shmulc/Stuff/tmp/latent-space/codenames` (Python, `.venv/` present).
 
 **Serving path (DO NOT churn until a winner is promoted — see §4):**
-- `probe.py` — encoders + clue scoring (the engine).
-- `app.py` — server, risk profiles, vocab assembly.
-- `deck_he.py`, `morph.py` — board deck, Hebrew morphology/roots.
-- `hf_space/` — deployed copy (mirror of the above); only touch at promotion time.
+- `src/codenames/probe.py` — encoders + clue scoring (the engine).
+- `src/codenames/app.py` — server, risk profiles, vocab assembly.
+- `src/codenames/deck_he.py`, `src/codenames/morph.py` — board deck, Hebrew morphology/roots.
+- `hf_space/` — generated deploy bundle (synced from `src/codenames/` by `scripts/deploy.py`).
 
 **Encoder interface (duck-typed):** a class with
 `embed(self, words: list[str]) -> np.ndarray` returning `(N, dim)` **float32, L2-normalized**
@@ -28,7 +28,7 @@ g(c) = Σ_top-m team s'(c,b)  − λ_a·max(0,s'(c,assassin)) − λ_opp·max(0,
 s'(c,w) = cos(c,w) − mean_b cos(c,b)          # DETECT mean-centering
 ```
 plus a `safe_margin` gate (team word must beat the best enemy sim by a margin) and a
-`cohesion` count-trim. Three `RISK_PROFILES` (cautious/balanced/bold) in `app.py:50`.
+`cohesion` count-trim. Three `RISK_PROFILES` (cautious/balanced/bold) in `src/codenames/app.py`.
 **The engine already implements the standard competitive toolkit** (margin score,
 tiered assassin≫opp>neutral penalties, FREQ band, safety gate, risk dial). Do not
 re-derive these; build on them.
@@ -38,7 +38,7 @@ lexicon) + a **fastText cosine gate θ=0.30** (`probe.ROOT_TRANSPARENCY_THETA`).
 `python tests/test_legality.py` (encoder-independent; must stay green).
 
 **Vocabulary:** `probe.clue_vocab_band(n, lo, hi, pos, source_n)` slices
-`data/content_master_v2_30000.json` (rows `[lemma, count, pos]`). `app.py:180` builds the
+`data/content_master_v2_30000.json` (rows `[lemma, count, pos]`). `src/codenames/app.py` builds the
 live vocab with `pos={"NOUN","ADJ"}` → ~5,260 lemmas. **Proper nouns are currently EXCLUDED.**
 
 **Eval harnesses:**
@@ -142,7 +142,7 @@ path untouched** until §4 promotion. Eval harnesses import `make_exp_encoder`, 
   space — Kim et al. 2019, Burke.)
 
 ### Phase D — Vocabulary extension  *(operator chose: proper nouns + wider band)*
-- Build an alternate vocab (experiment-only helper, don't edit `app.py` yet):
+- Build an alternate vocab (experiment-only helper, don't edit `src/codenames/app.py` yet):
   add a **frequency-gated PROPN slice** (from `content_master_v2_30000.json` where pos=PROPN)
   **and widen the band** (raise `hi`, lower `lo`). Apply the offensive-word blocklist
   (`data/blocklist_he.txt`). Keep verbs out.
@@ -176,19 +176,20 @@ path untouched** until §4 promotion. Eval harnesses import `make_exp_encoder`, 
 
 ## 4. Promotion / integration (only after a phase wins its gate)
 1. Register the winning encoder in `probe.ENCODERS` + a new `kind` branch in
-   `probe.make_encoder` (and vocab change in `app.py` if Phase D wins).
+   `probe.make_encoder` (and vocab change in `src/codenames/app.py` if Phase D wins).
 2. **If the winner replaces fastText as the legality/spymaster encoder, RECALIBRATE θ**
 (`ROOT_TRANSPARENCY_THETA`, calibrated on fastText cosines) and update `tests/test_legality.py`'s
    measured cosines.
-3. Mirror all changed serving files + new runtime data into `hf_space/` and `hf_space/data/`.
+3. `scripts/deploy.py` auto-syncs the serving code from `src/codenames/`; new **runtime data**
+   must still be added to `hf_space/data/` by hand (it is deliberately not auto-synced).
 4. Run `tests/test_legality.py` (green), `bench_feedback.py`, `bench_recovery.py` on the promoted
-   config. Deploy via the `codenames-deploy` skill.
+   config. Deploy via `make deploy`.
 
 ---
 
 ## 5. Constraints (repeat)
 - New/experimental code in `exp_encoders.py` + `research/`; **do not edit the serving path**
-  (`probe.py`/`app.py`/`deck_he.py`/`morph.py`/`hf_space/`) until §4.
+  (`src/codenames/{probe,app,deck_he,morph}.py`) until §4.
 - Never fabricate datasets — if a download fails, say so.
 - L2-normalize every encoder's output; NaN (not zero) for OOV.
 - Keep `tests/test_legality.py` green.
