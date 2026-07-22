@@ -11,7 +11,7 @@ import os
 import sys
 import time
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,7 +61,10 @@ This is batch {b}; maximize lexical diversity and focus on different ambiguous w
             "model": model,
             "temperature": 0.5,
             "messages": [
-                {"role": "system", "content": "Return conservative machine-readable lexical metadata."},
+                {
+                    "role": "system",
+                    "content": "Return conservative machine-readable lexical metadata.",
+                },
                 {"role": "user", "content": prompt},
             ],
             "response_format": {"type": "json_object"},
@@ -92,20 +95,31 @@ This is batch {b}; maximize lexical diversity and focus on different ambiguous w
                         score = round(float(row.get("ambiguity")), 3)
                     except (TypeError, ValueError):
                         continue
-                    if (not word or "\n" in word or "\t" in word or not isinstance(senses, list)
-                            or len(senses) < 2 or not 0.0 <= score <= 1.0):
+                    if (
+                        not word
+                        or "\n" in word
+                        or "\t" in word
+                        or not isinstance(senses, list)
+                        or len(senses) < 2
+                        or not 0.0 <= score <= 1.0
+                    ):
                         continue
                     if word in entries:
                         continue
-                    entries[word] = {"ambiguity": score, "senses": [str(s)[:80] for s in senses[:5]]}
+                    entries[word] = {
+                        "ambiguity": score,
+                        "senses": [str(s)[:80] for s in senses[:5]],
+                    }
                     accepted += 1
 
-                print(f"Batch {b} complete: accepted {accepted} new entries (total: {len(entries)})")
+                print(
+                    f"Batch {b} complete: accepted {accepted} new entries (total: {len(entries)})"
+                )
                 success = True
                 break
             except Exception as exc:
                 print(f"Attempt {attempt + 1} failed for batch {b}: {exc}", file=sys.stderr)
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
 
         if not success:
             print(f"Failed to generate batch {b} after retries", file=sys.stderr)
@@ -114,7 +128,7 @@ This is batch {b}; maximize lexical diversity and focus on different ambiguous w
     document = {
         "source": "openai_generated",
         "model": model,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "entries": entries,
     }
     OUT.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

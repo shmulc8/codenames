@@ -37,7 +37,9 @@ test('dev store hook exposes lifecycle changes and canonical selectors', async (
     store.getState().toggleLifecycle(board.words[0]);
 
     const modulePath = '/src/state/store.ts';
-    const storeModule = (await import(/* @vite-ignore */ modulePath)) as typeof import('../../src/state/store');
+    const storeModule = (await import(
+      /* @vite-ignore */ modulePath
+    )) as typeof import('../../src/state/store');
     const state = store.getState();
 
     return {
@@ -66,9 +68,7 @@ test('store enforces one-color clusters and surfaces the canonical toast', async
     store.getState().toggleSelected(board.words[9]);
   }, fixtureBoard);
 
-  await expect(page.getByTestId('toast')).toContainText(
-    'אפשר לבחור רק קלפים בצבע אחד',
-  );
+  await expect(page.getByTestId('toast')).toContainText('אפשר לבחור רק קלפים בצבע אחד');
 
   const state = await page.evaluate(() => {
     if (!window.__store) throw new Error('The dev store hook was not installed');
@@ -96,7 +96,9 @@ test('API boundary and MSW keep relative wire roles out of app responses', async
 
   const result = await page.evaluate(async (board) => {
     const modulePath = '/src/api/client.ts';
-    const client = (await import(/* @vite-ignore */ modulePath)) as typeof import('../../src/api/client');
+    const client = (await import(
+      /* @vite-ignore */ modulePath
+    )) as typeof import('../../src/api/client');
     const deal = await client.getDeal();
     const clue = await client.postSpymaster(board, 'red', [board.words[0]], 'balanced');
     const check = await client.postCheck(board, 'red', 'בדיקה');
@@ -123,12 +125,7 @@ test('API boundary and MSW keep relative wire roles out of app responses', async
     };
   }, fixtureBoard);
 
-  for (const roles of [
-    result.dealRoles,
-    result.clueRoles,
-    result.checkRoles,
-    result.spaceRoles,
-  ]) {
+  for (const roles of [result.dealRoles, result.clueRoles, result.checkRoles, result.spaceRoles]) {
     expect(roles).not.toContain('my');
     expect(roles).not.toContain('opp');
   }
@@ -138,7 +135,6 @@ test('API boundary and MSW keep relative wire roles out of app responses', async
   expect(result.checkRequest?.roles[fixtureBoard.words[0]]).toBe('my');
   expect(result.spaceRequest?.roles[fixtureBoard.words[9]]).toBe('opp');
   expect(
-    (result.feedbackRequest?.revealed as Array<{ chosenBy: string }> | undefined)?.[0]
-      ?.chosenBy,
+    (result.feedbackRequest?.revealed as Array<{ chosenBy: string }> | undefined)?.[0]?.chosenBy,
   ).toBe('opp');
 });

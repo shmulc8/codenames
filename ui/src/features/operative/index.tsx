@@ -30,10 +30,7 @@ function RankedGuess({ ranking }: { ranking: OperativeRankEntry[] }): JSX.Elemen
                 aria-valuemax={100}
                 aria-valuenow={score}
               >
-                <span
-                  className="operative-ranking__fill"
-                  style={{ width: `${score}%` }}
-                />
+                <span className="operative-ranking__fill" style={{ width: `${score}%` }} />
               </span>
               <span className="operative-ranking__score">{score}</span>
             </li>
@@ -108,7 +105,11 @@ export function OperativePanel(): JSX.Element {
             >
               −
             </button>
-            <span className="operative-count__value" data-testid="operative-count-value" aria-live="polite">
+            <span
+              className="operative-count__value"
+              data-testid="operative-count-value"
+              aria-live="polite"
+            >
               {count}
             </span>
             <button

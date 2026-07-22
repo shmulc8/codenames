@@ -1,0 +1,42 @@
+# Tooling configuration for the Hebrew Codenames co-pilot.
+# Dependencies are NOT declared here — requirements.txt (dev) and hf_space/requirements.txt (deploy)
+# remain authoritative. This file holds the lint / format / type-check config only.
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [
+    ".venv",
+    ".agents",           # agent-tooling scripts (mirror of .claude/, itself git-ignored)
+    "ui",
+    "notebooks",
+    "hf_space",          # generated deploy bundle (synced from root by scripts/deploy.py)
+    "*.template.html",
+    "codenames_latent_space.html",
+]
+
+[tool.ruff.lint]
+# pycodestyle errors/warnings, pyflakes, import sorting, pyupgrade, bugbear.
+select = ["E", "W", "F", "I", "UP", "B"]
+ignore = [
+    "E501",   # line length is enforced by the formatter, not the linter
+    "B008",   # function calls in argument defaults (common, intentional here)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]              # tests set up sys.path/env before importing the engine
+"scripts/build_site.py" = ["E402"]  # sets HF_HUB_OFFLINE before importing the engine (intentional)
+# research/ and data/ are experimental scripts, not shipping code — don't hold them to the same
+# bar for naming (E741), lambdas (E731), late imports (E402), or bugbear style nits (B-series).
+"research/*" = ["E402", "E741", "E731", "B905", "B023", "B007"]
+"data/*" = ["E741", "E731", "B905", "B023", "B007"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["app.py", "probe.py", "morph.py", "deck_he.py", "exp_encoders.py", "guesser.py", "scripts"]
+ignore_missing_imports = true   # numpy/flask/fasttext/hf_hub ship partial or no stubs
+warn_unused_ignores = true
+warn_redundant_casts = true
+# The codebase is partially typed; check what's annotated without forcing annotations everywhere.
+check_untyped_defs = false
+disallow_untyped_defs = false

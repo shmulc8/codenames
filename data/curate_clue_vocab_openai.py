@@ -20,7 +20,7 @@ import subprocess
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,9 +30,19 @@ URL = "https://api.openai.com/v1/chat/completions"
 ALLOWED_FLAGS = {"ambiguous", "translation_sensitive", "proper_name", "loanword"}
 ALLOWED_POS = {"NOUN", "ADJ", "PROPN"}
 CATEGORIES = (
-    "nature_animals", "food_cooking", "places_geography", "science_tech",
-    "history_culture", "sports_games", "home_objects", "professions_society",
-    "emotions_ideas", "arts_media", "body_health", "travel_transport", "general",
+    "nature_animals",
+    "food_cooking",
+    "places_geography",
+    "science_tech",
+    "history_culture",
+    "sports_games",
+    "home_objects",
+    "professions_society",
+    "emotions_ideas",
+    "arts_media",
+    "body_health",
+    "travel_transport",
+    "general",
 )
 
 
@@ -49,8 +59,10 @@ def load_dotenv() -> None:
 
 
 def build_prompt(batch: list[dict]) -> str:
-    items = [{"i": idx, "w": r["word"], "c": r["count"], "p": r.get("pos") or "?"}
-             for idx, r in enumerate(batch)]
+    items = [
+        {"i": idx, "w": r["word"], "c": r["count"], "p": r.get("pos") or "?"}
+        for idx, r in enumerate(batch)
+    ]
     return (
         "You are an expert in modern Hebrew and the party game Codenames. From the numbered words below, "
         "return ONLY the ones that are GOOD spymaster CLUE words and OMIT the rest.\n"
@@ -71,7 +83,8 @@ def build_prompt(batch: list[dict]) -> str:
         "Refer to each kept word ONLY by its integer index i — never retype the Hebrew.\n"
         'Return compact JSON ONLY: {"k":[{"i":0,"p":"NOUN","c":"general","a":0.1,"fl":[]}]}\n'
         "i = the index of a word you KEEP (required). p = part of speech NOUN/ADJ/PROPN. c = category, one of "
-        + json.dumps(list(CATEGORIES)) + ". a = ambiguity 0.0-1.0. fl = flags, subset of "
+        + json.dumps(list(CATEGORIES))
+        + ". a = ambiguity 0.0-1.0. fl = flags, subset of "
         + json.dumps(sorted(ALLOWED_FLAGS))
         + ' (include "ambiguous" if a>=0.5, "translation_sensitive" if the common meaning is context-dependent, '
         '"proper_name" for PROPN, "loanword" for borrowings). p is REQUIRED for every kept word; c, a, fl may be omitted when unremarkable.\n'
@@ -89,18 +102,23 @@ def classify(api_key: str, model: str, batch: list[dict], retries: int) -> list[
         ],
         "response_format": {"type": "json_object"},
     }
-    config = "\n".join([
-        "url = " + json.dumps(URL),
-        "silent", "show-error", "max-time = 120",
-        "header = " + json.dumps(f"Authorization: Bearer {api_key}"),
-        "header = " + json.dumps("Content-Type: application/json"),
-        "data-binary = " + json.dumps(json.dumps(body, ensure_ascii=False)),
-        "",
-    ])
+    config = "\n".join(
+        [
+            "url = " + json.dumps(URL),
+            "silent",
+            "show-error",
+            "max-time = 120",
+            "header = " + json.dumps(f"Authorization: Bearer {api_key}"),
+            "header = " + json.dumps("Content-Type: application/json"),
+            "data-binary = " + json.dumps(json.dumps(body, ensure_ascii=False)),
+            "",
+        ]
+    )
     for attempt in range(retries + 1):
         try:
-            result = subprocess.run(["curl", "--config", "-"], input=config,
-                                    capture_output=True, text=True, timeout=140)
+            result = subprocess.run(
+                ["curl", "--config", "-"], input=config, capture_output=True, text=True, timeout=140
+            )
             if result.returncode != 0:
                 raise RuntimeError(f"curl exit {result.returncode}: {result.stderr[:150]}")
             payload = json.loads(result.stdout)
@@ -108,11 +126,17 @@ def classify(api_key: str, model: str, batch: list[dict], retries: int) -> list[
                 raise RuntimeError(payload["error"].get("message", "api_error"))
             content = payload["choices"][0]["message"]["content"]
             return json.loads(content).get("k", [])
-        except (subprocess.SubprocessError, OSError, ValueError, KeyError,
-                RuntimeError, json.JSONDecodeError):
+        except (
+            subprocess.SubprocessError,
+            OSError,
+            ValueError,
+            KeyError,
+            RuntimeError,
+            json.JSONDecodeError,
+        ):
             if attempt >= retries:
                 return None
-            time.sleep(2 ** attempt + 0.5 * attempt)
+            time.sleep(2**attempt + 0.5 * attempt)
     return None
 
 
@@ -146,11 +170,14 @@ def main() -> int:
         word, count = str(row[0]).strip(), row[1]
         pos = row[2] if len(row) > 2 else None
         if not re.fullmatch(r"[א-ת]{3,}", word):
-            continue   # two-letter tokens are almost always fragments/abbreviations, not clue words
+            continue  # two-letter tokens are almost always fragments/abbreviations, not clue words
         candidates[word] = {"word": word, "count": count, "pos": pos}
 
-    blocked = {l.strip() for l in BLOCKLIST.read_text(encoding="utf-8").splitlines()
-               if l.strip() and not l.lstrip().startswith("#")}
+    blocked = {
+        l.strip()
+        for l in BLOCKLIST.read_text(encoding="utf-8").splitlines()
+        if l.strip() and not l.lstrip().startswith("#")
+    }
     deck = set(json.loads(DECK.read_text(encoding="utf-8")))
     candidates = {w: r for w, r in candidates.items() if w not in blocked and w not in deck}
 
@@ -166,9 +193,12 @@ def main() -> int:
             pass
 
     pending = [r for w, r in candidates.items() if w not in decided]
-    batches = [pending[i:i + args.batch_size] for i in range(0, len(pending), args.batch_size)]
-    print(f"candidates={len(candidates)} already_decided={len(decided)} "
-          f"pending={len(pending)} batches={len(batches)} model={args.model}", flush=True)
+    batches = [pending[i : i + args.batch_size] for i in range(0, len(pending), args.batch_size)]
+    print(
+        f"candidates={len(candidates)} already_decided={len(decided)} "
+        f"pending={len(pending)} batches={len(batches)} model={args.model}",
+        flush=True,
+    )
     if not batches:
         print("nothing to do", flush=True)
         return 0
@@ -178,9 +208,12 @@ def main() -> int:
 
     def save() -> None:
         document = {
-            "source": "openai_curated", "model": args.model,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "entry_count": len(entries), "decided": sorted(decided), "entries": entries,
+            "source": "openai_curated",
+            "model": args.model,
+            "generated_at": datetime.now(UTC).isoformat(),
+            "entry_count": len(entries),
+            "decided": sorted(decided),
+            "entries": entries,
         }
         tmp = output_path.with_suffix(".tmp")
         tmp.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -212,7 +245,7 @@ def main() -> int:
                     word = src["word"]
                     if word in entries:
                         continue
-                    pos = (src["pos"] or str(obj.get("p", "")).strip().upper())
+                    pos = src["pos"] or str(obj.get("p", "")).strip().upper()
                     if pos not in ALLOWED_POS:
                         continue
                     amb = clamp01(obj.get("a"))
@@ -227,16 +260,25 @@ def main() -> int:
                     flags = sorted(flags)
                     category = obj.get("c") if obj.get("c") in CATEGORIES else "general"
                     entries[word] = {
-                        "count": src["count"], "pos": pos, "category": category,
-                        "familiarity": round(fam, 3), "ambiguity": round(amb, 3),
-                        "translation_risk": round(trisk, 3), "flags": flags,
-                        "origin": "openai_curated", "in_corpus": src["pos"] is not None,
-                        "source": "openai_curated", "model": args.model,
+                        "count": src["count"],
+                        "pos": pos,
+                        "category": category,
+                        "familiarity": round(fam, 3),
+                        "ambiguity": round(amb, 3),
+                        "translation_risk": round(trisk, 3),
+                        "flags": flags,
+                        "origin": "openai_curated",
+                        "in_corpus": src["pos"] is not None,
+                        "source": "openai_curated",
+                        "model": args.model,
                     }
             if stats["done"] % 10 == 0 or stats["done"] == len(batches):
                 save()
-                print(f"progress {stats['done']}/{len(batches)} batches "
-                      f"kept={len(entries)} failed_batches={stats['failed']}", flush=True)
+                print(
+                    f"progress {stats['done']}/{len(batches)} batches "
+                    f"kept={len(entries)} failed_batches={stats['failed']}",
+                    flush=True,
+                )
 
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         futures = [pool.submit(handle, b) for b in batches]
@@ -244,8 +286,10 @@ def main() -> int:
             fut.result()
 
     save()
-    print(f"DONE: kept {len(entries)} clue words -> {output_path} "
-          f"(failed_batches={stats['failed']})", flush=True)
+    print(
+        f"DONE: kept {len(entries)} clue words -> {output_path} (failed_batches={stats['failed']})",
+        flush=True,
+    )
     return 0
 
 

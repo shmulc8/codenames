@@ -9,19 +9,12 @@ const roleLabel: Record<Role, string> = {
   assassin: 'מתנקש',
 };
 
-export interface RoleIconProps
-  extends Omit<HTMLAttributes<HTMLSpanElement>, 'children'> {
+export interface RoleIconProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'children'> {
   role: Role;
 }
 
-export function RoleIcon({
-  className = '',
-  role,
-  ...props
-}: RoleIconProps): JSX.Element {
-  const classes = ['cn-role-icon', `role-${role}`, className]
-    .filter(Boolean)
-    .join(' ');
+export function RoleIcon({ className = '', role, ...props }: RoleIconProps): JSX.Element {
+  const classes = ['cn-role-icon', `role-${role}`, className].filter(Boolean).join(' ');
 
   return (
     <span
@@ -32,4 +25,3 @@ export function RoleIcon({
     />
   );
 }
-

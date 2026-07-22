@@ -25,15 +25,15 @@ _lock = threading.Lock()
 _tok = _model = None
 _mtok = _mmodel = None
 
-CONTENT_POS = {"NOUN", "PROPN", "ADJ", "VERB"}   # keep as clue words; drop ADP/PRON/DET/CONJ/ADV/NUM
-_BATCH = 512   # DictaBERT.predict holds the whole list in memory at once — chunk to bound it
+CONTENT_POS = {"NOUN", "PROPN", "ADJ", "VERB"}  # keep as clue words; drop ADP/PRON/DET/CONJ/ADV/NUM
+_BATCH = 512  # DictaBERT.predict holds the whole list in memory at once — chunk to bound it
 
 
 def _predict(model, tok, words):
     """model.predict over `words` in bounded batches (avoids OOM on large vocabularies)."""
     out = []
     for i in range(0, len(words), _BATCH):
-        out.extend(model.predict(words[i:i + _BATCH], tok))
+        out.extend(model.predict(words[i : i + _BATCH], tok))
     return out
 
 
@@ -43,9 +43,11 @@ def _load():
         with _lock:
             if _model is None:
                 from transformers import AutoModel, AutoTokenizer
+
                 _tok = AutoTokenizer.from_pretrained(_LEX_ID, local_files_only=True)
-                _model = AutoModel.from_pretrained(_LEX_ID, trust_remote_code=True,
-                                                   local_files_only=True).eval()
+                _model = AutoModel.from_pretrained(
+                    _LEX_ID, trust_remote_code=True, local_files_only=True
+                ).eval()
     return _tok, _model
 
 
@@ -55,9 +57,11 @@ def _load_morph():
         with _lock:
             if _mmodel is None:
                 from transformers import AutoModel, AutoTokenizer
+
                 _mtok = AutoTokenizer.from_pretrained(_MORPH_ID, local_files_only=True)
-                _mmodel = AutoModel.from_pretrained(_MORPH_ID, trust_remote_code=True,
-                                                    local_files_only=True).eval()
+                _mmodel = AutoModel.from_pretrained(
+                    _MORPH_ID, trust_remote_code=True, local_files_only=True
+                ).eval()
     return _mtok, _mmodel
 
 
@@ -85,9 +89,9 @@ def lemmas(words) -> list[str]:
     if not words:
         return []
     tok, model = _load()
-    preds = _predict(model, tok, words)         # each word treated as its own sentence
+    preds = _predict(model, tok, words)  # each word treated as its own sentence
     out = []
-    for w, pred in zip(words, preds):
+    for w, pred in zip(words, preds, strict=False):
         lem = None
         if pred:
             # pred is a list of (token, lemma) for the word's piece(s)
@@ -132,9 +136,9 @@ def root_sig(word: str) -> str:
     derivative through; residual same-root pairs with a different skeleton are caught by the
     DictaLM root-judge (`probe.llm_root_conflicts`)."""
     s = word.translate(_FINALS).replace("ו", "").replace("י", "")
-    if len(s) >= 4 and s[0] in "מהנ":     # servile prefix: present-participle מ-, hif'il ה-, nif'al נ-
-        s = s[1:]                          # מפחד→פחד, הפחיד→הפחד→פחד, נפחד→פחד
-    if len(s) > 3 and s[-1] in "נתה":     # agentive/feminine ending: פחדן→פחד, שומרת→שומר
+    if len(s) >= 4 and s[0] in "מהנ":  # servile prefix: present-participle מ-, hif'il ה-, nif'al נ-
+        s = s[1:]  # מפחד→פחד, הפחיד→הפחד→פחד, נפחד→פחד
+    if len(s) > 3 and s[-1] in "נתה":  # agentive/feminine ending: פחדן→פחד, שומרת→שומר
         s = s[:-1]
     return s
 
@@ -147,7 +151,7 @@ def root_sig(word: str) -> str:
 # fallback for words the lexicon does not cover.
 
 _ROOT_LEXICON_PATH = os.path.join(os.path.dirname(__file__), "data", "word2root.json")
-_NIQQUD = re.compile(r"[֑-ׇ]")   # cantillation + niqqud range
+_NIQQUD = re.compile(r"[֑-ׇ]")  # cantillation + niqqud range
 _PUNCT = re.compile(r"[׳׳'\"“”‘’`]")
 _FINAL_FORMS = str.maketrans("ךםןףץ", "כמנפצ")
 
@@ -173,56 +177,97 @@ def _root_lexicon() -> dict:
 @functools.lru_cache(maxsize=4096)
 def roots(word: str) -> set[str]:
     """Triliteral root(s) of a surface Hebrew word per the vendored Wiktionary lexicon.
-    Handles prefixes, suffixes, plurals, construct forms, and inflections using 
+    Handles prefixes, suffixes, plurals, construct forms, and inflections using
     lexicon-based decomposition and lemmatization fallbacks."""
     lex = _root_lexicon()
     if not lex:
         return set()
-        
+
     norm = _norm_lookup(word)
     if not norm:
         return set()
-        
+
     # Tier 1: Direct lookup
     res = _get_lex_roots(norm, lex)
     if res:
         return res
-            
+
     # Tier 2: Systematic prefix/suffix stripping based on lexicon validation
     # This avoids loading/running DictaBERT for simple prefix/suffix inflections
-    PREFIXES = ["וב", "וכ", "ול", "ומ", "וה", "וש", "שב", "שה", "שכ", "של", "שמ", "ו", "ש", "ה", "ב", "כ", "ל", "מ"]
-    SUFFIXES = ["יהם", "יהן", "יכם", "יכן", "ינו", "יה", "יו", "יך", "יי", "הם", "הן", "כם", "כן", "נו", "ות", "ים", "ה", "ת", "י", "ו", "ך"]
-    
+    PREFIXES = [
+        "וב",
+        "וכ",
+        "ול",
+        "ומ",
+        "וה",
+        "וש",
+        "שב",
+        "שה",
+        "שכ",
+        "של",
+        "שמ",
+        "ו",
+        "ש",
+        "ה",
+        "ב",
+        "כ",
+        "ל",
+        "מ",
+    ]
+    SUFFIXES = [
+        "יהם",
+        "יהן",
+        "יכם",
+        "יכן",
+        "ינו",
+        "יה",
+        "יו",
+        "יך",
+        "יי",
+        "הם",
+        "הן",
+        "כם",
+        "כן",
+        "נו",
+        "ות",
+        "ים",
+        "ה",
+        "ת",
+        "י",
+        "ו",
+        "ך",
+    ]
+
     candidates = set()
-    
+
     # Try stripping prefixes only
     for p in PREFIXES:
         if norm.startswith(p) and len(norm) - len(p) >= 2:
-            stem = norm[len(p):]
+            stem = norm[len(p) :]
             stem_roots = _get_lex_roots(stem, lex)
             if stem_roots:
                 candidates.update(stem_roots)
-                
+
     # Try stripping suffixes only
     for s in SUFFIXES:
         if norm.endswith(s) and len(norm) - len(s) >= 2:
-            stem = norm[:-len(s)]
+            stem = norm[: -len(s)]
             stem_roots = _get_lex_roots(stem, lex)
             if stem_roots:
                 candidates.update(stem_roots)
-                
+
     # Try stripping both prefixes and suffixes
     for p in PREFIXES:
         for s in SUFFIXES:
             if norm.startswith(p) and norm.endswith(s) and len(norm) - len(p) - len(s) >= 2:
-                stem = norm[len(p):-len(s)]
+                stem = norm[len(p) : -len(s)]
                 stem_roots = _get_lex_roots(stem, lex)
                 if stem_roots:
                     candidates.update(stem_roots)
-                    
+
     if candidates:
         return candidates
-        
+
     # Tier 3: Lemmatizer fallback
     try:
         lem = lemma(word)
@@ -233,25 +278,29 @@ def roots(word: str) -> set[str]:
         # Try stripping on the lemma itself
         for p in PREFIXES:
             if norm_lem.startswith(p) and len(norm_lem) - len(p) >= 2:
-                stem = norm_lem[len(p):]
+                stem = norm_lem[len(p) :]
                 stem_roots = _get_lex_roots(stem, lex)
                 if stem_roots:
                     candidates.update(stem_roots)
         for s in SUFFIXES:
             if norm_lem.endswith(s) and len(norm_lem) - len(s) >= 2:
-                stem = norm_lem[:-len(s)]
+                stem = norm_lem[: -len(s)]
                 stem_roots = _get_lex_roots(stem, lex)
                 if stem_roots:
                     candidates.update(stem_roots)
         for p in PREFIXES:
             for s in SUFFIXES:
-                if norm_lem.startswith(p) and norm_lem.endswith(s) and len(norm_lem) - len(p) - len(s) >= 2:
-                    stem = norm_lem[len(p):-len(s)]
+                if (
+                    norm_lem.startswith(p)
+                    and norm_lem.endswith(s)
+                    and len(norm_lem) - len(p) - len(s) >= 2
+                ):
+                    stem = norm_lem[len(p) : -len(s)]
                     stem_roots = _get_lex_roots(stem, lex)
                     if stem_roots:
                         candidates.update(stem_roots)
     except Exception:
         # DictaBERT might fail or not be loaded
         pass
-        
+
     return candidates

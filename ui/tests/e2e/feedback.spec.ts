@@ -188,9 +188,7 @@ test.describe('instant feedback', () => {
         expectedWireRole(fixtureBoard.roles[word], 'red'),
       );
     }
-    expect(firstPayload?.revealed).toEqual([
-      { word: fixtureBoard.words[9], chosenBy: 'opp' },
-    ]);
+    expect(firstPayload?.revealed).toEqual([{ word: fixtureBoard.words[9], chosenBy: 'opp' }]);
     expect(firstPayload?.option).toMatchObject({
       word: cleanOption.word,
       count: cleanOption.count,
@@ -327,9 +325,9 @@ test.describe('outcome feedback and session log', () => {
 
     await lifecycleButton.click();
     await expect(page.getByTestId('tile-0')).toHaveAttribute('data-lifecycle', 'chosen');
-    expect(
-      await page.evaluate(() => window.__store?.getState().clue.used?.revealedAfter),
-    ).toEqual([{ word: tileWord, chosenBy: 'red' }]);
+    expect(await page.evaluate(() => window.__store?.getState().clue.used?.revealedAfter)).toEqual([
+      { word: tileWord, chosenBy: 'red' },
+    ]);
 
     await page.clock.fastForward(5_001);
     await expect
@@ -379,9 +377,7 @@ test.describe('outcome feedback and session log', () => {
         ],
       });
     await expect
-      .poll(() =>
-        page.evaluate(() => window.__store?.getState().clue.used?.outcomeSent),
-      )
+      .poll(() => page.evaluate(() => window.__store?.getState().clue.used?.outcomeSent))
       .toBe(true);
   });
 
@@ -400,9 +396,7 @@ test.describe('outcome feedback and session log', () => {
     });
 
     await expect(page.getByTestId('log-entry-0')).toContainText(riskyOption.word);
-    await expect(page.getByTestId('log-entry-0')).toContainText(
-      'כבר השתמשת ברמז הזה',
-    );
+    await expect(page.getByTestId('log-entry-0')).toContainText('כבר השתמשת ברמז הזה');
     await expect(page.getByTestId('log-entry-1')).toContainText(cleanOption.word);
 
     await page.getByTestId('log-toggle').click();

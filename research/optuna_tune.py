@@ -11,25 +11,30 @@ Usage:
 """
 
 import os
+
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 import argparse
-import collections
 import json
 import random
-import time
+
 import numpy as np
 import optuna
 
 from exp_encoders import make_exp_encoder
-import probe
 from probe import (
-    clue_vocab_band, freq_scores, sample_board,
-    encoder_rank, llm_guess_ranking,
-    spearman, recovery_at_k,
-    HebrewLLM, LLM_FAST, Board, Clue,
+    LLM_FAST,
+    Clue,
+    HebrewLLM,
     _legal_candidates,
+    clue_vocab_band,
+    encoder_rank,
+    freq_scores,
+    llm_guess_ranking,
+    recovery_at_k,
+    sample_board,
+    spearman,
 )
 
 # ---------------------------------------------------------------------------
@@ -61,11 +66,9 @@ def load_once(n_boards: int, seed: int):
                     BLOCK.add(w)
 
     print("Loading clue vocabulary …", flush=True)
-    raw, counts = clue_vocab_band(20000, lo=1000, hi=80000,
-                                  pos={"NOUN", "ADJ"}, source_n=30000)
+    raw, counts = clue_vocab_band(20000, lo=1000, hi=80000, pos={"NOUN", "ADJ"}, source_n=30000)
     VOCAB = [w for w in raw if w not in BLOCK]
-    FREQ = freq_scores(np.array([counts[raw.index(w)] for w in VOCAB]),
-                       lo=1500, hi=40000)
+    FREQ = freq_scores(np.array([counts[raw.index(w)] for w in VOCAB]), lo=1500, hi=40000)
     EMB = ENC.embed(VOCAB)
     print(f"  Vocab size: {len(VOCAB)}", flush=True)
 
@@ -81,8 +84,21 @@ def load_once(n_boards: int, seed: int):
 # Custom spymaster with tuneable α and 1-word penalty
 # ---------------------------------------------------------------------------
 
-def tuned_spymaster(enc, board, clue_vocab, clue_emb, vocab_freq,
-                    m, lam_a, lam_opp, lam_neu, lam_f, alpha, penalty_1):
+
+def tuned_spymaster(
+    enc,
+    board,
+    clue_vocab,
+    clue_emb,
+    vocab_freq,
+    m,
+    lam_a,
+    lam_opp,
+    lam_neu,
+    lam_f,
+    alpha,
+    penalty_1,
+):
     """encoder_spymaster with tuneable min-max alpha and 1-word penalty."""
     bw, B, cand, keep, C = _legal_candidates(enc, board, clue_vocab, clue_emb, None)
     adj = C @ B.T
@@ -113,24 +129,29 @@ def tuned_spymaster(enc, board, clue_vocab, clue_emb, vocab_freq,
     bi = int(np.nanargmax(g))
     my_words = [w for w, mm in zip(bw, is_my) if mm]
     order = np.argsort(-adj_my[bi])[:m_eff]
-    return Clue(word=cand[bi], count=m_eff,
-                intended=[my_words[j] for j in order], margin=float(g[bi]),
-                assassin_sim=float(adj[bi, is_as][0]) if is_as.any() else float("nan"))
+    return Clue(
+        word=cand[bi],
+        count=m_eff,
+        intended=[my_words[j] for j in order],
+        margin=float(g[bi]),
+        assassin_sim=float(adj[bi, is_as][0]) if is_as.any() else float("nan"),
+    )
 
 
 # ---------------------------------------------------------------------------
 # Objective
 # ---------------------------------------------------------------------------
 
+
 def objective(trial: optuna.Trial) -> float:
     # --- Suggest hyperparameters ---
-    m       = trial.suggest_int("m", 2, 4)
-    lam_a   = trial.suggest_float("lam_a", 1.0, 4.0)
+    m = trial.suggest_int("m", 2, 4)
+    lam_a = trial.suggest_float("lam_a", 1.0, 4.0)
     lam_opp = trial.suggest_float("lam_opp", 0.3, 2.0)
     lam_neu = trial.suggest_float("lam_neu", 0.1, 0.8)
-    lam_f   = trial.suggest_float("lam_f", 0.0, 0.15)
-    alpha   = trial.suggest_float("alpha", 0.0, 3.0)
-    pen_1   = trial.suggest_float("penalty_1", -1.0, 0.0)
+    lam_f = trial.suggest_float("lam_f", 0.0, 0.15)
+    alpha = trial.suggest_float("alpha", 0.0, 3.0)
+    pen_1 = trial.suggest_float("penalty_1", -1.0, 0.0)
 
     # Count-trim / cohesion (used for served_count if we were to wire it, but
     # the benchmark uses encoder_spymaster which returns the raw intended list)
@@ -142,9 +163,20 @@ def objective(trial: optuna.Trial) -> float:
     spearman_rhos = []
 
     for board in BOARDS:
-        c = tuned_spymaster(ENC, board, VOCAB, EMB, FREQ,
-                            m=m, lam_a=lam_a, lam_opp=lam_opp, lam_neu=lam_neu,
-                            lam_f=lam_f, alpha=alpha, penalty_1=pen_1)
+        c = tuned_spymaster(
+            ENC,
+            board,
+            VOCAB,
+            EMB,
+            FREQ,
+            m=m,
+            lam_a=lam_a,
+            lam_opp=lam_opp,
+            lam_neu=lam_neu,
+            lam_f=lam_f,
+            alpha=alpha,
+            penalty_1=pen_1,
+        )
         if c is None or not c.word:
             recoveries.append(0.0)
             safe_flags.append(0)
@@ -184,6 +216,7 @@ def objective(trial: optuna.Trial) -> float:
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--trials", type=int, default=60)
@@ -209,7 +242,7 @@ def main():
     print(f"  Safe rate:       {best.user_attrs['safe_rate']:.2%}")
     print(f"  Assassin rank:   {best.user_attrs['assassin_rank']:.1f}/25")
     print(f"  Spearman ρ:      {best.user_attrs['spearman']:+.3f}")
-    print(f"\n  Best params:")
+    print("\n  Best params:")
     for k, v in best.params.items():
         print(f"    {k:12s} = {v}")
 
@@ -217,16 +250,26 @@ def main():
     out_path = os.path.join("data", "optuna_results.json")
     trials_data = []
     for t in study.trials:
-        trials_data.append({
-            "number": t.number,
-            "value": t.value,
-            "params": t.params,
-            "user_attrs": t.user_attrs,
-        })
+        trials_data.append(
+            {
+                "number": t.number,
+                "value": t.value,
+                "params": t.params,
+                "user_attrs": t.user_attrs,
+            }
+        )
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump({"best": best.params, "best_value": best.value,
-                   "best_attrs": best.user_attrs, "trials": trials_data},
-                  f, ensure_ascii=False, indent=2)
+        json.dump(
+            {
+                "best": best.params,
+                "best_value": best.value,
+                "best_attrs": best.user_attrs,
+                "trials": trials_data,
+            },
+            f,
+            ensure_ascii=False,
+            indent=2,
+        )
     print(f"\nAll trials saved to {out_path}")
 
 

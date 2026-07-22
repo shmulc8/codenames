@@ -21,6 +21,7 @@ default fast signal, the external LLM (`--guesser llm:...`) the promotion gate.
   HF_HUB_OFFLINE=1 FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin EMBED_ONLY=1 \\
     .venv/bin/python -m research.bench_clue --boards 40 --guesser ensemble
 """
+
 from __future__ import annotations
 
 import argparse
@@ -59,7 +60,9 @@ def score_board(board: probe.Board, risk: str, guesser, profile=None) -> dict:
     legal = not probe.shares_lemma(clue, board, enc=app.get_enc(app.GEO_ENC))
     return {
         "served": 1.0,
-        "clue": clue, "count": count, "intended": intended,
+        "clue": clue,
+        "count": count,
+        "intended": intended,
         "gained": float(min(safe_run, count)),
         "recovery": recovered / count if count else 0.0,
         "safe_turn": 1.0 if all(board.role[w] == "my" for w in picks) else 0.0,
@@ -97,9 +100,12 @@ def run(risk: str, n_boards: int, seed: int, guesser, verbose: bool) -> dict:
         r = score_board(board, risk, guesser)
         rows.append(r)
         if verbose and r.get("served"):
-            print(f"  [{risk}] {i + 1:>2}/{n_boards} {r['clue']}·{r['count']} "
-                  f"gained={r['gained']:.0f} rec={r['recovery']:.2f} "
-                  f"safe={int(r['safe_turn'])} asn={int(r['assassin'])}", flush=True)
+            print(
+                f"  [{risk}] {i + 1:>2}/{n_boards} {r['clue']}·{r['count']} "
+                f"gained={r['gained']:.0f} rec={r['recovery']:.2f} "
+                f"safe={int(r['safe_turn'])} asn={int(r['assassin'])}",
+                flush=True,
+            )
         elif verbose:
             print(f"  [{risk}] {i + 1:>2}/{n_boards} — refused", flush=True)
     return {"summary": aggregate(rows, n_boards), "rows": rows}
@@ -123,22 +129,36 @@ def main():
     for risk in risks:
         results[risk] = run(risk, args.boards, args.seed, guesser, args.verbose)
 
-    cols = ["served_rate", "gained", "recovery", "safe_turn", "assassin", "over_claim",
-            "mean_count", "legal"]
+    cols = [
+        "served_rate",
+        "gained",
+        "recovery",
+        "safe_turn",
+        "assassin",
+        "over_claim",
+        "mean_count",
+        "legal",
+    ]
     print(f"\n{'risk':9s} " + " ".join(f"{c:>11s}" for c in cols))
     for risk in risks:
         s = results[risk]["summary"]
+
         def cell(c):
             if c in ("served_rate", "mean_count"):
                 return f"{s[c]:>11.3f}"
             return f"{s[c]:.3f}±{s[c + '_se']:.2f}"
+
         print(f"{risk:9s} " + " ".join(f"{cell(c):>11s}" for c in cols))
     print("\ngained = team words won/turn (higher better) · assassin = catastrophic (lower better)")
 
     if args.out:
-        payload = {"guesser": guesser.model_id, "boards": args.boards, "seed": args.seed,
-                   "results": {r: results[r]["summary"] for r in risks},
-                   "rows": {r: results[r]["rows"] for r in risks}}
+        payload = {
+            "guesser": guesser.model_id,
+            "boards": args.boards,
+            "seed": args.seed,
+            "results": {r: results[r]["summary"] for r in risks},
+            "rows": {r: results[r]["rows"] for r in risks},
+        }
         with open(args.out, "w", encoding="utf-8") as fh:
             json.dump(payload, fh, ensure_ascii=False, indent=2)
         print(f"saved → {args.out}")

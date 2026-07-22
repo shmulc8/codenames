@@ -9,9 +9,13 @@ Reconstructs each 👍/👎 spymaster board from the feedback log and measures t
 
 Reads the feedback from the HF dataset (falls back to the local log). Run: python -m research.bench_feedback
 """
-import os, json, collections
+
+import json
+import os
+
 os.environ.setdefault("FASTTEXT_COMPRESSED", "data/cc.he.300.fp16.bin")
 import numpy as np
+
 import probe
 from probe import Board
 
@@ -19,14 +23,15 @@ from probe import Board
 RISK = {
     "cautious": dict(m=2, lam_a=3.0, lam_opp=1.5, lam_neu=0.5, safe_margin=0.05),
     "balanced": dict(m=3, lam_a=2.0, lam_opp=1.0, lam_neu=0.3, safe_margin=0.02),
-    "bold":     dict(m=4, lam_a=1.5, lam_opp=0.7, lam_neu=0.2, safe_margin=0.0),
+    "bold": dict(m=4, lam_a=1.5, lam_opp=0.7, lam_neu=0.2, safe_margin=0.0),
 }
-_ROLE_FIX = {"team": "my"}          # legacy feedback rows used "team" for the team role
+_ROLE_FIX = {"team": "my"}  # legacy feedback rows used "team" for the team role
 
 
 def load_feedback():
     try:
         from huggingface_hub import hf_hub_download
+
         p = hf_hub_download("shmulc/codenames-feedback", "data/feedback.jsonl", repo_type="dataset")
     except Exception:
         p = os.path.join("feedback", "feedback.jsonl")
@@ -55,24 +60,42 @@ def safe_run(enc, board, clue) -> int:
 
 
 def main() -> int:
-    rows = [r for r in load_feedback()
-            if r.get("mode") == "spymaster" and r.get("board", {}).get("words")
-            and not any(t in (r.get("comment") or "").lower() for t in ("ignore", "test"))]
+    rows = [
+        r
+        for r in load_feedback()
+        if r.get("mode") == "spymaster"
+        and r.get("board", {}).get("words")
+        and not any(t in (r.get("comment") or "").lower() for t in ("ignore", "test"))
+    ]
     up = [r for r in rows if r.get("verdict") == "up"]
     down = [r for r in rows if r.get("verdict") == "down"]
-    print(f"feedback spymaster rows (test rows excluded): {len(rows)}  ({len(up)} 👍 / {len(down)} 👎)\n")
+    print(
+        f"feedback spymaster rows (test rows excluded): {len(rows)}  ({len(up)} 👍 / {len(down)} 👎)\n"
+    )
 
     enc = probe.make_encoder("fasttext")
     vocab, counts = probe.clue_vocab_band(20000, lo=300, hi=80000)
     emb = enc.embed(vocab)
-    lems = list(vocab)                                   # content-band entries are already lemmas
+    lems = list(vocab)  # content-band entries are already lemmas
     freq = probe.freq_scores(counts, lo=1500, hi=40000)
 
     def serve(board, risk, focus=None):
         prof = RISK.get(risk, RISK["balanced"])
-        tgt = [w for w in (focus or []) if w in board.my] or None   # honour the user's pinned targets
-        return probe.encoder_clue_candidates(enc, board, vocab, emb, vocab_lemmas=lems,
-                                             vocab_freq=freq, lam_f=0.05, n=5, targets=tgt, **prof)
+        tgt = [
+            w for w in (focus or []) if w in board.my
+        ] or None  # honour the user's pinned targets
+        return probe.encoder_clue_candidates(
+            enc,
+            board,
+            vocab,
+            emb,
+            vocab_lemmas=lems,
+            vocab_freq=freq,
+            lam_f=0.05,
+            n=5,
+            targets=tgt,
+            **prof,
+        )
 
     our_illegal = 0
     safe_runs, safe_ge_count = [], 0
@@ -106,13 +129,19 @@ def main() -> int:
                 up_retained += 1
 
     print("engine health")
-    print(f"  served-clue legality:        {len(safe_runs) - our_illegal}/{len(safe_runs)} legal"
-          f"  ({'OK' if our_illegal == 0 else str(our_illegal) + ' ILLEGAL'})")
+    print(
+        f"  served-clue legality:        {len(safe_runs) - our_illegal}/{len(safe_runs)} legal"
+        f"  ({'OK' if our_illegal == 0 else str(our_illegal) + ' ILLEGAL'})"
+    )
     print(f"  mean safe-run of served clue: {np.mean(safe_runs):.2f} team words before first enemy")
-    print(f"  served clue safe for its own count (safe_run >= count): {safe_ge_count}/{len(safe_runs)}")
+    print(
+        f"  served clue safe for its own count (safe_run >= count): {safe_ge_count}/{len(safe_runs)}"
+    )
     print("\nlearning from 👎")
     print(f"  disliked clue now flagged illegal (would be prevented): {down_prevented}/{len(down)}")
-    print(f"  engine still serves the disliked clue as top pick:      {down_reproduced}/{len(down)}")
+    print(
+        f"  engine still serves the disliked clue as top pick:      {down_reproduced}/{len(down)}"
+    )
     print(f"  disliked clue still anywhere in top-5:                  {down_in_top5}/{len(down)}")
     print("\nretention of 👍")
     print(f"  liked clue still in top-5 shortlist: {up_retained}/{len(up)}")

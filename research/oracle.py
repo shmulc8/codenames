@@ -10,12 +10,13 @@ generate the LLM clues and judge both sides on the same boards.
 """
 
 import os
+
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
+import argparse
 import json
 import random
-import argparse
 import urllib.request
 from statistics import mean
 
@@ -27,7 +28,9 @@ SERVER = "http://127.0.0.1:7860"
 
 def geo_clue(board):
     body = json.dumps({"words": board.words, "roles": board.role, "engine": "geometry"}).encode()
-    req = urllib.request.Request(SERVER + "/api/coach/spymaster", body, {"Content-Type": "application/json"})
+    req = urllib.request.Request(
+        SERVER + "/api/coach/spymaster", body, {"Content-Type": "application/json"}
+    )
     r = json.load(urllib.request.urlopen(req, timeout=120))
     return probe.Clue(word=r["clue"], count=r["count"], intended=r["intended"], margin=0.0)
 
@@ -44,28 +47,50 @@ def main():
 
     rows = []
     for i, b in enumerate(boards):
-        g = geo_clue(b)                              # LLM-free clue, from the live server
-        l = probe.llm_spymaster(llm, b)              # 12B clue
-        gj = bench.judge(llm, b, g)                  # 12B judges the geometry clue
-        lj = bench.judge(llm, b, l) if l else None   # 12B judges its own clue
-        rows.append({"geo": g.word, "geo_count": g.count, "geo_intended": g.intended, "geo_j": gj,
-                     "llm": (l.word if l else None), "llm_j": lj})
-        print(f"[{i+1}/{args.n}] geometry: {g.word}({g.count}) j={gj}  |  "
-              f"llm: {l.word if l else '—'} j={lj}", flush=True)
+        g = geo_clue(b)  # LLM-free clue, from the live server
+        l = probe.llm_spymaster(llm, b)  # 12B clue
+        gj = bench.judge(llm, b, g)  # 12B judges the geometry clue
+        lj = bench.judge(llm, b, l) if l else None  # 12B judges its own clue
+        rows.append(
+            {
+                "geo": g.word,
+                "geo_count": g.count,
+                "geo_intended": g.intended,
+                "geo_j": gj,
+                "llm": (l.word if l else None),
+                "llm_j": lj,
+            }
+        )
+        print(
+            f"[{i + 1}/{args.n}] geometry: {g.word}({g.count}) j={gj}  |  "
+            f"llm: {l.word if l else '—'} j={lj}",
+            flush=True,
+        )
 
     gj = [r["geo_j"] for r in rows if r["geo_j"] is not None]
     lj = [r["llm_j"] for r in rows if r["llm_j"] is not None]
-    wins = sum(1 for r in rows if r["geo_j"] is not None and r["llm_j"] is not None and r["geo_j"] >= r["llm_j"])
+    wins = sum(
+        1
+        for r in rows
+        if r["geo_j"] is not None and r["llm_j"] is not None and r["geo_j"] >= r["llm_j"]
+    )
     both = sum(1 for r in rows if r["geo_j"] is not None and r["llm_j"] is not None)
-    print(f"\n{'='*60}\n12B ORACLE  (n={args.n}, judge=DictaLM-3.0-12B)\n{'='*60}")
+    print(f"\n{'=' * 60}\n12B ORACLE  (n={args.n}, judge=DictaLM-3.0-12B)\n{'=' * 60}")
     print(f"geometry (NO LLM):  judge {mean(gj):.2f}   (n={len(gj)})")
     print(f"llm (DictaLM 12B):  judge {mean(lj):.2f}   (n={len(lj)})")
     print(f"geometry >= llm on {wins}/{both} boards")
-    json.dump({"args": vars(args), "rows": rows,
-               "geometry_judge": round(mean(gj), 2) if gj else None,
-               "llm_judge": round(mean(lj), 2) if lj else None,
-               "geometry_ge_llm": f"{wins}/{both}"},
-              open("bench_oracle.json", "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    json.dump(
+        {
+            "args": vars(args),
+            "rows": rows,
+            "geometry_judge": round(mean(gj), 2) if gj else None,
+            "llm_judge": round(mean(lj), 2) if lj else None,
+            "geometry_ge_llm": f"{wins}/{both}",
+        },
+        open("bench_oracle.json", "w", encoding="utf-8"),
+        ensure_ascii=False,
+        indent=2,
+    )
     print("saved → bench_oracle.json")
 
 

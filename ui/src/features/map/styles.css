@@ -20,7 +20,11 @@
   justify-content: space-between;
   gap: var(--space-6);
   border-bottom: 1px solid var(--color-divider);
-  background: linear-gradient(90deg, var(--cn-surface-2), color-mix(in srgb, var(--cn-surface-2) 72%, transparent));
+  background: linear-gradient(
+    90deg,
+    var(--cn-surface-2),
+    color-mix(in srgb, var(--cn-surface-2) 72%, transparent)
+  );
 }
 
 .semantic-panel__header h2,
@@ -67,7 +71,11 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(circle at center, color-mix(in srgb, var(--color-accent) 5%, transparent), transparent 56%),
+    radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--color-accent) 5%, transparent),
+      transparent 56%
+    ),
     var(--cn-board-void);
 }
 
@@ -121,7 +129,9 @@
   fill: var(--cn-map-bg);
   stroke: var(--cn-role-dot);
   stroke-width: 2;
-  transition: r 120ms ease, filter 120ms ease;
+  transition:
+    r 120ms ease,
+    filter 120ms ease;
 }
 
 .semantic-map__dot.is-target .semantic-map__dot-circle {

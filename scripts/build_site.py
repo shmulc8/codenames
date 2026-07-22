@@ -7,20 +7,22 @@ not a real test. Locally, app.py adds DictaLM + the remaining encoders."""
 
 import os
 import sys
+
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
-import json
 import base64
+import json
+
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from probe import make_encoder, load_clue_vocab, DECK
+from probe import DECK, load_clue_vocab, make_encoder
 
 HERE = ROOT
-BAKE = ["blend_0.7_0.3", "embeddinggemma"]   # different geometries -> non-trivial play
+BAKE = ["blend_0.7_0.3", "embeddinggemma"]  # different geometries -> non-trivial play
 N_CLUE = 1500
 
 deck = list(DECK)
@@ -39,9 +41,11 @@ for key in BAKE:
     enc = make_encoder(key)
     Dq = quant(enc.embed(deck))
     Cq = quant(enc.embed(clue))
-    engines[key] = dict(dim=int(Dq.shape[1]),
-                        deck_b64=base64.b64encode(Dq.tobytes()).decode(),
-                        clue_b64=base64.b64encode(Cq.tobytes()).decode())
+    engines[key] = dict(
+        dim=int(Dq.shape[1]),
+        deck_b64=base64.b64encode(Dq.tobytes()).decode(),
+        clue_b64=base64.b64encode(Cq.tobytes()).decode(),
+    )
 
 data = dict(words=deck, clue_words=clue, engines=engines)
 
@@ -49,4 +53,6 @@ tpl = open(os.path.join(HERE, "latent_space.template.html"), encoding="utf-8").r
 html = tpl.replace("__DATA__", json.dumps(data, ensure_ascii=False))
 out = os.path.join(HERE, "codenames_latent_space.html")
 open(out, "w", encoding="utf-8").write(html)
-print(f"wrote {out}  ({len(html)/1e6:.2f} MB, engines={BAKE}, {len(deck)} deck, {len(clue)} clue)")
+print(
+    f"wrote {out}  ({len(html) / 1e6:.2f} MB, engines={BAKE}, {len(deck)} deck, {len(clue)} clue)"
+)

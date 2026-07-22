@@ -163,7 +163,14 @@ def _risk_key(d: dict, *keys: str) -> str:
 
 def extract_single_result(raw: Any, hint_word: str) -> EvalResult:
     if not isinstance(raw, dict):
-        return EvalResult(score=None, reason=str(raw), assassin_risk="none", opponent_risk="none", neutral_risk="none", raw=raw)
+        return EvalResult(
+            score=None,
+            reason=str(raw),
+            assassin_risk="none",
+            opponent_risk="none",
+            neutral_risk="none",
+            raw=raw,
+        )
 
     score = raw.get("score")
     reason = raw.get("reason", "")
@@ -185,7 +192,16 @@ def extract_single_result(raw: Any, hint_word: str) -> EvalResult:
 
 def parse_multi_response(raw: Any, hints: list[HintEntry]) -> list[EvalResult]:
     if not isinstance(raw, dict):
-        return [EvalResult(score=None, reason=str(raw), assassin_risk="none", opponent_risk="none", neutral_risk="none", raw=raw)] * len(hints)
+        return [
+            EvalResult(
+                score=None,
+                reason=str(raw),
+                assassin_risk="none",
+                opponent_risk="none",
+                neutral_risk="none",
+                raw=raw,
+            )
+        ] * len(hints)
 
     results_list = raw.get("results") or raw.get("hints")
     if results_list is None:
@@ -196,7 +212,16 @@ def parse_multi_response(raw: Any, hints: list[HintEntry]) -> list[EvalResult]:
         if i < len(results_list):
             out.append(extract_single_result(results_list[i], h.hint))
         else:
-            out.append(EvalResult(score=None, reason="missing", assassin_risk="none", opponent_risk="none", neutral_risk="none", raw=None))
+            out.append(
+                EvalResult(
+                    score=None,
+                    reason="missing",
+                    assassin_risk="none",
+                    opponent_risk="none",
+                    neutral_risk="none",
+                    raw=None,
+                )
+            )
     return out
 
 
@@ -210,7 +235,11 @@ def build_comparisons(
         delta = None
         if orig.score is not None and v1.score is not None:
             delta = round(v1.score - orig.score, 4)
-        comparisons.append(HintComparison(hint=h.hint, count=h.count, intended=h.intended, original=orig, v1=v1, delta=delta))
+        comparisons.append(
+            HintComparison(
+                hint=h.hint, count=h.count, intended=h.intended, original=orig, v1=v1, delta=delta
+            )
+        )
     return comparisons
 
 
@@ -226,10 +255,14 @@ def evaluate_team(
     neutral_words: list[str],
     assassin: str,
 ) -> TeamResult:
-    orig_payload = build_original_payload(hints, active_team, my_words, opp_words, neutral_words, assassin)
+    orig_payload = build_original_payload(
+        hints, active_team, my_words, opp_words, neutral_words, assassin
+    )
     v1_payload = build_v1_payload(hints, active_team, my_words, opp_words, neutral_words, assassin)
 
-    orig_raw = safe_call_openai(client, model, original_prompt, orig_payload, f"original-eval/{active_team}")
+    orig_raw = safe_call_openai(
+        client, model, original_prompt, orig_payload, f"original-eval/{active_team}"
+    )
     v1_raw = safe_call_openai(client, model, v1_prompt, v1_payload, f"v1-eval/{active_team}")
 
     orig_results = parse_multi_response(orig_raw, hints)
@@ -261,14 +294,18 @@ def print_hint_comparison(c: HintComparison) -> None:
     v1_score_str = f"{c.v1.score:.2f}" if c.v1.score is not None else "n/a"
 
     print(f"  ┌─ original-eval ──── score={orig_score_str}")
-    print(f"  │  \"{c.original.reason[:120]}\"")
-    print(f"  │  risk: {_risk_display(c.original.assassin_risk, c.original.opponent_risk, c.original.neutral_risk)}")
+    print(f'  │  "{c.original.reason[:120]}"')
+    print(
+        f"  │  risk: {_risk_display(c.original.assassin_risk, c.original.opponent_risk, c.original.neutral_risk)}"
+    )
     print(f"  └─ v1-eval ────────── score={v1_score_str}")
-    print(f"     \"{c.v1.reason[:120]}\"")
+    print(f'     "{c.v1.reason[:120]}"')
     print(f"     risk: {_risk_display(c.v1.assassin_risk, c.v1.opponent_risk, c.v1.neutral_risk)}")
 
     if c.delta is not None:
-        direction = "v1 scored higher" if c.delta > 0 else ("v1 scored lower" if c.delta < 0 else "tied")
+        direction = (
+            "v1 scored higher" if c.delta > 0 else ("v1 scored lower" if c.delta < 0 else "tied")
+        )
         print(f"  Δ score: {c.delta:+.4f}  ({direction})")
 
 
@@ -355,29 +392,45 @@ def run(
         print_board_header(board_num, red_words, blue_words)
 
         red_result = evaluate_team(
-            client, model, original_prompt, v1_prompt,
-            red_hints, "red",
-            red_words, blue_words, neutral_words, assassin_word,
+            client,
+            model,
+            original_prompt,
+            v1_prompt,
+            red_hints,
+            "red",
+            red_words,
+            blue_words,
+            neutral_words,
+            assassin_word,
         )
         blue_result = evaluate_team(
-            client, model, original_prompt, v1_prompt,
-            blue_hints, "blue",
-            blue_words, red_words, neutral_words, assassin_word,
+            client,
+            model,
+            original_prompt,
+            v1_prompt,
+            blue_hints,
+            "blue",
+            blue_words,
+            red_words,
+            neutral_words,
+            assassin_word,
         )
 
         print_team_section("RED team hints", red_result)
         print_team_section("BLUE team hints", blue_result)
 
-        all_results.append(BoardResult(
-            board_number=board_num,
-            seed=seed + board_num - 1,
-            red_words=red_words,
-            blue_words=blue_words,
-            neutral_words=neutral_words,
-            assassin=assassin_word,
-            red_team=red_result,
-            blue_team=blue_result,
-        ))
+        all_results.append(
+            BoardResult(
+                board_number=board_num,
+                seed=seed + board_num - 1,
+                red_words=red_words,
+                blue_words=blue_words,
+                neutral_words=neutral_words,
+                assassin=assassin_word,
+                red_team=red_result,
+                blue_team=blue_result,
+            )
+        )
 
     out_path = Path(out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -387,7 +440,9 @@ def run(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Compare two eval prompts on sampled Codenames boards.")
+    parser = argparse.ArgumentParser(
+        description="Compare two eval prompts on sampled Codenames boards."
+    )
     parser.add_argument("--boards", type=int, default=1)
     parser.add_argument("--hints", type=int, default=3)
     parser.add_argument("--seed", type=int, default=42)

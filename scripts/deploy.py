@@ -3,11 +3,14 @@
     make deploy            # full: sync, build, legality gate, upload, wait, verify
     make deploy-dry        # everything except the upload (safe to run anytime)
 
-Root .py files are the single source of truth: the shared engine files are copied into
-`hf_space/` here, so you only ever edit the root copies. The UI is built straight into
-`hf_space/webapp/` (see ui/vite.config.ts). The 237 MB fastText binaries already live in the
-Space and are never re-uploaded.
+The repo root is the single source of truth for code. The engine modules and served HTML the Space
+needs are *generated* into `hf_space/` here and git-ignored there (see .gitignore), so no code is
+maintained in two places. The UI is built straight into `hf_space/webapp/` (see ui/vite.config.ts).
+`hf_space/` commits its own deploy files (Dockerfile, requirements.txt, README, .gitattributes) plus
+`hf_space/data/` — a prod-curated data subset that intentionally differs from the dev root/data. The
+237 MB fastText binaries already live in the Space and are never re-uploaded.
 """
+
 import argparse
 import os
 import subprocess
@@ -18,30 +21,47 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HF = os.path.join(REPO, "hf_space")
 REPO_ID = "shmulc/hebrew-codenames-copilot"
 
-# Engine files kept identical between the dev root and the deploy bundle. Edit the ROOT copy;
-# deploy syncs it into hf_space/ so the two can never silently drift (this is what let the
-# deployed morph.py fall behind the dev one).
-SHARED_PY = ["app.py", "probe.py", "morph.py", "exp_encoders.py", "deck_he.py"]
+# Code files mirrored root → hf_space at deploy time (repo-root-relative paths). These are the ONLY
+# copies of this content in the tree; the hf_space versions are generated and git-ignored, so the
+# two can never silently drift (this is what let the deployed morph.py fall behind the dev one).
+# NOTE: data/ is deliberately NOT mirrored — hf_space/data/ carries a prod-curated subset that
+# intentionally differs from the dev root/data (trimmed vocab / freq list), so it stays committed.
+SHARED = [
+    # engine modules
+    "app.py",
+    "probe.py",
+    "morph.py",
+    "exp_encoders.py",
+    "deck_he.py",
+    # served HTML
+    "copilot.html",
+    "methods.html",
+]
 # Already in the Space (huge) or local-only junk — never upload.
 IGNORE = ["data/cc.he.300.*", "**/__pycache__/**", "*.pyc", "**/.DS_Store"]
 
 
-def _log(msg): print(f"\033[1m▶ {msg}\033[0m", flush=True)
+def _log(msg):
+    print(f"\033[1m▶ {msg}\033[0m", flush=True)
 
 
-def sync_py():
-    _log("sync engine files root → hf_space")
-    changed = []
-    for f in SHARED_PY:
+def sync_shared():
+    _log("sync shared files root → hf_space")
+    changed, missing = [], []
+    for f in SHARED:
         src, dst = os.path.join(REPO, f), os.path.join(HF, f)
         if not os.path.exists(src):
+            missing.append(f)
             continue
         a = open(src, "rb").read()
         b = open(dst, "rb").read() if os.path.exists(dst) else None
         if a != b:
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
             open(dst, "wb").write(a)
             changed.append(f)
     print(f"  synced: {changed or 'all already in sync'}")
+    if missing:
+        sys.exit(f"✗ source file(s) missing at root — cannot build bundle: {missing}")
 
 
 def build_ui():
@@ -52,8 +72,13 @@ def build_ui():
 def legality_gate():
     _log("legality regression (gate)")
     env = dict(os.environ, FASTTEXT_COMPRESSED=os.path.join("data", "cc.he.300.fp16.bin"))
-    r = subprocess.run([sys.executable, "tests/test_legality.py"], cwd=REPO, env=env,
-                       capture_output=True, text=True)
+    r = subprocess.run(
+        [sys.executable, "tests/test_legality.py"],
+        cwd=REPO,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
     tail = (r.stdout + r.stderr).strip().splitlines()[-1:] or [""]
     print("  " + tail[0])
     if r.returncode != 0 or "cases pass" not in (r.stdout + r.stderr):
@@ -62,11 +87,17 @@ def legality_gate():
 
 def upload():
     _log(f"upload hf_space/ → {REPO_ID}")
-    os.environ["HF_HUB_OFFLINE"] = "0"          # offline mode would block the upload
+    os.environ["HF_HUB_OFFLINE"] = "0"  # offline mode would block the upload
     from huggingface_hub import HfApi
+
     api = HfApi()
-    url = api.upload_folder(folder_path=HF, repo_id=REPO_ID, repo_type="space",
-                            ignore_patterns=IGNORE, commit_message="deploy via make deploy")
+    url = api.upload_folder(
+        folder_path=HF,
+        repo_id=REPO_ID,
+        repo_type="space",
+        ignore_patterns=IGNORE,
+        commit_message="deploy via make deploy",
+    )
     print(f"  commit: {url}")
     return api
 
@@ -103,7 +134,7 @@ def main(argv):
     ap.add_argument("--no-verify", action="store_true")
     args = ap.parse_args(argv)
 
-    sync_py()
+    sync_shared()
     if not args.skip_build:
         build_ui()
     legality_gate()

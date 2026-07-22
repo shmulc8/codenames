@@ -25,10 +25,10 @@ the 25 board words and the LLM's ordering, averaged over rounds.
 
 from __future__ import annotations
 
-import os
-import re
 import json
+import os
 import random
+import re
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -46,20 +46,20 @@ ENCODERS = {
     # Static subword vectors — the literature-recommended baseline for Hebrew
     # (morphology/OOV); often competitive with contextual encoders for bare-word
     # association. Handles OOV via subwords.
-    "fasttext":      dict(kind="fasttext", path=os.path.join(DATA, "cc.he.300.bin")),
+    "fasttext": dict(kind="fasttext", path=os.path.join(DATA, "cc.he.300.bin")),
     # Concatenated L2-normalized blend of fastText and ConceptNet Numberbatch.
     "blend_0.5_0.5": dict(kind="blend", w_ft=0.5, w_nb=0.5),
     "blend_0.7_0.3": dict(kind="blend", w_ft=0.7, w_nb=0.3),
     # Hebrew-native, newest Dicta encoder (needs transformers<5).
-    "neodictabert":  dict(kind="st", model_id="dicta-il/neodictabert-bilingual-embed"),
+    "neodictabert": dict(kind="st", model_id="dicta-il/neodictabert-bilingual-embed"),
     # 2025 multilingual SOTA-small.
     "embeddinggemma": dict(kind="st", model_id="google/embeddinggemma-300m"),
-    "qwen3-embed":   dict(kind="st", model_id="Qwen/Qwen3-Embedding-0.6B"),
+    "qwen3-embed": dict(kind="st", model_id="Qwen/Qwen3-Embedding-0.6B"),
 }
 
 # DictaLM 3.0 (2026-05) via MLX. Swap to the 12B for the quality run.
 LLM_FAST = "ssdataanalysis/DictaLM-3.0-1.7B-Instruct-mlx-8Bit"
-LLM_BIG  = "ssdataanalysis/DictaLM-3.0-Nemotron-12B-Instruct-mlx-8Bit"
+LLM_BIG = "ssdataanalysis/DictaLM-3.0-Nemotron-12B-Instruct-mlx-8Bit"
 
 # Standard Codenames split: 25 words, 9 / 8 / 7 / 1.
 N_BOARD, N_MY, N_OPP, N_NEUTRAL, N_ASSASSIN = 25, 9, 8, 7, 1
@@ -69,8 +69,10 @@ N_BOARD, N_MY, N_OPP, N_NEUTRAL, N_ASSASSIN = 25, 9, 8, 7, 1
 # Encoders
 # --------------------------------------------------------------------------- #
 
+
 def _device():
     import torch
+
     if torch.backends.mps.is_available():
         return "mps"
     if torch.cuda.is_available():
@@ -92,10 +94,11 @@ class Encoder:
         dev = _device()
         try:
             from sentence_transformers import SentenceTransformer
+
             self._st = SentenceTransformer(model_id, device=dev, trust_remote_code=True)
         except Exception:
-            import torch
-            from transformers import AutoTokenizer, AutoModel
+            from transformers import AutoModel, AutoTokenizer
+
             self._tok = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
             self._model = AutoModel.from_pretrained(model_id, trust_remote_code=True).to(dev).eval()
             self._dev = dev
@@ -103,15 +106,19 @@ class Encoder:
     def embed(self, words) -> np.ndarray:
         words = list(words)
         if self._st is not None:
-            V = self._st.encode(words, normalize_embeddings=True,
-                                convert_to_numpy=True, show_progress_bar=False)
+            V = self._st.encode(
+                words, normalize_embeddings=True, convert_to_numpy=True, show_progress_bar=False
+            )
             return np.nan_to_num(V, nan=0.0, posinf=0.0, neginf=0.0)
         import torch
+
         out = []
         with torch.no_grad():
             for i in range(0, len(words), 64):
-                batch = words[i:i + 64]
-                enc = self._tok(batch, padding=True, truncation=True, return_tensors="pt").to(self._dev)
+                batch = words[i : i + 64]
+                enc = self._tok(batch, padding=True, truncation=True, return_tensors="pt").to(
+                    self._dev
+                )
                 hs = self._model(**enc).last_hidden_state
                 mask = enc["attention_mask"].unsqueeze(-1).float()
                 mean = (hs * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
@@ -125,6 +132,7 @@ class FastTextEncoder:
 
     def __init__(self, path: str):
         import fasttext
+
         self.model_id = os.path.basename(path)
         self._m = fasttext.load_model(path)
 
@@ -133,7 +141,7 @@ class FastTextEncoder:
         if not words:
             return np.zeros((0, self._m.get_dimension()), np.float32)
         V = np.stack([self._m.get_word_vector(w) for w in words]).astype(np.float32)
-        V /= (np.linalg.norm(V, axis=1, keepdims=True) + 1e-9)
+        V /= np.linalg.norm(V, axis=1, keepdims=True) + 1e-9
         return V
 
 
@@ -143,6 +151,7 @@ class CompressedFastTextEncoder:
 
     def __init__(self, path: str):
         import compress_fasttext
+
         self.model_id = os.path.basename(path)
         self._m = compress_fasttext.models.CompressedFastTextKeyedVectors.load(path)
 
@@ -151,13 +160,14 @@ class CompressedFastTextEncoder:
         if not words:
             return np.zeros((0, self._m.vector_size), np.float32)
         V = np.stack([self._m[w] for w in words]).astype(np.float32)
-        V /= (np.linalg.norm(V, axis=1, keepdims=True) + 1e-9)
+        V /= np.linalg.norm(V, axis=1, keepdims=True) + 1e-9
         return V
 
 
 def make_encoder(key: str):
     if key == "numberbatch" or key.startswith("blend_"):
         from exp_encoders import make_exp_encoder
+
         return make_exp_encoder(key)
     cfg = ENCODERS[key]
     if cfg["kind"] == "fasttext":
@@ -191,7 +201,8 @@ def load_clue_vocab(n: int = 12000, min_len: int = 2, max_len: int = 12, path: s
             w = line.split(" ")[0].strip()
             if w in seen or not (min_len <= len(w) <= max_len) or not _HEB_LETTERS.match(w):
                 continue
-            seen.add(w); out.append(w)
+            seen.add(w)
+            out.append(w)
             if len(out) >= n:
                 break
     return out
@@ -210,12 +221,13 @@ def load_clue_vocab_content(n: int = 1500, source_n: int = 6000, cache: str | No
     parts = morph.pos(raw)
     lems = morph.lemmas(raw)
     out, seen = [], set()
-    for w, p, lem in zip(raw, parts, lems):
+    for _w, p, lem in zip(raw, parts, lems, strict=False):
         if p not in morph.CONTENT_POS or not _HEB_LETTERS.match(lem) or len(lem) < 2:
             continue
         if lem in seen:
             continue
-        seen.add(lem); out.append(lem)            # the lemma is the clue word
+        seen.add(lem)
+        out.append(lem)  # the lemma is the clue word
         if len(out) >= n:
             break
     with open(cache, "w", encoding="utf-8") as f:
@@ -262,12 +274,14 @@ def content_lemma_master(source_n: int = 14000, cache: str | None = None):
             p = line.split()
             if len(p) >= 2 and _HEB_LETTERS.match(p[0]) and 2 <= len(p[0]) <= 12:
                 if p[0] not in cnt:
-                    raw.append(p[0]); cnt[p[0]] = int(p[1])
+                    raw.append(p[0])
+                    cnt[p[0]] = int(p[1])
             if len(raw) >= source_n:
                 break
-    parts = morph.pos(raw); lems = morph.lemmas(raw)
+    parts = morph.pos(raw)
+    lems = morph.lemmas(raw)
     best: dict[str, tuple[int, str]] = {}
-    for w, p, lem in zip(raw, parts, lems):
+    for w, p, lem in zip(raw, parts, lems, strict=False):
         if p not in morph.CONTENT_POS or not _HEB_LETTERS.match(lem) or len(lem) < 2:
             continue
         c = cnt[w]
@@ -299,27 +313,34 @@ def load_blocklist() -> set[str]:
 def is_malformed(word: str) -> bool:
     # 1. Reject words with 3 or more of the same character in a row
     for i in range(len(word) - 2):
-        if word[i] == word[i+1] == word[i+2]:
+        if word[i] == word[i + 1] == word[i + 2]:
             return True
-            
+
     # 2. Reject words with final letters (ך, ם, ן, ף, ץ) in middle positions (non-final)
     finals = set("ךםןףץ")
     for i in range(len(word) - 1):
         if word[i] in finals:
             return True
-            
+
     # 3. Reject words with non-final letters (כ, מ, נ, פ, צ) at the end of the word
     non_finals = set("כמנפצ")
     if word[-1] in non_finals:
         return True
-        
+
     return False
 
 
-def clue_vocab_band(n: int = 1800, lo: int = 200, hi: int = 60000,
-                    pos: set[str] | None = None, source_n: int = 14000, min_len: int = 3,
-                    mode: str | None = None, filter_malformed: bool = True,
-                    filter_blocklist: bool = True):
+def clue_vocab_band(
+    n: int = 1800,
+    lo: int = 200,
+    hi: int = 60000,
+    pos: set[str] | None = None,
+    source_n: int = 14000,
+    min_len: int = 3,
+    mode: str | None = None,
+    filter_malformed: bool = True,
+    filter_blocklist: bool = True,
+):
     """Clue vocab from a frequency BAND of content lemmas: drop over-common conversational
     words (count > hi) and obscure words (count < lo). `pos` optionally restricts the part
     of speech (e.g. {'NOUN','ADJ'} — nouns/adjectives make cleaner clues than verbs and
@@ -342,7 +363,7 @@ def clue_vocab_band(n: int = 1800, lo: int = 200, hi: int = 60000,
 
     data = content_lemma_master(source_n)
     block = load_blocklist() if filter_blocklist else set()
-    
+
     band = []
     for w, c, p in data:
         if not (lo <= c <= hi):
@@ -358,7 +379,7 @@ def clue_vocab_band(n: int = 1800, lo: int = 200, hi: int = 60000,
         band.append((w, c))
         if len(band) >= n:
             break
-            
+
     return [w for w, _ in band], np.array([c for _, c in band], dtype=np.float32)
 
 
@@ -391,7 +412,9 @@ def _board_softmax(sim: np.ndarray, tau: float) -> np.ndarray:
     return e / e.sum(1, keepdims=True)
 
 
-def _listener_danger(adj: np.ndarray, is_as: np.ndarray, is_opp: np.ndarray, tau: float) -> np.ndarray:
+def _listener_danger(
+    adj: np.ndarray, is_as: np.ndarray, is_opp: np.ndarray, tau: float
+) -> np.ndarray:
     """Probability mass a literal listener puts on danger words, per candidate clue: the
     softmax share landing on the assassin (weighted) plus the share on opponent words. Unlike
     the hinge penalties (which read absolute centred similarity), this is scale-invariant and
@@ -407,6 +430,7 @@ def _listener_danger(adj: np.ndarray, is_as: np.ndarray, is_opp: np.ndarray, tau
 # Board
 # --------------------------------------------------------------------------- #
 
+
 @dataclass
 class Board:
     words: list[str]
@@ -416,26 +440,30 @@ class Board:
         return [w for w in self.words if self.role[w] == r]
 
     @property
-    def my(self):       return self.of("my")
+    def my(self):
+        return self.of("my")
+
     @property
     def assassin(self):
         a = self.of("assassin")
-        return a[0] if a else ""      # tolerate a board the user marked without an assassin
+        return a[0] if a else ""  # tolerate a board the user marked without an assassin
+
     @property
-    def avoid(self):    return [w for w in self.words if self.role[w] != "my"]
+    def avoid(self):
+        return [w for w in self.words if self.role[w] != "my"]
 
 
 def sample_board(rng: random.Random) -> Board:
     words = rng.sample(DECK, N_BOARD)
-    roles = (["my"] * N_MY + ["opp"] * N_OPP +
-             ["neutral"] * N_NEUTRAL + ["assassin"] * N_ASSASSIN)
+    roles = ["my"] * N_MY + ["opp"] * N_OPP + ["neutral"] * N_NEUTRAL + ["assassin"] * N_ASSASSIN
     rng.shuffle(roles)
-    return Board(words=words, role=dict(zip(words, roles)))
+    return Board(words=words, role=dict(zip(words, roles, strict=False)))
 
 
 # --------------------------------------------------------------------------- #
 # Encoder spymaster + ranking
 # --------------------------------------------------------------------------- #
+
 
 def encoder_rank(enc, board: Board, clue: str):
     """Rank all board words by cosine to the clue. Returns (ordered_words, sims_dict)."""
@@ -443,7 +471,9 @@ def encoder_rank(enc, board: Board, clue: str):
     c = enc.embed([clue])[0]
     sims = W @ c
     order = np.argsort(-sims)
-    return [board.words[i] for i in order], {board.words[i]: float(sims[i]) for i in range(len(board.words))}
+    return [board.words[i] for i in order], {
+        board.words[i]: float(sims[i]) for i in range(len(board.words))
+    }
 
 
 def cohesion_keep(enc, words, floor: float = 0.24, pin=frozenset(), mode: str = "any"):
@@ -472,9 +502,15 @@ def cohesion_keep(enc, words, floor: float = 0.24, pin=frozenset(), mode: str = 
     return [words[i] for i in kept]
 
 
-def served_count(read, keep_rel: float = 0.66, pin=frozenset(),
-                 enc=None, cohesion_floor: float | None = None, cohesion_mode: str = "any",
-                 cliff: float = 0.5):
+def served_count(
+    read,
+    keep_rel: float = 0.66,
+    pin=frozenset(),
+    enc=None,
+    cohesion_floor: float | None = None,
+    cohesion_mode: str = "any",
+    cliff: float = 0.5,
+):
     """The words a clue should *claim* and light up, from a board reading.
 
     `read` = list of {word, role, sim} ordered by sim desc (an encoder's reading of the clue).
@@ -501,10 +537,13 @@ def served_count(read, keep_rel: float = 0.66, pin=frozenset(),
     for w in safe[1:]:
         s = simmap[w]
         if w in pin:
-            kept.append(w); prev = s; continue
+            kept.append(w)
+            prev = s
+            continue
         if s < top * keep_rel or s < prev * cliff:
             break
-        kept.append(w); prev = s
+        kept.append(w)
+        prev = s
     if enc is not None and cohesion_floor is not None and len(kept) > 1:
         kept = cohesion_keep(enc, kept, floor=cohesion_floor, pin=pin, mode=cohesion_mode)
     return kept
@@ -515,15 +554,26 @@ class Clue:
     word: str
     count: int
     intended: list[str]
-    margin: float                       # the scoring-function value g(c, I)
+    margin: float  # the scoring-function value g(c, I)
     assassin_sim: float = field(default=float("nan"))
-    reason: str = ""                    # one-line rationale (hybrid / LLM picks)
+    reason: str = ""  # one-line rationale (hybrid / LLM picks)
 
 
-def encoder_spymaster(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas=None,
-                      lam_opp: float = 1.0, lam_neu: float = 0.3, lam_a: float = 2.0,
-                      lam_f: float = 0.0, vocab_freq=None, m: int = 2,
-                      lam_soft: float = 0.0, soft_tau: float = 0.1) -> Clue:
+def encoder_spymaster(
+    enc,
+    board: Board,
+    clue_vocab,
+    clue_emb=None,
+    vocab_lemmas=None,
+    lam_opp: float = 1.0,
+    lam_neu: float = 0.3,
+    lam_a: float = 2.0,
+    lam_f: float = 0.0,
+    vocab_freq=None,
+    m: int = 2,
+    lam_soft: float = 0.0,
+    soft_tau: float = 0.1,
+) -> Clue:
     """Pick the clue maximising a tiered Codenames scoring function:
         g(c) = sum_{top-m team} s'(c,b)
                - lam_a   * max(0, s'(c, assassin))     # the black card — avoid hardest
@@ -541,8 +591,8 @@ def encoder_spymaster(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas
     aligned with clue_vocab) to enable the FREQ term.
     """
     bw, B, cand, keep, C = _legal_candidates(enc, board, clue_vocab, clue_emb, vocab_lemmas)
-    adj = C @ B.T                                    # (V, 25) cosine to every board word
-    adj = adj - adj.mean(1, keepdims=True)           # centre per clue over the board
+    adj = C @ B.T  # (V, 25) cosine to every board word
+    adj = adj - adj.mean(1, keepdims=True)  # centre per clue over the board
 
     roles = np.array([board.role[w] for w in bw])
     is_my, is_opp = roles == "my", roles == "opp"
@@ -567,20 +617,36 @@ def encoder_spymaster(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas
         g = g - lam_soft * _listener_danger(adj, is_as, is_opp, soft_tau)
 
     bi = int(np.nanargmax(g))
-    my_words = [w for w, mm in zip(bw, is_my) if mm]
+    my_words = [w for w, mm in zip(bw, is_my, strict=False) if mm]
     order = np.argsort(-adj_my[bi])[:m]
-    return Clue(word=cand[bi], count=m,
-                intended=[my_words[j] for j in order], margin=float(g[bi]),
-                assassin_sim=float(adj[bi, is_as][0]) if is_as.any() else float("nan"))
+    return Clue(
+        word=cand[bi],
+        count=m,
+        intended=[my_words[j] for j in order],
+        margin=float(g[bi]),
+        assassin_sim=float(adj[bi, is_as][0]) if is_as.any() else float("nan"),
+    )
 
 
-def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas=None,
-                            n: int = 10, targets: list[str] | None = None,
-                            lam_opp: float = 1.0, lam_neu: float = 0.3, lam_a: float = 2.0,
-                            lam_f: float = 0.0, vocab_freq=None, m: int = 2,
-                            safe_margin: float = 0.0,
-                            lam_soft: float = 0.0, soft_tau: float = 0.1,
-                            lam_div: float = 0.0):
+def encoder_clue_candidates(
+    enc,
+    board: Board,
+    clue_vocab,
+    clue_emb=None,
+    vocab_lemmas=None,
+    n: int = 10,
+    targets: list[str] | None = None,
+    lam_opp: float = 1.0,
+    lam_neu: float = 0.3,
+    lam_a: float = 2.0,
+    lam_f: float = 0.0,
+    vocab_freq=None,
+    m: int = 2,
+    safe_margin: float = 0.0,
+    lam_soft: float = 0.0,
+    soft_tau: float = 0.1,
+    lam_div: float = 0.0,
+):
     """Top-n legal clue candidates, each with the team words it *safely* connects.
 
     A team word counts toward a clue only if it is safe — its mean-centred similarity to the
@@ -601,20 +667,28 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
     picked)`, so near-duplicate clues for the same target pair don't crowd out other legal
     combinations. lam_div=0 restores the plain top-n-by-score behaviour."""
     bw, B, cand, keep, C = _legal_candidates(enc, board, clue_vocab, clue_emb, vocab_lemmas)
-    adj = C @ B.T; adj = adj - adj.mean(1, keepdims=True)
+    adj = C @ B.T
+    adj = adj - adj.mean(1, keepdims=True)
     roles = np.array([board.role[w] for w in bw])
     is_my = roles == "my"
     is_opp, is_neu, is_as = roles == "opp", roles == "neutral", roles == "assassin"
-    def tmax(mask): return np.clip(adj[:, mask].max(1), 0, None) if mask.any() else np.zeros(len(cand))
+
+    def tmax(mask):
+        return np.clip(adj[:, mask].max(1), 0, None) if mask.any() else np.zeros(len(cand))
+
     enemy_ceiling = adj[:, ~is_my].max(1) if (~is_my).any() else np.full(len(cand), -1e9)
     fixed = bool(targets)
-    my_words = [w for w in targets if w in bw] if fixed else [w for w, mm in zip(bw, is_my) if mm]
+    my_words = (
+        [w for w in targets if w in bw]
+        if fixed
+        else [w for w, mm in zip(bw, is_my, strict=False) if mm]
+    )
     my_cols = [bw.index(w) for w in my_words]
     adj_my = adj[:, my_cols] if my_cols else np.zeros((len(cand), 0), np.float32)
-    safe = adj_my > (enemy_ceiling[:, None] + safe_margin)     # beats every enemy word by margin
+    safe = adj_my > (enemy_ceiling[:, None] + safe_margin)  # beats every enemy word by margin
     if fixed:
-        g_team = adj_my.sum(1)                                 # honour the user's chosen targets
-    else:                                                      # mean + minimum of the top-k *safe* team words (k <= m)
+        g_team = adj_my.sum(1)  # honour the user's chosen targets
+    else:  # mean + minimum of the top-k *safe* team words (k <= m)
         safe_counts = safe.sum(1)
         sorted_safe = np.sort(np.where(safe, adj_my, -9.0), 1)[:, ::-1]
         g_team = np.zeros(len(cand), dtype=np.float32)
@@ -623,7 +697,9 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
             if not mask.any():
                 continue
             if k_val >= 2:
-                g_team[mask] = sorted_safe[mask, :k_val].mean(1) + 1.0 * sorted_safe[mask, k_val - 1]
+                g_team[mask] = (
+                    sorted_safe[mask, :k_val].mean(1) + 1.0 * sorted_safe[mask, k_val - 1]
+                )
             else:
                 g_team[mask] = sorted_safe[mask, 0] - 0.5
         g_team[safe_counts == 0] = -99.0
@@ -632,12 +708,13 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
         g = g + lam_f * np.asarray(vocab_freq, dtype=np.float32)[keep]
     if lam_soft:
         g = g - lam_soft * _listener_danger(adj, is_as, is_opp, soft_tau)
+
     def intended_of(bi) -> list[str]:
         if fixed:
             return my_words
         order = [j for j in np.argsort(-adj_my[bi]) if safe[bi, j]][:m]
         if not order and adj_my.shape[1]:
-            order = [int(np.argmax(adj_my[bi]))]               # nothing clears the bar: best single word
+            order = [int(np.argmax(adj_my[bi]))]  # nothing clears the bar: best single word
         return [my_words[j] for j in order]
 
     ranked = list(np.argsort(-g))
@@ -656,7 +733,9 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
                 val = float(g[bi]) - lam_div * ov
                 if val > best_val:
                     best_val, best_bi = val, bi
-            selected.append(best_bi); chosen_sets.append(pool_sets[best_bi]); remaining.remove(best_bi)
+            selected.append(best_bi)
+            chosen_sets.append(pool_sets[best_bi])
+            remaining.remove(best_bi)
     else:
         selected = ranked[:n]
 
@@ -671,18 +750,23 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
 # Hebrew LLM (DictaLM 3.0 via MLX)
 # --------------------------------------------------------------------------- #
 
+
 class HebrewLLM:
     def __init__(self, model_id: str = LLM_FAST):
         from mlx_lm import load
+
         self.model_id = model_id
         self.model, self.tok = load(model_id)
 
     def chat(self, system: str, user: str, max_tokens: int = 256) -> str:
         from mlx_lm import generate
+
         msgs = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         prompt = self.tok.apply_chat_template(msgs, add_generation_prompt=True)
         try:
-            return generate(self.model, self.tok, prompt=prompt, max_tokens=max_tokens, verbose=False)
+            return generate(
+                self.model, self.tok, prompt=prompt, max_tokens=max_tokens, verbose=False
+            )
         except TypeError:
             return generate(self.model, self.tok, prompt, max_tokens=max_tokens, verbose=False)
 
@@ -701,12 +785,18 @@ _SPY_FMT = (
 
 
 def llm_spymaster(llm: HebrewLLM, board: Board) -> Clue | None:
-    def block(label, ws): return f"{label}: " + ", ".join(ws)
+    def block(label, ws):
+        return f"{label}: " + ", ".join(ws)
+
     user = (
-        block("הצוות שלי", board.my) + "\n" +
-        block("היריב", board.of("opp")) + "\n" +
-        block("ניטרלי", board.of("neutral")) + "\n" +
-        f"המתנקש (אסור!): {board.assassin}\n\n" + _SPY_FMT
+        block("הצוות שלי", board.my)
+        + "\n"
+        + block("היריב", board.of("opp"))
+        + "\n"
+        + block("ניטרלי", board.of("neutral"))
+        + "\n"
+        + f"המתנקש (אסור!): {board.assassin}\n\n"
+        + _SPY_FMT
     )
     txt = llm.chat(_SPY_SYS, user, max_tokens=120)
     clue = _grab(r"רמז:\s*([^\n,]+)", txt)
@@ -715,7 +805,7 @@ def llm_spymaster(llm: HebrewLLM, board: Board) -> Clue | None:
     if not clue:
         return None
     clue = clue.strip().split()[0]
-    if shares_lemma(clue, board):            # illegal: clue is a board word or a form of one
+    if shares_lemma(clue, board):  # illegal: clue is a board word or a form of one
         return None
     intended = []
     if words_line:
@@ -723,8 +813,12 @@ def llm_spymaster(llm: HebrewLLM, board: Board) -> Clue | None:
             w = _match_board(tok, board.my)
             if w and w not in intended:
                 intended.append(w)
-    return Clue(word=clue, count=int(cnt) if cnt else len(intended) or 2,
-                intended=intended, margin=float("nan"))
+    return Clue(
+        word=clue,
+        count=int(cnt) if cnt else len(intended) or 2,
+        intended=intended,
+        margin=float("nan"),
+    )
 
 
 _PICK_SYS = (
@@ -736,9 +830,13 @@ _PICK_SYS = (
 
 def llm_pick_clue(llm: HebrewLLM, board: Board, candidates) -> Clue:
     """Hybrid spymaster: the LLM picks the best clue out of a geometry-vetted shortlist."""
-    lines = "\n".join(f"{i+1}. {c['word']}  →  {', '.join(c['intended'])}" for i, c in enumerate(candidates))
-    user = (f"הצוות שלי: {', '.join(board.my)}\nהמתנקש (אסור!): {board.assassin}\n\n"
-            f"מועמדים:\n{lines}\n\nבחר רמז אחד מהרשימה.")
+    lines = "\n".join(
+        f"{i + 1}. {c['word']}  →  {', '.join(c['intended'])}" for i, c in enumerate(candidates)
+    )
+    user = (
+        f"הצוות שלי: {', '.join(board.my)}\nהמתנקש (אסור!): {board.assassin}\n\n"
+        f"מועמדים:\n{lines}\n\nבחר רמז אחד מהרשימה."
+    )
     txt = llm.chat(_PICK_SYS, user, max_tokens=120)
     word = _grab(r"רמז:\s*([^\n,]+)", txt)
     cnt = _grab(r"מספר:\s*(\d+)", txt)
@@ -748,10 +846,16 @@ def llm_pick_clue(llm: HebrewLLM, board: Board, candidates) -> Clue:
         word = word.strip().split()[0]
         for c in candidates:
             if c["word"] == word or word in c["word"] or c["word"] in word:
-                chosen = c; break
+                chosen = c
+                break
     chosen = chosen or candidates[0]
-    return Clue(word=chosen["word"], count=int(cnt) if cnt else chosen["count"],
-                intended=chosen["intended"], margin=chosen.get("score", float("nan")), reason=reason)
+    return Clue(
+        word=chosen["word"],
+        count=int(cnt) if cnt else chosen["count"],
+        intended=chosen["intended"],
+        margin=chosen.get("score", float("nan")),
+        reason=reason,
+    )
 
 
 _GUESS_SYS = (
@@ -773,8 +877,9 @@ def llm_guess_ranking(llm: HebrewLLM, board: Board, clue: str) -> list[str]:
     for tok in re.split(r"[,\n־]| ו", txt):
         w = _match_board(tok, board.words)
         if w and w not in seen:
-            ranked.append(w); seen.add(w)
-    for w in board.words:                 # append any the model dropped
+            ranked.append(w)
+            seen.add(w)
+    for w in board.words:  # append any the model dropped
         if w not in seen:
             ranked.append(w)
     return ranked
@@ -794,7 +899,7 @@ def llm_guess_ranking(llm: HebrewLLM, board: Board, clue: str) -> list[str]:
 ROOT_TRANSPARENCY_THETA = 0.30
 
 
-def forbidden_lemmas(board: "Board", lemmas=None) -> set[str]:
+def forbidden_lemmas(board: Board, lemmas=None) -> set[str]:
     """The board words plus their lemmas — a clue equal to any of these is illegal. Pass
     precomputed `lemmas` (aligned with board.words) to avoid re-lemmatising the board."""
     lems = morph.lemmas(board.words) if lemmas is None else lemmas
@@ -816,18 +921,20 @@ def _root_conflict(sig: str, board_sigs) -> bool:
     return False
 
 
-def _board_root_signals(board: "Board", lemmas=None):
+def _board_root_signals(board: Board, lemmas=None):
     """Per board word, the pair (lexicon root set, root_sig fallback string). The root set
     unions the word's and its lemma's lexicon roots; the sig backs the OOV fallback compare.
     Pass precomputed `lemmas` (aligned with board.words) to avoid re-lemmatising the board."""
     lems = morph.lemmas(board.words) if lemmas is None else lemmas
-    return [(morph.roots(w) | morph.roots(lem), morph.root_sig(lem))
-            for w, lem in zip(board.words, lems)]
+    return [
+        (morph.roots(w) | morph.roots(lem), morph.root_sig(lem))
+        for w, lem in zip(board.words, lems, strict=False)
+    ]
 
 
 def _normalize_root(r: str) -> str:
     if len(r) == 3:
-        if r[-1] in ('ה', 'י', 'ו'):
+        if r[-1] in ("ה", "י", "ו"):
             return r[:-1]
         if r[-1] == r[-2]:
             return r[:-1]
@@ -845,21 +952,23 @@ def _shares_root(cand_roots, cand_sig, board_roots, board_sig) -> bool:
     return _root_conflict(cand_sig, {board_sig} if len(board_sig) >= 2 else set())
 
 
-def legal_vocab_mask(clue_vocab, vocab_lemmas, board, cos, theta: float = ROOT_TRANSPARENCY_THETA) -> list[bool]:
+def legal_vocab_mask(
+    clue_vocab, vocab_lemmas, board, cos, theta: float = ROOT_TRANSPARENCY_THETA
+) -> list[bool]:
     """Per-candidate legality over a whole clue vocabulary. `cos` is the (V, n_board) clue↔board
     cosine matrix (= C @ B.T for L2-normalised encoders). A candidate is illegal if it (or its
     lemma) is a board word/lemma, or if it shares a root with a board word it is transparent to
     (cosine >= theta). Root work runs only for candidates transparent to some board word."""
-    board_lems = morph.lemmas(board.words)                       # lemmatise the board once
+    board_lems = morph.lemmas(board.words)  # lemmatise the board once
     forbidden = forbidden_lemmas(board, board_lems)
     signals = _board_root_signals(board, board_lems)
-    hotmask = cos >= theta                                       # (V, n_board) transparent pairs
+    hotmask = cos >= theta  # (V, n_board) transparent pairs
     out = []
-    for i, (c, clem) in enumerate(zip(clue_vocab, vocab_lemmas)):
+    for i, (c, clem) in enumerate(zip(clue_vocab, vocab_lemmas, strict=False)):
         if c in forbidden or clem in forbidden:
             out.append(False)
             continue
-        hot = np.flatnonzero(hotmask[i])             # board words this clue is transparent to
+        hot = np.flatnonzero(hotmask[i])  # board words this clue is transparent to
         if hot.size == 0:
             out.append(True)
             continue
@@ -869,11 +978,11 @@ def legal_vocab_mask(clue_vocab, vocab_lemmas, board, cos, theta: float = ROOT_T
     return out
 
 
-_LEGAL_KEEP_CACHE: dict = {}          # (encoder, vocab size, board words) -> legal keep indices
+_LEGAL_KEEP_CACHE: dict = {}  # (encoder, vocab size, board words) -> legal keep indices
 _LEGAL_KEEP_CACHE_MAX = 64
 
 
-def _legal_candidates(enc, board: "Board", clue_vocab, clue_emb=None, vocab_lemmas=None):
+def _legal_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas=None):
     """Embed the vocab + board, drop illegal clues (composite root + cosine gate), and return
     (board_words, B, kept_candidates, keep_indices, C_kept). Encoders return L2-normalised
     vectors, so C @ B.T is the cosine used by both the legality gate and the scorer.
@@ -897,19 +1006,22 @@ def _legal_candidates(enc, board: "Board", clue_vocab, clue_emb=None, vocab_lemm
     return bw, B, cand, keep, Cfull[keep]
 
 
-def shares_lemma(clue: str, board: "Board", enc=None, theta: float = ROOT_TRANSPARENCY_THETA) -> bool:
+def shares_lemma(clue: str, board: Board, enc=None, theta: float = ROOT_TRANSPARENCY_THETA) -> bool:
     """Single-clue legality (the coach 'is my clue legal?' check). Illegal if the clue/its lemma
     is a board word/lemma, or it shares a root with a board word it is transparent to. Without an
     encoder the transparency gate cannot run, so any shared root is treated as illegal (strict)."""
-    board_lems = morph.lemmas(board.words)                       # lemmatise the board once
+    board_lems = morph.lemmas(board.words)  # lemmatise the board once
     forbidden = forbidden_lemmas(board, board_lems)
     lem = morph.lemma(clue)
     if clue in forbidden or lem in forbidden:
         return True
     crs = morph.roots(clue) | morph.roots(lem)
     csig = morph.root_sig(lem)
-    shared = [j for j, sig in enumerate(_board_root_signals(board, board_lems))
-              if _shares_root(crs, csig, *sig)]
+    shared = [
+        j
+        for j, sig in enumerate(_board_root_signals(board, board_lems))
+        if _shares_root(crs, csig, *sig)
+    ]
     if not shared:
         return False
     if enc is None:
@@ -928,13 +1040,13 @@ _ROOT_SYS = (
 )
 
 
-def llm_root_conflicts(llm: "HebrewLLM", candidate_words, board_words) -> set[str]:
+def llm_root_conflicts(llm: HebrewLLM, candidate_words, board_words) -> set[str]:
     """Shoresh/derivative gate: ask the Hebrew LLM which candidates share a root with a
     board word — real morphological knowledge for the case lemma equality cannot catch."""
     cw = list(candidate_words)
     if not cw:
         return set()
-    lines = "\n".join(f"{i+1}. {w}" for i, w in enumerate(cw))
+    lines = "\n".join(f"{i + 1}. {w}" for i, w in enumerate(cw))
     user = f"מילות הלוח: {', '.join(board_words)}\n\nמועמדים:\n{lines}\n\nאילו מועמדים פסולים?"
     txt = llm.chat(_ROOT_SYS, user, max_tokens=80)
     bad = set()
@@ -948,6 +1060,7 @@ def llm_root_conflicts(llm: "HebrewLLM", candidate_words, board_words) -> set[st
 # --------------------------------------------------------------------------- #
 # Parsing helpers
 # --------------------------------------------------------------------------- #
+
 
 def _grab(pat: str, text: str):
     m = re.search(pat, text)
@@ -974,9 +1087,11 @@ def _match_board(token: str, candidates: list[str]):
 # Metrics
 # --------------------------------------------------------------------------- #
 
+
 def spearman(order_a: list[str], order_b: list[str]) -> float:
     """Spearman rho between two orderings of the same item set."""
     from scipy.stats import spearmanr
+
     rank_a = {w: i for i, w in enumerate(order_a)}
     rank_b = {w: i for i, w in enumerate(order_b)}
     items = list(order_a)

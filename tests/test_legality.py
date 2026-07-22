@@ -7,6 +7,7 @@ clue is ever served) lives in the manual run_flow harness.
 
 Run: python tests/test_legality.py
 """
+
 import sys
 from pathlib import Path
 
@@ -42,7 +43,13 @@ CASES = [
     ("אש", "ראש", 0.1083, False, "fire inside head — coincidental substring, OOV fallback"),
     ("אורות", "אש", 0.2082, False, "lights vs fire — different roots"),
     ("שמש", "ים", 0.1287, False, "sun vs sea — unrelated"),
-    ("פרחח", "פרח", 0.3500, False, "punk vs flower — different roots (quadriliteral vs triliteral), high cosine stays legal"),
+    (
+        "פרחח",
+        "פרח",
+        0.3500,
+        False,
+        "punk vs flower — different roots (quadriliteral vs triliteral), high cosine stays legal",
+    ),
     # opaque etymological cognate — shares a root but a player wouldn't see it: legal via θ gate
     ("מלחמה", "לחם", 0.2761, False, "war vs bread — shared root לחמ, but cosine below θ"),
 ]
@@ -79,12 +86,16 @@ def main() -> int:
         if got != expected:
             failures.append((clue, word, expected, got, note))
         verdict = "illegal" if got else "legal"
-        print(f"  [{status}] {clue:8}↔ {word:8} cos={cos:.3f} shares_root={_shares_root(clue, word)!s:5} → {verdict:7} ({note})")
+        print(
+            f"  [{status}] {clue:8}↔ {word:8} cos={cos:.3f} shares_root={_shares_root(clue, word)!s:5} → {verdict:7} ({note})"
+        )
 
     print()
     if failures:
         for clue, word, exp, got, note in failures:
-            print(f"FAILED: {clue}↔{word} expected {'illegal' if exp else 'legal'}, got {'illegal' if got else 'legal'} — {note}")
+            print(
+                f"FAILED: {clue}↔{word} expected {'illegal' if exp else 'legal'}, got {'illegal' if got else 'legal'} — {note}"
+            )
         print(f"\n{len(failures)} failure(s).")
         return 1
     print(f"All {len(CASES)} legality cases pass (θ={THETA}).")

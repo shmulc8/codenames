@@ -98,10 +98,9 @@ export function BoardGrid(): JSX.Element {
       setBoard(deal.words, deal.roles);
       setMarkingRevealed(false);
     } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי',
-        { tone: 'error' },
-      );
+      showToast(error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי', {
+        tone: 'error',
+      });
     } finally {
       setDealing(false);
     }
@@ -122,8 +121,12 @@ export function BoardGrid(): JSX.Element {
 
         <div className="board__toolbar-actions">
           <div className="board__remaining" aria-label="קלפי קבוצה שנותרו במשחק">
-            <span className="role-red"><RoleIcon role="red" /> אדום {remaining.red}</span>
-            <span className="role-blue"><RoleIcon role="blue" /> כחול {remaining.blue}</span>
+            <span className="role-red">
+              <RoleIcon role="red" /> אדום {remaining.red}
+            </span>
+            <span className="role-blue">
+              <RoleIcon role="blue" /> כחול {remaining.blue}
+            </span>
           </div>
 
           <div className="board__legend" ref={legendRef}>
@@ -137,7 +140,12 @@ export function BoardGrid(): JSX.Element {
               מקרא
             </button>
             {legendOpen && (
-              <div id="board-role-legend" className="board__legend-popover" role="dialog" aria-label="מקרא תפקידי הלוח">
+              <div
+                id="board-role-legend"
+                className="board__legend-popover"
+                role="dialog"
+                aria-label="מקרא תפקידי הלוח"
+              >
                 {legendRoles.map((role) => (
                   <span className={`role-${role}`} key={role}>
                     <RoleIcon role={role} /> {roleLabel[role]}
@@ -183,7 +191,7 @@ export function BoardGrid(): JSX.Element {
           // The guesser sees no card colors until a card is chosen — the spymaster view
           // (mode !== 'operative') is untouched, still showing the true role at all times.
           const hideRole = mode === 'operative' && !chosen;
-          const visualRole = chosen ? tile.chosenBy ?? tile.role : tile.role;
+          const visualRole = chosen ? (tile.chosenBy ?? tile.role) : tile.role;
           const displayRole = hideRole ? 'neutral' : visualRole;
           const classes = [
             'board-tile',
@@ -232,7 +240,10 @@ export function BoardGrid(): JSX.Element {
                   <span className="board-tile__hole" aria-hidden="true" />
                   <RoleIcon className="board-tile__role" role={tile.role} />
                   {selectedForClue && (
-                    <span className="board-tile__badge" aria-label={`סדר בחירה ${selectionIndex + 1}`}>
+                    <span
+                      className="board-tile__badge"
+                      aria-label={`סדר בחירה ${selectionIndex + 1}`}
+                    >
                       {selectionIndex + 1}
                     </span>
                   )}
@@ -243,10 +254,14 @@ export function BoardGrid(): JSX.Element {
                       title={`נלקח על ידי ${roleLabel[tile.chosenBy ?? tile.role]}`}
                     >
                       <RoleIcon role={tile.chosenBy ?? tile.role} />
-                      <span className="sr-only">נלקח על ידי {roleLabel[tile.chosenBy ?? tile.role]}</span>
+                      <span className="sr-only">
+                        נלקח על ידי {roleLabel[tile.chosenBy ?? tile.role]}
+                      </span>
                     </span>
                   )}
-                  <span className="board-tile__mirror" aria-hidden="true">{tile.word}</span>
+                  <span className="board-tile__mirror" aria-hidden="true">
+                    {tile.word}
+                  </span>
                   <span className="board-tile__label">{tile.word}</span>
                 </span>
               </button>

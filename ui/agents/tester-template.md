@@ -26,6 +26,7 @@ You are the test agent for **{FEATURE}** in the Codenames Copilot frontend. You 
 ## Phase C testers — mandatory desktop-regression block
 
 If your FEATURE is a mobile one (stepC-*), your spec file MUST also include a **desktop-regression block** that is treated as non-negotiable:
+
 - Run the relevant tests at a **desktop viewport** and assert the mobile shell/canvas/panels are ABSENT and the desktop layout renders.
 - After your mobile specs pass, run the **entire** desktop suite (`npm run test:e2e`, all specs — smoke + every stepB feature) and report ANY desktop failure as a blocker, not a warning. Mobile work that reddens a desktop spec is wrong by definition (CONTRACTS §4 Phase C: mobile is additive).
 - Where practical, screenshot the key desktop screens and compare against the `phase-b-done` reference; flag visual diffs. Set mobile viewport with Playwright `page.setViewportSize({width:390,height:844})` and desktop with `{width:1320,height:900}`; no real device needed.
