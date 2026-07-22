@@ -1,0 +1,187 @@
+/*
+ * Mobile panels — CSS-only re-layout for stepC-4.
+ *
+ * EVERY rule is scoped under the `.mobile` root so it can NEVER leak into the
+ * desktop layout (Phase C's prime directive). The reused desktop panels keep
+ * their own global CSS untouched; these rules only re-flow their containers for
+ * a 390px single-column app frame.
+ */
+
+.mobile {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--cn-app-bg);
+  color: var(--cn-text);
+  font-family: var(--font-body);
+}
+
+.mobile *,
+.mobile *::before,
+.mobile *::after {
+  box-sizing: border-box;
+}
+
+/* ---- Scrollable content column ---- */
+.mobile__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-4) var(--space-6);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* The map tab is full-bleed: no padding, no scroll — it fills the viewport. */
+.mobile__content[data-mobile-tab='map'] {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.mobile-panel {
+  width: 100%;
+}
+
+/* ---- Clue tab ---- */
+.mobile-clue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mobile-clue .clue-panel {
+  width: 100%;
+}
+
+/* At 390px the target segmented control drops below the heading text. */
+.mobile-clue .clue-builder__heading {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  row-gap: var(--space-3);
+}
+
+.mobile-clue__log {
+  border-top: 1px solid var(--color-divider);
+  padding-top: var(--space-4);
+}
+
+/* ---- Check tab ---- */
+.mobile-check .check-panel {
+  width: 100%;
+}
+
+/* ---- Map tab (full-bleed) ---- */
+.mobile-map {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.mobile-map .semantic-panel {
+  flex: 1 1 auto;
+  border-radius: 0;
+  border-inline: none;
+  box-shadow: none;
+}
+
+.mobile-map .semantic-map__legend {
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+}
+
+/* ---- Board placeholder ---- */
+.mobile-board-placeholder {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  color: var(--cn-text-muted);
+  text-align: center;
+}
+
+.mobile-board-placeholder__glyph {
+  font-size: 2.75rem;
+  color: var(--color-accent-400);
+}
+
+/* ---- Bottom tab bar ---- */
+.mobile__tabbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2)
+    calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--cn-panel);
+  border-top: 1px solid var(--color-divider);
+}
+
+.mobile__tab {
+  flex: 1 1 0;
+  min-height: 48px;
+  min-width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--space-1) 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--cn-text-dim);
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.mobile__tab-glyph {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.mobile__tab-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.mobile__tab.is-active {
+  color: var(--color-accent-400);
+  background: color-mix(in srgb, var(--color-accent-500) 16%, transparent);
+}
+
+.mobile__tab:focus-visible {
+  outline: 2px solid var(--color-accent-400);
+  outline-offset: -2px;
+}
+
+/* ---- Landscape: rotate the bottom bar into a side rail (camera-app style) ---- */
+@media (orientation: landscape) and (max-height: 560px) {
+  .mobile {
+    flex-direction: row-reverse;
+  }
+
+  .mobile__tabbar {
+    flex-direction: column;
+    justify-content: center;
+    border-top: none;
+    border-inline-start: 1px solid var(--color-divider);
+    padding: var(--space-2)
+      calc(var(--space-2) + env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile__tab {
+    transition: none;
+  }
+}
