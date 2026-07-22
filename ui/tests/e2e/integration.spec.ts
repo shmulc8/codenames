@@ -6,7 +6,7 @@ test('complete spymaster flow stays synchronized across every desktop slice', as
   page,
 }) => {
   await page.goto('/');
-  await page.getByTestId('btn-skip-demo').click();
+  await page.getByTestId('btn-random-board').click();
   await page.getByTestId('btn-confirm-board').click();
   await expect(page.getByTestId('board-grid')).toBeVisible();
 

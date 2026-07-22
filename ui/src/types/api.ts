@@ -84,6 +84,29 @@ export interface RevealedEntry {
   chosenBy: Role;   // absolute color of the team that claimed the card (red|blue|neutral|assassin)
 }
 
+// --- Extensions for restored features (vocab-mode dial + guesser/operative mode). ---
+// Additive and wire-compatible; the canonical types above are unchanged.
+export type VocabMode = 'conservative' | 'broad' | 'experimental' | 'curated';
+
+export interface OperativeRankEntry {
+  word: string;
+  sim: number;   // cosine, ~[-1..1]
+  conf: number;  // 0..1 — render as 0-100
+  rank: number;
+}
+
+export interface OperativeResponse {
+  engine?: string;
+  clue: string;
+  count: number;
+  ranking: OperativeRankEntry[];  // every board word, best guess first (roles hidden)
+  picks: string[];                // top `count` words — the recommended guess order
+  geo_order?: string[];
+  agreement: number | null;       // how many of the top picks a 2nd opinion agrees on
+  agree_with: string | null;
+  error?: string;
+}
+
 export interface FeedbackPayload {
   uid: string;                       // random id persisted in localStorage 'cn-uid'
   verdict: 'up' | 'down' | 'outcome';

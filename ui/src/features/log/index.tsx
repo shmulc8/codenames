@@ -9,7 +9,7 @@ import './log.css';
 const riskLabel: Record<Risk, string> = {
   cautious: 'זהיר',
   balanced: 'מאוזן',
-  bold: 'נועז',
+  bold: 'שובב',
 };
 
 const timeFormatter = new Intl.DateTimeFormat('he-IL', {

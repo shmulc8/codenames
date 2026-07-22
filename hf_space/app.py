@@ -51,15 +51,16 @@ SECOND_OPINION = os.environ.get("SECOND_OPINION", "1").lower() not in ("0", "fal
 # how hard to avoid enemy/neutral/assassin words (lam_*). Cautious only plays rock-solid
 # clues (and refuses more); bold reaches for more words and tolerates a tighter enemy.
 RISK_PROFILES = {
-    # Scoring weights (m, lam_*, safe_margin) validated on bench_clue.py (real serve_clue path,
-    # validated fasttext+qwen guesser); a random search over these knobs did not beat them on
-    # held-out boards, so they stand. The count-trim `keep` (keep_rel) sets the coverage↔safety
-    # point: lower claims more words but over-claims and risks a wrong guess. Chosen on the
-    # held-out coverage/safety curve — balanced 0.60 keeps single-word clues to ~18% (0.66 gave
-    # ~25%) at ~2.2 words/clue; cautious stays tight (safety first), bold reaches furthest.
+    # Scoring weights (m, lam_*, safe_margin) validated on bench_clue.py (the real serve_clue path).
+    # The count-trim `keep` (keep_rel) sets the coverage↔calibration point: a team word is claimed
+    # only when its similarity is >= keep · the top target's. Higher `keep` sheds marginal words a
+    # human guesser would not actually recover, so the claimed count tracks what a strong human-proxy
+    # (the LLM guesser/judge) recovers and `over_claim` stays near zero. cautious claims fewest via
+    # its m=2 cap (raising its keep only reshuffles selection, so it holds at 0.68); bold reaches
+    # furthest. keep ordering stays cautious >= balanced >= bold.
     "cautious": dict(m=2, lam_a=3.0, lam_opp=1.3, lam_neu=0.7, keep=0.68, safe_margin=0.05),
-    "balanced": dict(m=3, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.60, safe_margin=0.02),
-    "bold":     dict(m=4, lam_a=1.8, lam_opp=0.7, lam_neu=0.4, keep=0.55, safe_margin=0.0),
+    "balanced": dict(m=3, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.68, safe_margin=0.02),
+    "bold":     dict(m=4, lam_a=1.8, lam_opp=0.7, lam_neu=0.4, keep=0.62, safe_margin=0.0),
 }
 _CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu", "safe_margin")
 LAM_F = 0.14                # weight on the mid-frequency (DETECT-FREQ) prior in candidate scoring
@@ -68,6 +69,10 @@ LAM_F = 0.14                # weight on the mid-frequency (DETECT-FREQ) prior in
 # across risk profiles; SOFT_TAU is the softmax temperature. LAM_SOFT=0 restores hinge-only scoring.
 LAM_SOFT = 1.0
 SOFT_TAU = 0.10
+# Shortlist diversity (MMR): when picking the browsable options, penalise a candidate by how much
+# its target set overlaps ones already chosen, so a tight board pair (e.g. חולצה/מכנסיים) can't fill
+# the whole shortlist with near-duplicate clues. 0 restores plain top-n-by-score.
+LAM_DIV = 0.5
 
 # Cohesion: a counted word must cohere (cosine >= COH_FLOOR) with the cluster's *head* (strongest)
 # word, not merely with the clue — so the number reflects a real cluster, not passengers riding
@@ -488,13 +493,16 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
 
 def _risk_order(options: list[dict], risk: str) -> list[int]:
     """Order analyzed geometry options by the risk *policy* (not just the scoring weight):
-    refuse-clues always sink last; bold maximises coverage (count) then safety; cautious and
-    balanced put safety first, then coverage. Returns option indices best-first."""
+    refuse-clues always sink last; a single-word clue is a last resort, so any multi-word clue
+    outranks it; bold then maximises coverage (count) then safety; cautious and balanced put
+    safety first, then coverage. Returns option indices best-first."""
+    def single(i: int) -> int:
+        return 1 if options[i]["count"] <= 1 else 0
     if risk == "bold":
-        key = lambda i: (1 if options[i]["no_clue"] else 0,
+        key = lambda i: (1 if options[i]["no_clue"] else 0, single(i),
                          -options[i]["count"], -options[i]["safe"], -options[i]["score"])
     else:
-        key = lambda i: (1 if options[i]["no_clue"] else 0,
+        key = lambda i: (1 if options[i]["no_clue"] else 0, single(i),
                          1 if options[i]["risky"] else 0,
                          -options[i]["safe"], -options[i]["count"], -options[i]["score"])
     return sorted(range(len(options)), key=key)
@@ -511,7 +519,7 @@ def serve_clue(board: probe.Board, risk: str = "balanced", focus=None, profile=N
     vocab, emb, lems, freq = geo_assets(vocab_mode)
     cands = probe.encoder_clue_candidates(
         get_enc(GEO_ENC), board, vocab, emb, vocab_lemmas=lems, vocab_freq=freq,
-        lam_f=LAM_F, lam_soft=LAM_SOFT, soft_tau=SOFT_TAU,
+        lam_f=LAM_F, lam_soft=LAM_SOFT, soft_tau=SOFT_TAU, lam_div=LAM_DIV,
         n=10, targets=focus, **{k: prof[k] for k in _CAND_KEYS})
     options = [_analyze_clue(board, c["word"], c["intended"], c["count"], c["score"], focus,
                              keep_rel=prof["keep"], max_count=prof["m"]) for c in cands]
@@ -551,7 +559,7 @@ def coach_spymaster():
         vocab, emb, lems, freq = geo_assets(vocab_mode)
         cands = probe.encoder_clue_candidates(get_enc(GEO_ENC), board, vocab, emb,
                                               vocab_lemmas=lems, vocab_freq=freq, lam_f=LAM_F,
-                                              lam_soft=LAM_SOFT, soft_tau=SOFT_TAU,
+                                              lam_soft=LAM_SOFT, soft_tau=SOFT_TAU, lam_div=LAM_DIV,
                                               n=10, targets=focus, **cand_kw)
         bad = probe.llm_root_conflicts(get_llm(mid), [c["word"] for c in cands], board.words)
         cands = [c for c in cands if c["word"] not in bad] or cands   # keep >=1

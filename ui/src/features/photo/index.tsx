@@ -27,6 +27,12 @@ const roleLabel: Record<Role, string> = {
 };
 
 type InputMode = 'manual' | 'photo';
+// Photo/OCR board capture is still being finished — gated off in production, on in
+// dev/tests (VITE_ENABLE_OCR=1). Manual entry + random deal stay the default setup path.
+const OCR_ENABLED =
+  import.meta.env.VITE_ENABLE_OCR === '1' ||
+  import.meta.env.VITE_ENABLE_OCR === 'true';
+
 type OcrState = 'warming' | 'ready' | 'recognizing' | 'success' | 'error';
 
 function filePreview(file: File): string {
@@ -60,10 +66,17 @@ function SetupModeIcon({ name }: { name: 'camera' | 'cube' | 'keyboard' }): JSX.
 
 export function PhotoSetup(): JSX.Element {
   const setBoard = useAppStore((state) => state.setBoard);
+  const tiles = useAppStore((state) => state.tiles);
   const [mode, setMode] = useState<InputMode>('manual');
-  const [words, setWords] = useState([...EMPTY_WORDS]);
-  const [confidences, setConfidences] = useState([...EMPTY_CONFIDENCE]);
-  const [roles, setRoles] = useState<Role[]>([...EMPTY_ROLES]);
+  const [words, setWords] = useState(() =>
+    tiles.length > 0 ? tiles.map((tile) => tile.word) : [...EMPTY_WORDS],
+  );
+  const [confidences, setConfidences] = useState(() =>
+    tiles.length > 0 ? tiles.map(() => 100) : [...EMPTY_CONFIDENCE],
+  );
+  const [roles, setRoles] = useState<Role[]>(() =>
+    tiles.length > 0 ? tiles.map((tile) => tile.role) : [...EMPTY_ROLES],
+  );
   const [ocrState, setOcrState] = useState<OcrState>('warming');
   const [ocrProgress, setOcrProgress] = useState(0);
   const [keyBusy, setKeyBusy] = useState(false);
@@ -74,8 +87,11 @@ export function PhotoSetup(): JSX.Element {
   const [keyPreview, setKeyPreview] = useState<string | null>(null);
   const boardOcrAttempt = useRef(0);
   const keyCardAttempt = useRef(0);
+  const didInit = useRef(false);
+  const dealAttempt = useRef(0);
 
   useEffect(() => {
+    if (!OCR_ENABLED) return;
     let active = true;
     const unsubscribe = subscribeToOcrProgress(({ progress }) => {
       setOcrProgress(Math.round(progress * 100));
@@ -117,9 +133,12 @@ export function PhotoSetup(): JSX.Element {
     counts.assassin === 1;
 
   async function loadDemo(): Promise<void> {
+    const attempt = ++dealAttempt.current;
     setDemoBusy(true);
     try {
       const deal = await getDeal();
+      // A slow initial deal must not overwrite the grid if the user already switched to manual.
+      if (attempt !== dealAttempt.current) return;
       setMode('manual');
       setWords([...deal.words]);
       setRoles(deal.words.map((word) => deal.roles[word] ?? 'neutral'));
@@ -127,13 +146,34 @@ export function PhotoSetup(): JSX.Element {
       setValidation(null);
       setRandomLoaded(true);
     } catch (error) {
+      if (attempt !== dealAttempt.current) return;
       showToast(
         error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי',
         { tone: 'error' },
       );
     } finally {
-      setDemoBusy(false);
+      if (attempt === dealAttempt.current) setDemoBusy(false);
     }
+  }
+
+  // Most users just want to play, so a fresh setup starts on a random board. Returning to
+  // fix an existing board (tiles already present) keeps that board instead.
+  useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
+    if (tiles.length === 0) void loadDemo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Clear the grid so the user can type their own board from scratch.
+  function startManualEntry(): void {
+    dealAttempt.current += 1;
+    setMode('manual');
+    setWords([...EMPTY_WORDS]);
+    setRoles([...EMPTY_ROLES]);
+    setConfidences([...EMPTY_CONFIDENCE]);
+    setRandomLoaded(false);
+    setValidation(null);
   }
 
   async function handleBoardFile(file: File): Promise<void> {
@@ -206,6 +246,9 @@ export function PhotoSetup(): JSX.Element {
   }
 
   function updateWord(index: number, value: string): void {
+    // Typing means the user is entering their own board — cancel any in-flight deal so a
+    // late random result cannot overwrite what they typed.
+    dealAttempt.current += 1;
     if (ocrState === 'recognizing') {
       boardOcrAttempt.current += 1;
       setOcrState('ready');
@@ -259,6 +302,10 @@ export function PhotoSetup(): JSX.Element {
       });
       return;
     }
+    if (!validKey) {
+      setValidation('חלוקת המפתח חייבת להיות 9·8·7·1 לפני שמתחילים');
+      return;
+    }
 
     setValidation(null);
     const roleMap = Object.fromEntries(
@@ -277,30 +324,35 @@ export function PhotoSetup(): JSX.Element {
         <div className="photo-setup__modes" role="group" aria-label="אופן הזנת הלוח">
           <button
             type="button"
-            className={mode === 'manual' ? 'is-active' : undefined}
-            aria-pressed={mode === 'manual'}
-            onClick={() => setMode('manual')}
-          >
-            <SetupModeIcon name="keyboard" />
-            <span>הזנה ידנית</span>
-          </button>
-          <button
-            type="button"
-            className={mode === 'photo' ? 'is-active' : undefined}
-            aria-pressed={mode === 'photo'}
-            onClick={() => setMode('photo')}
-          >
-            <SetupModeIcon name="camera" />
-            <span>מתמונה</span>
-          </button>
-          <button
-            type="button"
-            data-testid="btn-skip-demo"
+            data-testid="btn-random-board"
+            className={randomLoaded ? 'is-active' : undefined}
+            aria-pressed={randomLoaded}
             disabled={demoBusy}
             onClick={() => void loadDemo()}
           >
             <SetupModeIcon name="cube" />
-            <span>{demoBusy ? 'טוען לוח…' : randomLoaded ? 'הגרילו שוב' : 'אקראי'}</span>
+            <span>{demoBusy ? 'טוען לוח…' : randomLoaded ? 'לוח אקראי' : 'אקראי'}</span>
+          </button>
+          {OCR_ENABLED && (
+            <button
+              type="button"
+              className={mode === 'photo' ? 'is-active' : undefined}
+              aria-pressed={mode === 'photo'}
+              onClick={() => setMode('photo')}
+            >
+              <SetupModeIcon name="camera" />
+              <span>מתמונה</span>
+            </button>
+          )}
+          <button
+            type="button"
+            data-testid="btn-manual-entry"
+            className={mode === 'manual' && !randomLoaded ? 'is-active' : undefined}
+            aria-pressed={mode === 'manual' && !randomLoaded}
+            onClick={startManualEntry}
+          >
+            <SetupModeIcon name="keyboard" />
+            <span>הזנה ידנית</span>
           </button>
         </div>
       </header>
@@ -401,6 +453,7 @@ export function PhotoSetup(): JSX.Element {
           </button>
         </section>
 
+        {OCR_ENABLED && (
         <aside className={`photo-setup__uploads ${mode === 'photo' ? 'is-emphasized' : ''}`}>
           <h2>יש תמונה של הלוח?</h2>
           <p>גררו לכאן צילום מהטלפון, או בחרו קובץ. תמיד תוכלו לתקן את הזיהוי.</p>
@@ -491,6 +544,7 @@ export function PhotoSetup(): JSX.Element {
             <p><strong>אין מצלמה במחשב?</strong> זו הסיבה שהזנה ידנית היא ברירת המחדל.</p>
           </div>
         </aside>
+        )}
       </div>
     </section>
   );

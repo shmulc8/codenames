@@ -579,7 +579,8 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
                             lam_opp: float = 1.0, lam_neu: float = 0.3, lam_a: float = 2.0,
                             lam_f: float = 0.0, vocab_freq=None, m: int = 2,
                             safe_margin: float = 0.0,
-                            lam_soft: float = 0.0, soft_tau: float = 0.1):
+                            lam_soft: float = 0.0, soft_tau: float = 0.1,
+                            lam_div: float = 0.0):
     """Top-n legal clue candidates, each with the team words it *safely* connects.
 
     A team word counts toward a clue only if it is safe — its mean-centred similarity to the
@@ -593,7 +594,12 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
     `lam_soft` adds a listener-competition penalty: the score drops by lam_soft times the
     softmax share (temperature `soft_tau`) a literal listener would put on the assassin
     (weighted) and opponent words (see `_listener_danger`). It complements the absolute hinge
-    penalties with a scale-invariant, whole-board view; set lam_soft=0 to disable."""
+    penalties with a scale-invariant, whole-board view; set lam_soft=0 to disable.
+
+    `lam_div` diversifies the returned shortlist (MMR-style): when >0 and not a fixed-target
+    request, candidates are picked greedily by `score - lam_div * max_jaccard(intended, already
+    picked)`, so near-duplicate clues for the same target pair don't crowd out other legal
+    combinations. lam_div=0 restores the plain top-n-by-score behaviour."""
     bw, B, cand, keep, C = _legal_candidates(enc, board, clue_vocab, clue_emb, vocab_lemmas)
     adj = C @ B.T; adj = adj - adj.mean(1, keepdims=True)
     roles = np.array([board.role[w] for w in bw])
@@ -626,15 +632,37 @@ def encoder_clue_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_
         g = g + lam_f * np.asarray(vocab_freq, dtype=np.float32)[keep]
     if lam_soft:
         g = g - lam_soft * _listener_danger(adj, is_as, is_opp, soft_tau)
-    out = []
-    for bi in np.argsort(-g)[:n]:
+    def intended_of(bi) -> list[str]:
         if fixed:
-            tg = my_words
-        else:
-            order = [j for j in np.argsort(-adj_my[bi]) if safe[bi, j]][:m]
-            if not order and adj_my.shape[1]:
-                order = [int(np.argmax(adj_my[bi]))]           # nothing clears the bar: best single word
-            tg = [my_words[j] for j in order]
+            return my_words
+        order = [j for j in np.argsort(-adj_my[bi]) if safe[bi, j]][:m]
+        if not order and adj_my.shape[1]:
+            order = [int(np.argmax(adj_my[bi]))]               # nothing clears the bar: best single word
+        return [my_words[j] for j in order]
+
+    ranked = list(np.argsort(-g))
+    if lam_div and not fixed:
+        # MMR: from a pool of the strongest candidates, greedily pick the n that trade off score
+        # against overlap with the target sets already chosen, so the shortlist spans distinct
+        # team-word combinations instead of collapsing onto one tight pair.
+        pool = ranked[: max(n * 20, 200)]
+        pool_sets = {bi: frozenset(intended_of(bi)) for bi in pool}
+        selected, chosen_sets, remaining = [], [], list(pool)
+        while len(selected) < n and remaining:
+            best_bi, best_val = remaining[0], -1e18
+            for bi in remaining:
+                s = pool_sets[bi]
+                ov = max((len(s & t) / len(s | t) for t in chosen_sets if (s | t)), default=0.0)
+                val = float(g[bi]) - lam_div * ov
+                if val > best_val:
+                    best_val, best_bi = val, bi
+            selected.append(best_bi); chosen_sets.append(pool_sets[best_bi]); remaining.remove(best_bi)
+    else:
+        selected = ranked[:n]
+
+    out = []
+    for bi in selected:
+        tg = intended_of(bi)
         out.append({"word": cand[int(bi)], "intended": tg, "count": len(tg), "score": float(g[bi])})
     return out
 

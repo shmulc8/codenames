@@ -4,12 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "VITE_ENABLE_OCR=1 vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
-    "dev:mock": "VITE_USE_MOCKS=1 vite"
+    "dev:mock": "VITE_USE_MOCKS=1 VITE_ENABLE_OCR=1 vite"
   },
   "dependencies": {
     "react": "^18.3.1",

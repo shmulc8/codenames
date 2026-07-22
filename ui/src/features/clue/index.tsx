@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { postSpymaster } from '../../api/client';
 import { Button, RoleIcon, showToast } from '../../components';
@@ -8,6 +8,7 @@ import type {
   Risk,
   Role,
   TeamColor,
+  VocabMode,
 } from '../../types/api';
 import { FeedbackControls } from '../feedback';
 import './clue.css';
@@ -17,6 +18,7 @@ type RequestKind = 'focused' | 'auto' | 'regenerate';
 interface RequestSnapshot {
   focus?: string[];
   risk: Risk;
+  vocabMode: VocabMode;
   target: TeamColor;
 }
 
@@ -31,7 +33,15 @@ const riskOptions: Array<{
 }> = [
   { value: 'cautious', label: 'זהיר' },
   { value: 'balanced', label: 'מאוזן' },
-  { value: 'bold', label: 'נועז' },
+  { value: 'bold', label: 'שובב' },
+];
+
+const vocabOptions: Array<{
+  value: VocabMode;
+  label: string;
+}> = [
+  { value: 'curated', label: 'מומלץ' },
+  { value: 'conservative', label: 'מורחב' },
 ];
 
 function HoverWordChip({
@@ -100,20 +110,28 @@ export function CluePanel(): JSX.Element {
   const tiles = useAppStore((state) => state.tiles);
   const selected = useAppStore((state) => state.selected);
   const risk = useAppStore((state) => state.risk);
+  const vocabMode = useAppStore((state) => state.vocabMode);
   const target = useAppStore((state) => state.target);
   const clue = useAppStore((state) => state.clue);
   const setRisk = useAppStore((state) => state.setRisk);
+  const setVocabMode = useAppStore((state) => state.setVocabMode);
   const setTarget = useAppStore((state) => state.setTarget);
   const setClueResult = useAppStore((state) => state.setClueResult);
   const selectSuggested = useAppStore((state) => state.selectSuggested);
   const setOptionIndex = useAppStore((state) => state.setOptionIndex);
   const useCurrentClue = useAppStore((state) => state.useCurrentClue);
   const [loading, setLoading] = useState<RequestKind | null>(null);
-  const lastRequest = useRef<RequestSnapshot | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const hasMounted = useRef(false);
 
   const response = clue.current;
-  const options = response?.options ?? [];
-  const option = options[clue.optionIndex];
+  // Show every option the engine returns (best-first, already MMR-diversified), minus any that
+  // cover none of the target cards — a "clue for nothing" is noise, not a suggestion.
+  const allOptions = response?.options ?? [];
+  const withCoverage = allOptions.filter((candidate) => candidate.count >= 1);
+  const options = withCoverage.length > 0 ? withCoverage : allOptions;
+  const optionIndex = Math.min(clue.optionIndex, options.length - 1);
+  const option = options[optionIndex];
   const selectedRoles = Object.fromEntries(
     tiles.map((tile) => [tile.word, tile.role]),
   );
@@ -128,7 +146,7 @@ export function CluePanel(): JSX.Element {
     if (loading) return;
 
     setLoading(kind);
-    lastRequest.current = snapshot;
+    setError(null);
 
     try {
       const state = useAppStore.getState();
@@ -139,6 +157,7 @@ export function CluePanel(): JSX.Element {
         snapshot.target,
         liveFocus?.length ? liveFocus : undefined,
         snapshot.risk,
+        snapshot.vocabMode,
       );
       const boardChanged = !boardsMatch(
         board,
@@ -157,11 +176,10 @@ export function CluePanel(): JSX.Element {
         const option = result.options[picked] ?? result.options[0];
         selectSuggested(option?.intended ?? [], snapshot.target);
       }
-    } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : 'לא הצלחנו לקבל רמז',
-        { tone: 'error' },
-      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'לא הצלחנו לקבל רמז';
+      setError(message);
+      showToast(message, { tone: 'error' });
     } finally {
       setLoading(null);
     }
@@ -175,22 +193,34 @@ export function CluePanel(): JSX.Element {
 
   function moveOption(delta: number): void {
     if (options.length < 2) return;
-    const nextIndex = (clue.optionIndex + delta + options.length) % options.length;
+    const nextIndex = (optionIndex + delta + options.length) % options.length;
     setOptionIndex(nextIndex);
-    // Keep the board selection (and thus the semantic map) in sync with the option
-    // now on screen, so switching clues re-highlights that clue's cards.
-    const nextOption = options[nextIndex];
-    if (nextOption) selectSuggested(nextOption.intended ?? [], target);
+    selectSuggested(options[nextIndex]?.intended ?? [], target);
+  }
+
+  function buildSnapshot(): RequestSnapshot {
+    return {
+      focus: [...selected],
+      risk,
+      vocabMode,
+      target,
+    };
   }
 
   function handleRegenerate(): void {
-    const snapshot = lastRequest.current;
-    if (!snapshot) {
-      void requestClue('auto', { risk, target });
+    void requestClue('regenerate', buildSnapshot());
+  }
+
+  // Risk/vocab dials should feel live: if a result is already on screen, changing
+  // either setting re-runs the last request with the new settings automatically.
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
       return;
     }
-    void requestClue('regenerate', snapshot);
-  }
+    if (!clue.current || loading) return;
+    void requestClue('regenerate', buildSnapshot());
+  }, [risk, vocabMode]);
 
   return (
     <div className="clue-panel" data-testid="stub-clue">
@@ -244,54 +274,80 @@ export function CluePanel(): JSX.Element {
           ) : null}
         </div>
 
-        <fieldset className="clue-risk" data-testid="risk-dial" disabled={Boolean(loading)}>
-          <legend>כמה להעז?</legend>
-          <div className="clue-risk__options seg">
-            {riskOptions.map(({ label, value }) => (
-              <button
-                key={value}
-                type="button"
-                className="clue-risk__option"
-                data-testid={`risk-${value}`}
-                aria-pressed={risk === value}
-                onClick={() => setRisk(value)}
-              >
-                {label}
-              </button>
-            ))}
+        <div className="clue-dials">
+          <fieldset className="clue-risk" data-testid="risk-dial" disabled={Boolean(loading)}>
+            <legend>כמה להעז?</legend>
+            <div className="clue-risk__options seg">
+              {riskOptions.map(({ label, value }) => (
+                <button
+                  key={value}
+                  type="button"
+                  className="clue-risk__option"
+                  data-testid={`risk-${value}`}
+                  aria-pressed={risk === value}
+                  onClick={() => setRisk(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="clue-risk__help">
+              זהיר = רק רמזים בטוחים · מאוזן = כיסוי בטוח · שובב = מקסימום מילים
+            </p>
+          </fieldset>
+
+          <div className="clue-vocab" data-testid="vocab-dial">
+            <label className="clue-vocab__label" htmlFor="clue-vocab-select">
+              אוצר מילים לרמזים
+            </label>
+            <select
+              id="clue-vocab-select"
+              className="clue-vocab__select"
+              data-testid="vocab-select"
+              value={vocabMode}
+              disabled={Boolean(loading)}
+              onChange={(event) => setVocabMode(event.target.value as VocabMode)}
+            >
+              {vocabOptions.map(({ label, value }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <p className="clue-vocab__help">
+              מומלץ = רשימה אצורה ואיכותית · מורחב = רשימת תדירות רחבה יותר
+            </p>
           </div>
-          <p className="clue-risk__help">
-            זהיר = רק רמזים בטוחים · מאוזן = כיסוי בטוח · נועז = מקסימום מילים
-          </p>
-        </fieldset>
+        </div>
 
         <div className="clue-actions">
           <Button
             className="clue-actions__button"
             data-testid="btn-get-clue"
-            disabled={selected.length === 0 || Boolean(loading)}
-            loading={loading === 'focused'}
+            disabled={Boolean(loading)}
+            loading={loading === 'focused' || loading === 'auto'}
             onClick={() =>
-              void requestClue('focused', {
-                focus: [...selected],
-                risk,
-                target,
-              })
+              selected.length > 0
+                ? void requestClue('focused', {
+                    focus: [...selected],
+                    risk,
+                    vocabMode,
+                    target,
+                  })
+                : void requestClue('auto', { risk, vocabMode, target })
             }
           >
-            קבל רמז לקלפים שבחרתי
-          </Button>
-          <Button
-            className="clue-actions__button"
-            data-testid="btn-auto-cluster"
-            disabled={Boolean(loading)}
-            loading={loading === 'auto'}
-            variant="secondary"
-            onClick={() => void requestClue('auto', { risk, target })}
-          >
-            מצא לי את הצירוף הכי טוב
+            {selected.length > 0
+              ? 'קבל רמז לקלפים שבחרתי'
+              : 'מצא לי את הצירוף הכי טוב'}
           </Button>
         </div>
+
+        {error ? (
+          <p className="clue-error" data-testid="clue-error-inline" role="alert">
+            {error}
+          </p>
+        ) : null}
       </section>
 
       {option || hasTopLevelEmptyState ? (
@@ -317,13 +373,18 @@ export function CluePanel(): JSX.Element {
             <div className="clue-empty" data-testid="no-clue-state" role="status">
               <strong>לא נמצא רמז מתאים</strong>
               <p>{response?.error}</p>
-              <p>נסה רמת 'נועז' או בחר מילים אחרות</p>
+              <p>נסה רמת 'שובב' או בחר מילים אחרות</p>
             </div>
           ) : option?.no_clue ? (
             <div className="clue-empty" data-testid="no-clue-state" role="status">
               <strong>לא נמצא רמז בטוח</strong>
+              <p>
+                הניסיון הקרוב ביותר שנפסל:{' '}
+                <strong data-testid="rejected-clue-word">{option.word}</strong>
+              </p>
               <p>{option.note || option.reason}</p>
-              <p>נסה רמת 'נועז' או בחר מילים אחרות</p>
+              <p>נסה רמת 'שובב' או בחר מילים אחרות</p>
+              <RankedRead option={option} />
             </div>
           ) : option ? (
             <>
@@ -358,6 +419,32 @@ export function CluePanel(): JSX.Element {
                   </div>
                 </div>
               </header>
+
+              {options.length > 1 ? (
+                <nav className="clue-carousel" aria-label="אפשרויות רמז">
+                  <Button
+                    data-testid="btn-next-option"
+                    variant="ghost"
+                    aria-label="האפשרות הבאה"
+                    onClick={() => moveOption(1)}
+                  >
+                    <span className="clue-carousel__chevron" aria-hidden="true">‹</span>
+                    <span data-testid="next-option-label">הבא</span>
+                  </Button>
+                  <span data-testid="option-counter">
+                    אפשרות {optionIndex + 1} מתוך {options.length}
+                  </span>
+                  <Button
+                    data-testid="btn-prev-option"
+                    variant="ghost"
+                    aria-label="האפשרות הקודמת"
+                    onClick={() => moveOption(-1)}
+                  >
+                    <span data-testid="prev-option-label">הקודם</span>
+                    <span className="clue-carousel__chevron" aria-hidden="true">›</span>
+                  </Button>
+                </nav>
+              ) : null}
 
               <div className="clue-intended">
                 <span>מכוון אל</span>
@@ -412,35 +499,38 @@ export function CluePanel(): JSX.Element {
           ) : null}
 
           {options.length > 0 ? (
-            <nav className="clue-carousel" aria-label="אפשרויות רמז">
-              <Button
-                data-testid="btn-next-option"
-                variant="ghost"
-                disabled={options.length < 2}
-                aria-label="האפשרות הבאה"
-                onClick={() => moveOption(1)}
-              >
-                <span className="clue-carousel__chevron" aria-hidden="true">‹</span>
-                <span data-testid="next-option-label">הבא</span>
-              </Button>
-              <span data-testid="option-counter">
-                אפשרות {clue.optionIndex + 1} מתוך {options.length}
-              </span>
-              <Button
-                data-testid="btn-prev-option"
-                variant="ghost"
-                disabled={options.length < 2}
-                aria-label="האפשרות הקודמת"
-                onClick={() => moveOption(-1)}
-              >
-                <span data-testid="prev-option-label">הקודם</span>
-                <span className="clue-carousel__chevron" aria-hidden="true">›</span>
-              </Button>
-            </nav>
+            <details className="clue-candidates" data-testid="clue-candidates">
+              <summary>המועמדים של המנוע ({options.length})</summary>
+              <ol className="clue-candidates__list">
+                {options.map((candidate, index) => (
+                  <li key={`${candidate.word}-${index}`}>
+                    <button
+                      type="button"
+                      className="clue-candidates__row"
+                      data-testid={`candidate-${index}`}
+                      aria-current={index === optionIndex}
+                      onClick={() => {
+                        setOptionIndex(index);
+                        selectSuggested(candidate.intended, target);
+                      }}
+                    >
+                      <span className="clue-candidates__rank">#{index + 1}</span>
+                      <span className="clue-candidates__word">{candidate.word}</span>
+                      <span className="clue-candidates__intended">
+                        {candidate.intended.join(', ')}
+                      </span>
+                      <span className="clue-candidates__score">
+                        {candidate.score.toFixed(2)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </details>
           ) : null}
 
           {option ? (
-            <FeedbackControls option={option} mode="suggest" risk={risk} />
+            <FeedbackControls key={option.word} option={option} mode="suggest" risk={risk} />
           ) : null}
         </section>
       ) : (

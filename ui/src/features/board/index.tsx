@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card } from '../../components/Card';
 import { RoleIcon } from '../../components/RoleIcon';
@@ -27,13 +27,18 @@ export const roleColor: Record<Role, string> = {
 
 export function BoardGrid(): JSX.Element {
   const tiles = useAppStore((state) => state.tiles);
+  const mode = useAppStore((state) => state.mode);
   const selected = useAppStore((state) => state.selected);
   const hoverWord = useAppStore((state) => state.hoverWord);
+  const currentClueOption = useAppStore(
+    (state) => state.clue.current?.options[state.clue.optionIndex] ?? null,
+  );
   const toggleSelected = useAppStore((state) => state.toggleSelected);
   const toggleLifecycle = useAppStore((state) => state.toggleLifecycle);
   const setHoverWord = useAppStore((state) => state.setHoverWord);
   const setBoard = useAppStore((state) => state.setBoard);
   const [legendOpen, setLegendOpen] = useState(false);
+  const [markingRevealed, setMarkingRevealed] = useState(false);
   const [dealing, setDealing] = useState(false);
   const legendRef = useRef<HTMLDivElement | null>(null);
 
@@ -48,6 +53,10 @@ export function BoardGrid(): JSX.Element {
   );
   const assassinRevealed = tiles.some(
     (tile) => tile.role === 'assassin' && tile.lifecycle === 'chosen',
+  );
+  const intendedWords = useMemo(
+    () => new Set(currentClueOption?.intended ?? []),
+    [currentClueOption],
   );
 
   useEffect(() => {
@@ -67,6 +76,9 @@ export function BoardGrid(): JSX.Element {
   }, [legendOpen]);
 
   function selectTile(index: number): void {
+    // Clue-focus selection is a spymaster concept — the guesser must not be able to
+    // trigger it (its "team-only" toast below would otherwise leak a hidden role).
+    if (mode === 'operative') return;
     const tile = tiles[index];
     if (!tile || tile.lifecycle !== 'inPlay') return;
     toggleSelected(tile.word);
@@ -84,6 +96,7 @@ export function BoardGrid(): JSX.Element {
       // setBoard intentionally keeps the player on the game screen while replacing
       // all board-scoped state (selections, clues, reveals, and log).
       setBoard(deal.words, deal.roles);
+      setMarkingRevealed(false);
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי',
@@ -95,7 +108,12 @@ export function BoardGrid(): JSX.Element {
   }
 
   return (
-    <section className="board" aria-labelledby="board-title" data-testid="stub-board">
+    <section
+      className="board"
+      aria-labelledby="board-title"
+      data-testid="stub-board"
+      data-mode={mode}
+    >
       <header className="board__toolbar">
         <div>
           <p className="board__eyebrow">הלוח הפעיל</p>
@@ -131,6 +149,16 @@ export function BoardGrid(): JSX.Element {
 
           <button
             type="button"
+            className={`btn btn-secondary ${markingRevealed ? 'is-active' : ''}`}
+            data-testid="btn-mark-revealed"
+            aria-pressed={markingRevealed}
+            onClick={() => setMarkingRevealed((marking) => !marking)}
+          >
+            {markingRevealed ? 'סיום סימון' : 'סימון כנחשף'}
+          </button>
+
+          <button
+            type="button"
             className="btn btn-secondary"
             data-testid="btn-reset-game"
             disabled={dealing}
@@ -152,14 +180,20 @@ export function BoardGrid(): JSX.Element {
           const selectionIndex = selected.indexOf(tile.word);
           const selectedForClue = selectionIndex >= 0;
           const chosen = tile.lifecycle === 'chosen';
+          // The guesser sees no card colors until a card is chosen — the spymaster view
+          // (mode !== 'operative') is untouched, still showing the true role at all times.
+          const hideRole = mode === 'operative' && !chosen;
           const visualRole = chosen ? tile.chosenBy ?? tile.role : tile.role;
+          const displayRole = hideRole ? 'neutral' : visualRole;
           const classes = [
             'board-tile',
-            `role-${visualRole}`,
+            `role-${displayRole}`,
             selectedForClue ? 'is-selected' : '',
             chosen ? 'is-chosen' : '',
             chosen && tile.role === 'assassin' ? 'is-assassin-chosen' : '',
+            intendedWords.has(tile.word) ? 'is-clue-target' : '',
             hoverWord === tile.word ? 'is-hover-linked' : '',
+            markingRevealed ? 'is-marking-revealed' : '',
           ]
             .filter(Boolean)
             .join(' ');
@@ -182,12 +216,18 @@ export function BoardGrid(): JSX.Element {
                 data-word={tile.word}
                 data-role={tile.role}
                 data-lifecycle={tile.lifecycle}
-                disabled={chosen}
+                disabled={chosen && !markingRevealed}
                 aria-pressed={selectedForClue}
-                aria-label={`${tile.word}, ${roleLabel[tile.role]}${chosen ? ', נחשף' : ''}`}
-                onClick={() => selectTile(index)}
+                aria-label={`${tile.word}${hideRole ? '' : `, ${roleLabel[tile.role]}`}${chosen ? ', נחשף' : ''}`}
+                onClick={() => {
+                  if (markingRevealed) {
+                    toggleLifecycle(tile.word);
+                    return;
+                  }
+                  selectTile(index);
+                }}
               >
-                <Card className="board-tile__face" color={roleColor[visualRole]} />
+                <Card className="board-tile__face" color={roleColor[displayRole]} />
                 <span className="board-tile__content">
                   <span className="board-tile__hole" aria-hidden="true" />
                   <RoleIcon className="board-tile__role" role={tile.role} />
@@ -226,7 +266,13 @@ export function BoardGrid(): JSX.Element {
         })}
       </div>
 
-      <p className="board__hint">לחצו על קלף קבוצה כדי לצרף אותו לרמז · סימון כנחשף מוציא אותו מהמהלך</p>
+      <p className="board__hint">
+        {mode === 'operative'
+          ? 'הלוח לא חושף בפניכם צבעים — הזינו את הרמז בפאנל בצד כדי לראות הצעת ניחוש'
+          : 'לחצו על קלף קבוצה כדי לצרף אותו לרמז'}
+        {' · '}
+        ב״סימון כנחשף״ לחצו על קלף שכבר יצא מהמשחק — הוא לא יישלח יותר לקבלת רמזים.
+      </p>
     </section>
   );
 }

@@ -3,14 +3,18 @@ import { CheckPanel } from '../features/check';
 import { CluePanel } from '../features/clue';
 import { SessionLog } from '../features/log';
 import { SemanticMap } from '../features/map';
+import { OperativePanel } from '../features/operative';
 import { PhotoSetup } from '../features/photo';
 import { useAppStore } from '../state/store';
 import './MainScreen.css';
 
 export function MainScreen(): JSX.Element {
   const screen = useAppStore((state) => state.screen);
+  const mode = useAppStore((state) => state.mode);
+  const setMode = useAppStore((state) => state.setMode);
   const activeTab = useAppStore((state) => state.activeTab);
   const setActiveTab = useAppStore((state) => state.setActiveTab);
+  const editBoard = useAppStore((state) => state.editBoard);
 
   if (screen === 'setup') {
     return (
@@ -28,8 +32,43 @@ export function MainScreen(): JSX.Element {
           <h1>שם קוד קופיילוט</h1>
         </div>
         <div className="main-screen__header-end">
+          <div
+            className="main-screen__mode"
+            role="group"
+            aria-label="מצב משחק"
+            data-testid="mode-toggle"
+          >
+            <button
+              type="button"
+              className="main-screen__mode-option"
+              aria-pressed={mode === 'spymaster'}
+              data-testid="mode-spymaster"
+              onClick={() => setMode('spymaster')}
+            >
+              רב המרגלים
+            </button>
+            <button
+              type="button"
+              className="main-screen__mode-option"
+              aria-pressed={mode === 'operative'}
+              data-testid="mode-operative"
+              onClick={() => setMode('operative')}
+            >
+              מנחש
+            </button>
+          </div>
           <p className="main-screen__status">הרמזים מותאמים ללוח שנמצא מולכם</p>
-          <a className="main-screen__methods" href="/methods">איך זה עובד</a>
+          <button
+            type="button"
+            className="main-screen__edit-board"
+            data-testid="btn-edit-board"
+            onClick={editBoard}
+          >
+            ✏️ ערוך לוח
+          </button>
+          <a className="main-screen__methods" href="/methods" target="_blank" rel="noopener">
+            איך זה עובד
+          </a>
         </div>
       </header>
 
@@ -40,32 +79,38 @@ export function MainScreen(): JSX.Element {
         </section>
 
         <aside className="main-screen__controls" aria-label="כלי המפעיל">
-          <div className="main-screen__tabs" role="tablist" aria-label="מצב עבודה">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'clue'}
-              className={activeTab === 'clue' ? 'is-active' : undefined}
-              data-testid="tab-clue"
-              onClick={() => setActiveTab('clue')}
-            >
-              קבל רמז
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'check'}
-              className={activeTab === 'check' ? 'is-active' : undefined}
-              data-testid="tab-check"
-              onClick={() => setActiveTab('check')}
-            >
-              בדוק מילה שלי
-            </button>
-          </div>
+          {mode === 'operative' ? (
+            <OperativePanel />
+          ) : (
+            <>
+              <div className="main-screen__tabs" role="tablist" aria-label="מצב עבודה">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'clue'}
+                  className={activeTab === 'clue' ? 'is-active' : undefined}
+                  data-testid="tab-clue"
+                  onClick={() => setActiveTab('clue')}
+                >
+                  קבל רמז
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'check'}
+                  className={activeTab === 'check' ? 'is-active' : undefined}
+                  data-testid="tab-check"
+                  onClick={() => setActiveTab('check')}
+                >
+                  בדוק מילה שלי
+                </button>
+              </div>
 
-          <section className="main-screen__active-panel" role="tabpanel">
-            {activeTab === 'clue' ? <CluePanel /> : <CheckPanel />}
-          </section>
+              <section className="main-screen__active-panel" role="tabpanel">
+                {activeTab === 'clue' ? <CluePanel /> : <CheckPanel />}
+              </section>
+            </>
+          )}
 
           <SessionLog />
         </aside>

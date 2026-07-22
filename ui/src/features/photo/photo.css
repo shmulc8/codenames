@@ -28,14 +28,15 @@
 .photo-setup__eyebrow { margin: 0 0 var(--space-2); font-size: .75rem; }
 
 .photo-setup__modes {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(7.5rem, 1fr));
+  display: flex;
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
   overflow: visible;
 }
 
 .photo-setup__modes button {
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 3rem;
   padding: 0 var(--space-6);
   display: inline-flex;
@@ -258,8 +259,7 @@
 @media (max-width: 620px) {
   .photo-setup__word-grid { gap: 4px; padding: 6px; }
   .photo-setup__word-cell input { padding: 2px 3px; font-size: .72rem; }
-  .photo-setup__modes { grid-template-columns: repeat(3, 1fr); }
-  .photo-setup__modes button { min-width: 0; padding: 0 4px; font-size: .75rem; }
+  .photo-setup__modes button { padding: 0 4px; font-size: .75rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

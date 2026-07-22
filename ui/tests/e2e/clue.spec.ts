@@ -76,7 +76,7 @@ async function releaseClueResponse(page: Page): Promise<void> {
 }
 
 async function requestAutoClue(page: Page): Promise<void> {
-  await page.getByTestId('btn-auto-cluster').click();
+  await page.getByTestId('btn-get-clue').click();
   await expect(page.getByTestId('clue-result')).toBeVisible();
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');
 }
@@ -86,22 +86,19 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
 }) => {
   await setupFixtureBoard(page);
 
-  const focusedAction = await page.getByTestId('btn-get-clue').boundingBox();
-  const automaticAction = await page.getByTestId('btn-auto-cluster').boundingBox();
-  expect(focusedAction).not.toBeNull();
-  expect(automaticAction).not.toBeNull();
-  expect(focusedAction!.y).toBeLessThan(automaticAction!.y);
-  await expect(page.getByTestId('btn-get-clue')).toBeDisabled();
+  // With no cards selected the single action button offers the "find best combination" flow.
+  await expect(page.getByTestId('btn-get-clue')).toBeEnabled();
+  await expect(page.getByTestId('btn-get-clue')).toHaveText('מצא לי את הצירוף הכי טוב');
   await expect(page.getByTestId('target-red')).toHaveAttribute('aria-pressed', 'true');
 
   await installClueResponseGate(page);
-  await page.getByTestId('btn-auto-cluster').click();
+  await page.getByTestId('btn-get-clue').click();
   try {
     await waitForClueResponse(page);
     await expect(
-      page.getByTestId('btn-auto-cluster').getByTestId('loading-spinner'),
+      page.getByTestId('btn-get-clue').getByTestId('loading-spinner'),
     ).toBeVisible();
-    await expect(page.getByTestId('btn-auto-cluster')).toBeDisabled();
+    await expect(page.getByTestId('btn-get-clue')).toBeDisabled();
     await expect(page.getByTestId('risk-balanced')).toBeDisabled();
   } finally {
     await releaseClueResponse(page);
@@ -113,7 +110,7 @@ test('auto-cluster renders option 0, posts no focus, and exposes loading state',
   await expect(page.getByTestId('clue-reason')).toContainText(
     'הרמז מחבר היטב בין מילות המטרה',
   );
-  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 3');
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 2');
   await expect(page.getByText(/המתנקש \(נחש\) במקום \d+ בדירוג/)).toBeVisible();
 
   const request = await page.evaluate(() => window.__lastSpymasterReq);
@@ -156,7 +153,9 @@ test('focused request posts the selected cluster and keyboard-selected risk', as
   expect(request?.risk).toBe('bold');
 });
 
-test('carousel wraps and renders risky and no-clue states', async ({ page }) => {
+test('carousel wraps between the two best options and renders the risky state', async ({
+  page,
+}) => {
   await setupFixtureBoard(page);
   await requestAutoClue(page);
 
@@ -182,26 +181,35 @@ test('carousel wraps and renders risky and no-clue states', async ({ page }) => 
     controlPositions.previousChevron,
   );
 
+  // Only the two strongest options are shown; wrapping backwards lands on the risky one.
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 2');
   await page.getByTestId('btn-prev-option').click();
-  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 3 מתוך 3');
-  await expect(page.getByTestId('no-clue-state')).toContainText(
-    'לא נמצא רמז בטוח. נסו אשכול אחר או רמת סיכון אחרת.',
-  );
-  await expect(page.getByTestId('no-clue-state')).toContainText(
-    "נסה רמת 'נועז' או בחר מילים אחרות",
-  );
-
-  await page.getByTestId('btn-next-option').click();
-  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 3');
-  await expect(page.getByTestId('clue-word')).toHaveText('טבע');
-
-  await page.getByTestId('btn-next-option').click();
-  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 2 מתוך 3');
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 2 מתוך 2');
   await expect(page.getByTestId('clue-word')).toHaveText('מסע');
   await expect(page.getByTestId('warning-banner')).toContainText(
     'זהירות: הרמז עלול למשוך מילה מסוכנת.',
   );
   await expect(page.getByTestId('warning-banner')).toContainText('נחש');
+
+  await page.getByTestId('btn-next-option').click();
+  await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 2');
+  await expect(page.getByTestId('clue-word')).toHaveText('טבע');
+});
+
+test('renders the no-clue state when the engine has no safe clue', async ({ page }) => {
+  await setupFixtureBoard(page);
+  // The cautious profile is the mock's deterministic "no safe clue" path.
+  await page.getByTestId('risk-cautious').click();
+  await page.getByTestId('btn-get-clue').click();
+
+  await expect(page.getByTestId('no-clue-state')).toContainText(
+    'לא נמצא רמז בטוח. נסו אשכול אחר או רמת סיכון אחרת.',
+  );
+  await expect(page.getByTestId('no-clue-state')).toContainText(
+    "נסה רמת 'שובב' או בחר מילים אחרות",
+  );
+  // With a single refusal option there is nothing to cycle through.
+  await expect(page.getByTestId('option-counter')).toHaveCount(0);
 });
 
 test('target switch clears selection and blue-target requests use my/opp wire roles', async ({
@@ -294,7 +302,7 @@ test('a clue response is immediately stale when the live board changes in flight
   await setupFixtureBoard(page);
   await installClueResponseGate(page);
 
-  await page.getByTestId('btn-auto-cluster').click();
+  await page.getByTestId('btn-get-clue').click();
   try {
     await waitForClueResponse(page);
 
@@ -355,7 +363,7 @@ test.describe('backend error handling', () => {
     });
 
     await setupFixtureBoard(page);
-    await page.getByTestId('btn-auto-cluster').click();
+    await page.getByTestId('btn-get-clue').click();
 
     await expect(page.getByTestId('toast')).toBeVisible();
     await expect(page.getByTestId('toast')).toContainText('בדיקת כשל מהשרת');

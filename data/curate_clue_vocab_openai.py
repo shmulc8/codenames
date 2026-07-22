@@ -62,6 +62,10 @@ def build_prompt(batch: list[dict]) -> str:
         "forms (e.g. words carrying ־ב/ה/ו/כ/ל/מ/ש prefixes, or a plural/possessive whose lemma is the real "
         "word), verbs, function words, pronouns, abbreviations, acronyms, fragments, numerals, "
         "rare/archaic/hyper-technical words, obscure transliterations, and vulgar/offensive words. "
+        "Be strict about non-words: reject letter fragments, truncated/partial words, and acronyms — "
+        "every kept word must be a complete, independently meaningful Hebrew lemma. Double-check the "
+        "part of speech: if a word is actually a verb (past/present/future or imperative), OMIT it even "
+        "if it superficially looks like a noun. "
         "When unsure a word is widely known, OMIT it.\n"
         'Each input item is {"i":index,"w":word,"c":corpus_frequency,"p":pos} (p "?" means infer it; higher c hints more familiar).\n'
         "Refer to each kept word ONLY by its integer index i — never retype the Hebrew.\n"
@@ -78,8 +82,7 @@ def build_prompt(batch: list[dict]) -> str:
 def classify(api_key: str, model: str, batch: list[dict], retries: int) -> list[dict] | None:
     body = {
         "model": model,
-        "temperature": 0.2,
-        "max_tokens": min(6000, 400 + len(batch) * 90),
+        "max_completion_tokens": min(6000, 400 + len(batch) * 90),
         "messages": [
             {"role": "system", "content": "Return only compact machine-readable JSON — no prose."},
             {"role": "user", "content": build_prompt(batch)},
@@ -142,8 +145,8 @@ def main() -> int:
     for row in rows:
         word, count = str(row[0]).strip(), row[1]
         pos = row[2] if len(row) > 2 else None
-        if not re.fullmatch(r"[א-ת]{2,}", word):
-            continue
+        if not re.fullmatch(r"[א-ת]{3,}", word):
+            continue   # two-letter tokens are almost always fragments/abbreviations, not clue words
         candidates[word] = {"word": word, "count": count, "pos": pos}
 
     blocked = {l.strip() for l in BLOCKLIST.read_text(encoding="utf-8").splitlines()

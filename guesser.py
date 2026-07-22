@@ -82,17 +82,36 @@ _LLM_SYS = (
 _PROVIDERS = {
     "openrouter": ("https://openrouter.ai/api/v1/chat/completions", "OPENROUTER_API_KEY"),
     "novita": ("https://api.novita.ai/openai/v1/chat/completions", "NOVITA_API_KEY"),
+    "openai": ("https://api.openai.com/v1/chat/completions", "OPENAI_API_KEY"),
 }
 
 
+def _load_dotenv() -> None:
+    """Populate os.environ from a repo-root .env (never overrides an existing var)."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8") as fh:
+        for raw in fh:
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
 class LLMGuesser:
-    """External LLM guesser. spec: 'llm:openrouter:google/gemini-2.5-flash'."""
+    """External LLM guesser. spec: 'llm:openai:gpt-5.6-terra' | 'llm:openrouter:google/gemini-2.5-flash'."""
 
     def __init__(self, provider: str = "openrouter", model: str = "google/gemini-2.5-flash"):
         if provider not in _PROVIDERS:
             raise ValueError(f"unknown provider {provider!r}; pick from {list(_PROVIDERS)}")
+        self.provider = provider
         self.url, self._key_env = _PROVIDERS[provider]
         self.api_key = os.environ.get(self._key_env, "")
+        if not self.api_key:
+            _load_dotenv()
+            self.api_key = os.environ.get(self._key_env, "")
         if not self.api_key:
             raise RuntimeError(f"{self._key_env} not set — cannot use the external LLM guesser")
         self.model = model
@@ -101,17 +120,35 @@ class LLMGuesser:
     def rank(self, board: "probe.Board", clue: str) -> list[str]:
         import json
         import re
+        import time
         import urllib.request
         user = (f"הרמז: {clue}\nמילות הלוח: {', '.join(board.words)}\n\n"
                 "החזר את כל מילות הלוח מסודרות מהקשורה ביותר לרמז עד הפחות קשורה, "
                 "מופרדות בפסיק, בלי מספור ובלי טקסט נוסף.")
-        body = json.dumps({"model": self.model, "temperature": 0,
-                           "messages": [{"role": "system", "content": _LLM_SYS},
-                                        {"role": "user", "content": user}]}).encode()
-        req = urllib.request.Request(self.url, data=body, headers={
-            "Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            txt = json.loads(resp.read())["choices"][0]["message"]["content"]
+        body_dict = {"model": self.model,
+                     "messages": [{"role": "system", "content": _LLM_SYS},
+                                  {"role": "user", "content": user}]}
+        if self.provider == "openai":
+            # gpt-5.x reasoning models reject a custom temperature and rename the token cap;
+            # a generous completion budget keeps hidden reasoning from truncating the answer.
+            body_dict["max_completion_tokens"] = 4000
+        else:
+            body_dict["temperature"] = 0
+        body = json.dumps(body_dict).encode()
+        txt, last_err = None, None
+        for attempt in range(3):
+            try:
+                req = urllib.request.Request(self.url, data=body, headers={
+                    "Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"})
+                with urllib.request.urlopen(req, timeout=90) as resp:
+                    txt = json.loads(resp.read())["choices"][0]["message"]["content"]
+                break
+            except Exception as err:                       # network/parse — retry with backoff
+                last_err = err
+                if attempt < 2:
+                    time.sleep(1.5 * (attempt + 1))
+        if txt is None:
+            raise RuntimeError(f"LLM guesser call failed after retries: {last_err}")
         ranked, seen = [], set()
         for tok in re.split(r"[,\n־]| ו", txt):
             w = probe._match_board(tok, board.words)
@@ -134,7 +171,8 @@ def make_guesser(spec: str = "ensemble"):
     if spec.startswith("llm:"):
         parts = spec.split(":", 2)
         provider = parts[1] if len(parts) > 1 and parts[1] else "openrouter"
-        model = parts[2] if len(parts) > 2 and parts[2] else "google/gemini-2.5-flash"
+        default_model = {"openai": "gpt-5.6-terra"}.get(provider, "google/gemini-2.5-flash")
+        model = parts[2] if len(parts) > 2 and parts[2] else default_model
         return LLMGuesser(provider, model)
     if spec == "ensemble":
         return EnsembleGuesser()

@@ -72,9 +72,12 @@ export async function classifyKeyCard(file: File): Promise<Role[]> {
 }
 
 export function rotateRolesClockwise(roles: Role[]): Role[] {
+  // The grid renders with direction: rtl, so column 0 sits on the screen's
+  // right edge. Rotating clockwise as the user sees it maps to this
+  // index-space formula (mirrored from the plain row/column rotation).
   return roles.map((_, index) => {
     const row = Math.floor(index / 5);
     const column = index % 5;
-    return roles[(4 - column) * 5 + row];
+    return roles[column * 5 + (4 - row)];
   });
 }

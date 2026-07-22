@@ -5,6 +5,7 @@ import { Button, Panel, RoleIcon, showToast } from '../../components';
 import { FeedbackControls } from '../feedback';
 import { boardsMatch, liveBoard, useAppStore } from '../../state/store';
 import type {
+  BoardPayload,
   CheckResponse,
   ClueOption,
   ReadEntry,
@@ -137,8 +138,10 @@ export function CheckPanel(): JSX.Element {
   const [input, setInput] = useState('');
   const [submittedClue, setSubmittedClue] = useState('');
   const [result, setResult] = useState<CheckResponse | null>(null);
+  const [resultBoard, setResultBoard] = useState<BoardPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -150,7 +153,9 @@ export function CheckPanel(): JSX.Element {
     }
 
     setValidationMessage('');
+    setError(null);
     setResult(null);
+    setResultBoard(null);
     setSubmittedClue('');
     setCheckedClue(null);
     setHoverWord(null);
@@ -164,14 +169,17 @@ export function CheckPanel(): JSX.Element {
         return;
       }
       setResult(response);
+      setResultBoard(board);
       setSubmittedClue(clue);
       rememberCheckResult(clue, response.read);
       setCheckedClue(clue);
-    } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : 'לא הצלחנו לבדוק את המילה',
-        { tone: 'error' },
-      );
+    } catch (caughtError) {
+      const message =
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'לא הצלחנו לבדוק את המילה';
+      setError(message);
+      showToast(message, { tone: 'error' });
     } finally {
       setLoading(false);
     }
@@ -182,12 +190,19 @@ export function CheckPanel(): JSX.Element {
     result.assassin.rank >= 0 &&
     result.assassin.rank < result.safe + 2;
 
+  const boardStale =
+    result !== null &&
+    resultBoard !== null &&
+    !boardsMatch(resultBoard, liveBoard(useAppStore.getState()));
+
   const handleTargetChange = (color: TeamColor) => {
     if (color === target) return;
     setTarget(color);
     setResult(null);
+    setResultBoard(null);
     setSubmittedClue('');
     setCheckedClue(null);
+    setError(null);
   };
 
   return (
@@ -235,10 +250,36 @@ export function CheckPanel(): JSX.Element {
         >
           בדוק את הרמז
         </Button>
+        {error ? (
+          <p className="check-form__validation" data-testid="check-error" role="alert">
+            {error}
+          </p>
+        ) : null}
       </form>
 
       {result ? (
         <div className="check-result" data-testid="check-result" aria-live="polite">
+          {boardStale ? (
+            <div
+              className="check-stale"
+              data-testid="check-stale"
+              role="status"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 'var(--space-3)',
+                padding: 'var(--space-3)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--cn-warn-bd)',
+                background: 'var(--cn-warn-bg)',
+                color: 'var(--cn-warn)',
+              }}
+            >
+              <strong>הלוח השתנה — בדקו שוב</strong>
+            </div>
+          ) : null}
+
           {result.illegal ? (
             <div className="check-illegal" data-testid="check-illegal" role="alert">
               <strong>הרמז אינו חוקי</strong>
@@ -297,6 +338,7 @@ export function CheckPanel(): JSX.Element {
           </Panel>
 
           <FeedbackControls
+            key={submittedClue}
             mode="check"
             option={syntheticOption(submittedClue, result)}
             risk={risk}
