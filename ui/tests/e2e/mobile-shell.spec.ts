@@ -1,10 +1,29 @@
 import { expect, test } from '@playwright/test';
 
 import { fixtureBoard } from '../../src/mocks/fixtures/board';
-import { openMobileShell } from '../support/mobile-shell';
+import {
+  MOBILE_LANDSCAPE,
+  MOBILE_PORTRAIT,
+  openMobileShell,
+} from '../support/mobile-shell';
 
 test.describe('mobile app shell', () => {
   test.use({ hasTouch: true });
+
+  test('requires landscape before setup or gameplay is available', async ({
+    page,
+  }) => {
+    await openMobileShell(page, MOBILE_PORTRAIT);
+
+    await expect(page.getByTestId('mobile-landscape-prompt')).toBeVisible();
+    await expect(page.getByTestId('mobile-home')).toBeHidden();
+    await expect(page.getByTestId('tabbar')).toBeHidden();
+
+    await page.setViewportSize(MOBILE_LANDSCAPE);
+    await expect(page.getByTestId('mobile-landscape-prompt')).toBeHidden();
+    await expect(page.getByTestId('mobile-home')).toBeVisible();
+    await expect(page.getByTestId('tabbar')).toBeVisible();
+  });
 
   test('shows the camera-first home and four accessible navigation tabs', async ({
     page,
@@ -41,11 +60,6 @@ test.describe('mobile app shell', () => {
 
     await expect(page.getByTestId('mobile-home')).toHaveCount(0);
     await expect(page.getByTestId('board-canvas')).toBeVisible();
-    await expect(page.getByTestId('board-rotate-prompt')).toBeVisible();
-    await expect(page.locator('.mobile-board__viewport')).toBeHidden();
-
-    await page.setViewportSize({ width: 844, height: 390 });
-    await expect(page.getByTestId('board-rotate-prompt')).toBeHidden();
     await expect(page.getByTestId('tile-0')).toBeVisible();
     await expect
       .poll(() =>
@@ -215,10 +229,14 @@ test.describe('desktop regression', () => {
     await expect(page.locator('.main-screen')).toBeVisible();
     await expect(page.getByTestId('board-grid')).toBeVisible();
 
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize(MOBILE_PORTRAIT);
     await expect(page.getByTestId('mobile-shell')).toBeVisible();
-    await expect(page.getByTestId('board-canvas')).toBeVisible();
+    await expect(page.getByTestId('mobile-landscape-prompt')).toBeVisible();
+    await expect(page.getByTestId('board-canvas')).toBeHidden();
     await expect(page.getByTestId('board-grid')).toHaveCount(0);
+
+    await page.setViewportSize(MOBILE_LANDSCAPE);
+    await expect(page.getByTestId('board-canvas')).toBeVisible();
 
     await page.setViewportSize({ width: 1320, height: 900 });
     await expect(page.getByTestId('mobile-shell')).toHaveCount(0);

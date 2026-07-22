@@ -74,24 +74,37 @@ export function MobileShell(): JSX.Element {
     if (tab === 'clue' || tab === 'check') setActiveTab(tab);
   }
 
-  if (screen === 'setup' && capturing) {
-    return (
-      <div className="mobile mobile-shell" data-testid="mobile-shell" dir="rtl">
-        <CaptureFlow onClose={() => setCapturing(false)} />
-      </div>
-    );
-  }
-
   return (
     <div className="mobile mobile-shell" data-testid="mobile-shell" dir="rtl">
-      {screen === 'setup' ? <MobileHeader /> : null}
-      {screen === 'setup' ? (
-        <MobileHome onShoot={() => setCapturing(true)} />
+      <MobileLandscapePrompt />
+      {screen === 'setup' && capturing ? (
+        <CaptureFlow onClose={() => setCapturing(false)} />
       ) : (
-        <MobilePanel tab={mobileTab} />
+        <>
+          {screen === 'setup' ? <MobileHeader /> : null}
+          {screen === 'setup' ? (
+            <MobileHome onShoot={() => setCapturing(true)} />
+          ) : (
+            <MobilePanel tab={mobileTab} />
+          )}
+          <MobileTabBar activeTab={mobileTab} onSelect={selectTab} />
+        </>
       )}
-      <MobileTabBar activeTab={mobileTab} onSelect={selectTab} />
     </div>
+  );
+}
+
+function MobileLandscapePrompt(): JSX.Element {
+  return (
+    <main
+      className="mobile-shell__orientation-gate"
+      data-testid="mobile-landscape-prompt"
+      role="status"
+    >
+      <span aria-hidden="true">↻</span>
+      <h1>סובבו את המכשיר לרוחב</h1>
+      <p>הצילום, הגדרת הלוח והמשחק פועלים בתצוגה אופקית</p>
+    </main>
   );
 }
 
