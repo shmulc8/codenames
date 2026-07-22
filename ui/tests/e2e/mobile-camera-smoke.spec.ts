@@ -8,7 +8,7 @@ test('captures a fake-camera frame and sends it to board review', async ({ page 
     cells: fixtureWords.map((word) => ({ word, confidence: 92 })),
     roles: [],
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 700, height: 390 });
   await page.goto('/');
   await page.getByTestId('btn-shoot').click();
 

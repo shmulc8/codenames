@@ -2,7 +2,7 @@ import { expect, type Page } from '@playwright/test';
 
 import { fixtureRoles, fixtureWords } from '../../src/mocks/fixtures/board';
 
-export const MOBILE = { width: 390, height: 844 } as const;
+export const MOBILE = { width: 700, height: 390 } as const;
 export const DESKTOP = { width: 1320, height: 900 } as const;
 
 // A minimal valid 1x1 PNG — the stubbed recognizers ignore its content, but the
