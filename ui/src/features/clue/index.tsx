@@ -175,7 +175,9 @@ export function CluePanel(): JSX.Element {
 
   function moveOption(delta: number): void {
     if (options.length < 2) return;
-    setOptionIndex((clue.optionIndex + delta + options.length) % options.length);
+    const nextIndex = (clue.optionIndex + delta + options.length) % options.length;
+    setOptionIndex(nextIndex);
+    selectSuggested(options[nextIndex]?.intended ?? [], target);
   }
 
   function handleRegenerate(): void {
@@ -261,34 +263,31 @@ export function CluePanel(): JSX.Element {
         </fieldset>
 
         <div className="clue-actions">
-          {selected.length > 0 ? (
-            <Button
-              className="clue-actions__button"
-              data-testid="btn-get-clue"
-              disabled={Boolean(loading)}
-              loading={loading === 'focused'}
-              onClick={() =>
-                void requestClue('focused', {
-                  focus: [...selected],
-                  risk,
-                  target,
-                })
-              }
-            >
-              קבל רמז לקלפים שבחרתי
-            </Button>
-          ) : (
-            <Button
-              className="clue-actions__button"
-              data-testid="btn-auto-cluster"
-              disabled={Boolean(loading)}
-              loading={loading === 'auto'}
-              variant="secondary"
-              onClick={() => void requestClue('auto', { risk, target })}
-            >
-              מצא לי את הצירוף הכי טוב
-            </Button>
-          )}
+          <Button
+            className="clue-actions__button"
+            data-testid="btn-get-clue"
+            disabled={selected.length === 0 || Boolean(loading)}
+            loading={loading === 'focused'}
+            onClick={() =>
+              void requestClue('focused', {
+                focus: [...selected],
+                risk,
+                target,
+              })
+            }
+          >
+            קבל רמז לקלפים שבחרתי
+          </Button>
+          <Button
+            className="clue-actions__button"
+            data-testid="btn-auto-cluster"
+            disabled={Boolean(loading)}
+            loading={loading === 'auto'}
+            variant="secondary"
+            onClick={() => void requestClue('auto', { risk, target })}
+          >
+            מצא לי את הצירוף הכי טוב
+          </Button>
         </div>
       </section>
 
