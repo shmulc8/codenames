@@ -1,0 +1,4 @@
+interface:
+  display_name: "TDD"
+  short_description: "Test-driven development: the red → green loop that produces tests worth keeping"
+  default_prompt: "Use $tdd to build the feature or fix the bug test-first — agree the seams, write the failing test (red), then only enough code to pass it (green)."
