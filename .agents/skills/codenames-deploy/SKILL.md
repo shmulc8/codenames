@@ -23,10 +23,10 @@ binaries (`data/cc.he.300.*`, hundreds of MB) already in the Space untouched.
 
 ```bash
 # default: upload the app/engine files most changes touch
-python .Codex/skills/codenames-deploy/scripts/deploy.py
+python .agents/skills/codenames-deploy/scripts/deploy.py
 
 # or name the changed files explicitly (paths relative to hf_space/)
-python .Codex/skills/codenames-deploy/scripts/deploy.py probe.py app.py data/word2root.json
+python .agents/skills/codenames-deploy/scripts/deploy.py probe.py app.py data/word2root.json
 ```
 
 It uploads the given files from `hf_space/` in one commit, prints the commit URL, and reports the
@@ -38,5 +38,5 @@ new image is up.
 Once the stage is `RUNNING`, verify live with the `codenames-qa` skill:
 
 ```bash
-python .Codex/skills/codenames-qa/scripts/verify_live.py
+python .agents/skills/codenames-qa/scripts/verify_live.py
 ```

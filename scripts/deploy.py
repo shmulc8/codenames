@@ -121,8 +121,16 @@ def wait_running(api, timeout=600):
 
 
 def verify():
-    v = os.path.join(REPO, ".claude/skills/codenames-qa/scripts/verify_live.py")
-    if os.path.exists(v):
+    # Prefer the tracked shared copy so this works on a fresh clone; fall back to the personal
+    # (git-ignored) .claude mirror if that's all that's present.
+    candidates = [
+        ".agents/skills/codenames-qa/scripts/verify_live.py",
+        ".claude/skills/codenames-qa/scripts/verify_live.py",
+    ]
+    v = next(
+        (os.path.join(REPO, c) for c in candidates if os.path.exists(os.path.join(REPO, c))), None
+    )
+    if v:
         _log("verify live Space")
         subprocess.run([sys.executable, v], cwd=REPO)
     else:

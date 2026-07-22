@@ -40,7 +40,7 @@ clues) — read them as trends, not pass/fail.
 ## 3. Verify the live Space (after a deploy)
 
 ```bash
-python .Codex/skills/codenames-qa/scripts/verify_live.py
+python .agents/skills/codenames-qa/scripts/verify_live.py
 ```
 
 POSTs to the deployed endpoints and asserts: `מדען` illegal next to `מדע`, `מלחמה` legal next to
