@@ -16,10 +16,12 @@ module offers two backends and a way to validate either against real human feedb
 `make_guesser(spec)` builds either from a string spec. `Guesser.rank(board, clue)`
 returns board words best-first; `rank_scores` also returns the per-word score.
 """
+
 from __future__ import annotations
 
 import functools
 import os
+
 import numpy as np
 
 import probe
@@ -38,7 +40,7 @@ def _ref_words(n: int = _N_REF) -> tuple[str, ...]:
     """A fixed pool of ordinary Hebrew content words used only to estimate per-word
     hubness (how close a board word sits to words in general). Skips the very top of the
     frequency list where function-ish words distort the estimate."""
-    return tuple(probe.load_clue_vocab(3000, min_len=3)[300:300 + n])
+    return tuple(probe.load_clue_vocab(3000, min_len=3)[300 : 300 + n])
 
 
 class EnsembleGuesser:
@@ -57,21 +59,23 @@ class EnsembleGuesser:
     def _z_scores(self, i: int, enc, words: list[str], clue: str) -> np.ndarray:
         M = enc.embed(list(words) + [clue])
         B, c = M[:-1], M[-1]
-        mu = np.nanmean(B @ self._ref_matrix(i, enc).T, axis=1)   # per-word hubness offset
-        s = (B @ c) - mu                                          # hubness-corrected similarity
-        finite = s[np.isfinite(s)]                                # OOV words → NaN
+        mu = np.nanmean(B @ self._ref_matrix(i, enc).T, axis=1)  # per-word hubness offset
+        s = (B @ c) - mu  # hubness-corrected similarity
+        finite = s[np.isfinite(s)]  # OOV words → NaN
         m, sd = (finite.mean(), finite.std()) if finite.size else (0.0, 1.0)
-        return (s - m) / (sd + 1e-9)                              # z-score → comparable across encoders
+        return (s - m) / (sd + 1e-9)  # z-score → comparable across encoders
 
-    def rank_scores(self, board: "probe.Board", clue: str) -> tuple[list[str], dict[str, float]]:
+    def rank_scores(self, board: probe.Board, clue: str) -> tuple[list[str], dict[str, float]]:
         words = board.words
         z = np.array([self._z_scores(i, e, words, clue) for i, e in enumerate(self._encs)])
-        agg = np.nanmean(z, axis=0)                     # a word OOV in one encoder still ranks via the other
-        agg = np.where(np.isfinite(agg), agg, agg[np.isfinite(agg)].min() if np.isfinite(agg).any() else 0.0)
+        agg = np.nanmean(z, axis=0)  # a word OOV in one encoder still ranks via the other
+        agg = np.where(
+            np.isfinite(agg), agg, agg[np.isfinite(agg)].min() if np.isfinite(agg).any() else 0.0
+        )
         order = [words[i] for i in np.argsort(-agg)]
         return order, {w: float(agg[j]) for j, w in enumerate(words)}
 
-    def rank(self, board: "probe.Board", clue: str) -> list[str]:
+    def rank(self, board: probe.Board, clue: str) -> list[str]:
         return self.rank_scores(board, clue)[0]
 
 
@@ -117,17 +121,24 @@ class LLMGuesser:
         self.model = model
         self.model_id = f"llm:{provider}:{model}"
 
-    def rank(self, board: "probe.Board", clue: str) -> list[str]:
+    def rank(self, board: probe.Board, clue: str) -> list[str]:
         import json
         import re
         import time
         import urllib.request
-        user = (f"הרמז: {clue}\nמילות הלוח: {', '.join(board.words)}\n\n"
-                "החזר את כל מילות הלוח מסודרות מהקשורה ביותר לרמז עד הפחות קשורה, "
-                "מופרדות בפסיק, בלי מספור ובלי טקסט נוסף.")
-        body_dict = {"model": self.model,
-                     "messages": [{"role": "system", "content": _LLM_SYS},
-                                  {"role": "user", "content": user}]}
+
+        user = (
+            f"הרמז: {clue}\nמילות הלוח: {', '.join(board.words)}\n\n"
+            "החזר את כל מילות הלוח מסודרות מהקשורה ביותר לרמז עד הפחות קשורה, "
+            "מופרדות בפסיק, בלי מספור ובלי טקסט נוסף."
+        )
+        body_dict = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": _LLM_SYS},
+                {"role": "user", "content": user},
+            ],
+        }
         if self.provider == "openai":
             # gpt-5.x reasoning models reject a custom temperature and rename the token cap;
             # a generous completion budget keeps hidden reasoning from truncating the answer.
@@ -138,12 +149,18 @@ class LLMGuesser:
         txt, last_err = None, None
         for attempt in range(3):
             try:
-                req = urllib.request.Request(self.url, data=body, headers={
-                    "Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"})
+                req = urllib.request.Request(
+                    self.url,
+                    data=body,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                )
                 with urllib.request.urlopen(req, timeout=90) as resp:
                     txt = json.loads(resp.read())["choices"][0]["message"]["content"]
                 break
-            except Exception as err:                       # network/parse — retry with backoff
+            except Exception as err:  # network/parse — retry with backoff
                 last_err = err
                 if attempt < 2:
                     time.sleep(1.5 * (attempt + 1))
@@ -153,13 +170,14 @@ class LLMGuesser:
         for tok in re.split(r"[,\n־]| ו", txt):
             w = probe._match_board(tok, board.words)
             if w and w not in seen:
-                ranked.append(w); seen.add(w)
-        for w in board.words:                      # append any the model dropped
+                ranked.append(w)
+                seen.add(w)
+        for w in board.words:  # append any the model dropped
             if w not in seen:
                 ranked.append(w)
         return ranked
 
-    def rank_scores(self, board: "probe.Board", clue: str):
+    def rank_scores(self, board: probe.Board, clue: str):
         order = self.rank(board, clue)
         n = len(order)
         return order, {w: float(n - i) for i, w in enumerate(order)}

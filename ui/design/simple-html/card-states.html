@@ -1,89 +1,314 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="he" dir="rtl">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Codenames Copilot — card states reference</title>
-<link rel="stylesheet" href="../tokens.css">
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Hebrew:wght@400;500;600;700&display=swap">
-<style>
-  body{margin:0;background:var(--cn-app-bg);color:var(--cn-text);font-family:var(--font-body);padding:32px}
-  h1{font-size:22px;font-weight:600;margin:0 0 4px}
-  .sub{color:var(--cn-text-muted);font-size:13px;margin:0 0 28px}
-  h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cn-text-muted);margin:28px 0 12px;font-weight:600}
-  .row{display:flex;flex-wrap:wrap;gap:16px}
-  .item{width:130px}
-  .cap{font-size:11px;color:var(--cn-text-dim);text-align:center;margin-top:7px}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Codenames Copilot — card states reference</title>
+    <link rel="stylesheet" href="../tokens.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"
+    />
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Hebrew:wght@400;500;600;700&display=swap"
+    />
+    <style>
+      body {
+        margin: 0;
+        background: var(--cn-app-bg);
+        color: var(--cn-text);
+        font-family: var(--font-body);
+        padding: 32px;
+      }
+      h1 {
+        font-size: 22px;
+        font-weight: 600;
+        margin: 0 0 4px;
+      }
+      .sub {
+        color: var(--cn-text-muted);
+        font-size: 13px;
+        margin: 0 0 28px;
+      }
+      h2 {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--cn-text-muted);
+        margin: 28px 0 12px;
+        font-weight: 600;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .item {
+        width: 130px;
+      }
+      .cap {
+        font-size: 11px;
+        color: var(--cn-text-dim);
+        text-align: center;
+        margin-top: 7px;
+      }
 
-  /* ---- Cream in-play card. Swap the four --r-* vars per role. ---- */
-  .card{
-    position:relative;min-height:96px;border-radius:8px;overflow:hidden;
-    display:flex;flex-direction:column;justify-content:flex-end;padding:8px;
-    background:var(--cn-card-face);
-    box-shadow:
-      inset 0 0 0 2px var(--r-ring),
-      inset 0 0 22px var(--r-tint),
-      inset 0 1.5px 0 rgba(255,255,255,.55),
-      inset 0 -3px 6px rgba(120,95,55,.28),
-      0 3px 7px rgba(0,0,0,.5);
-  }
-  .card .hole{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:9px;height:9px;border-radius:50%;background:var(--cn-card-hole);box-shadow:inset 0 1.5px 2.5px rgba(90,70,40,.55)}
-  .card .role{position:absolute;top:6px;left:7px;font-size:10px;color:var(--r-icon)}
-  .card .mirror{transform:rotate(180deg);text-align:center;font-size:11px;font-weight:600;color:var(--cn-card-mirror);margin-bottom:3px}
-  .card .label{background:var(--cn-card-label);border:1px solid var(--cn-card-label-bd);border-radius:4px;text-align:center;padding:3px 6px;font-size:14px;font-weight:700;color:var(--cn-card-ink)}
-  .card.sel{box-shadow:
-      inset 0 0 0 2px var(--r-ring),
-      inset 0 0 22px var(--r-tint),
-      inset 0 1.5px 0 rgba(255,255,255,.55),
-      0 0 0 3px var(--cn-select-ring),
-      0 3px 7px rgba(0,0,0,.5);}
-  .card .badge{position:absolute;top:4px;right:5px;width:18px;height:18px;border-radius:50%;background:var(--cn-badge-bg);color:var(--cn-badge-ink);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+      /* ---- Cream in-play card. Swap the four --r-* vars per role. ---- */
+      .card {
+        position: relative;
+        min-height: 96px;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 8px;
+        background: var(--cn-card-face);
+        box-shadow:
+          inset 0 0 0 2px var(--r-ring),
+          inset 0 0 22px var(--r-tint),
+          inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+          inset 0 -3px 6px rgba(120, 95, 55, 0.28),
+          0 3px 7px rgba(0, 0, 0, 0.5);
+      }
+      .card .hole {
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--cn-card-hole);
+        box-shadow: inset 0 1.5px 2.5px rgba(90, 70, 40, 0.55);
+      }
+      .card .role {
+        position: absolute;
+        top: 6px;
+        left: 7px;
+        font-size: 10px;
+        color: var(--r-icon);
+      }
+      .card .mirror {
+        transform: rotate(180deg);
+        text-align: center;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--cn-card-mirror);
+        margin-bottom: 3px;
+      }
+      .card .label {
+        background: var(--cn-card-label);
+        border: 1px solid var(--cn-card-label-bd);
+        border-radius: 4px;
+        text-align: center;
+        padding: 3px 6px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--cn-card-ink);
+      }
+      .card.sel {
+        box-shadow:
+          inset 0 0 0 2px var(--r-ring),
+          inset 0 0 22px var(--r-tint),
+          inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+          0 0 0 3px var(--cn-select-ring),
+          0 3px 7px rgba(0, 0, 0, 0.5);
+      }
+      .card .badge {
+        position: absolute;
+        top: 4px;
+        right: 5px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--cn-badge-bg);
+        color: var(--cn-badge-ink);
+        font-size: 11px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-  .red{--r-ring:var(--cn-red-ring);--r-tint:var(--cn-red-tint);--r-icon:var(--cn-red-ring)}
-  .blue{--r-ring:var(--cn-blue-ring);--r-tint:var(--cn-blue-tint);--r-icon:var(--cn-blue-ring)}
-  .neutral{--r-ring:var(--cn-neutral-ring);--r-tint:var(--cn-neutral-tint);--r-icon:var(--cn-neutral-icon)}
-  .assassin{--r-ring:var(--cn-assassin-ring);--r-tint:var(--cn-assassin-tint);--r-icon:var(--cn-assassin-icon)}
+      .red {
+        --r-ring: var(--cn-red-ring);
+        --r-tint: var(--cn-red-tint);
+        --r-icon: var(--cn-red-ring);
+      }
+      .blue {
+        --r-ring: var(--cn-blue-ring);
+        --r-tint: var(--cn-blue-tint);
+        --r-icon: var(--cn-blue-ring);
+      }
+      .neutral {
+        --r-ring: var(--cn-neutral-ring);
+        --r-tint: var(--cn-neutral-tint);
+        --r-icon: var(--cn-neutral-icon);
+      }
+      .assassin {
+        --r-ring: var(--cn-assassin-ring);
+        --r-tint: var(--cn-assassin-tint);
+        --r-icon: var(--cn-assassin-icon);
+      }
 
-  /* ---- Revealed / chosen tile: illustrated-agent stand-in (tinted, struck) ---- */
-  .revealed{position:relative;min-height:96px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px solid rgba(255,255,255,.08);opacity:.82;transform:scale(.96);filter:saturate(.75)}
-  .revealed.red{background:var(--cn-red-grad)}
-  .revealed.blue{background:var(--cn-blue-grad)}
-  .revealed.neutral{background:var(--cn-neutral-grad)}
-  .revealed.assassin{background:var(--cn-assassin-grad)}
-  .revealed .ag{font-size:24px;color:rgba(240,246,255,.88)}
-  .revealed .w{font-size:11px;color:rgba(240,246,255,.6);text-decoration:line-through}
-  .revealed .chk{position:absolute;top:4px;right:5px;font-size:13px;color:rgba(240,246,255,.9)}
-  .revealed .by{position:absolute;top:5px;left:6px;font-size:9px;color:rgba(240,246,255,.75)}
-  .revealed.neutral .ag,.revealed.neutral .w{color:rgba(60,48,24,.78)}
-  .revealed.neutral .chk,.revealed.neutral .by{color:rgba(60,48,24,.8)}
-</style>
-</head>
-<body>
-  <h1>מצבי קלף · Card states</h1>
-  <p class="sub">Team-agnostic: roles come from the key card (red / blue / neutral / assassin), never "mine / theirs". Every role pairs COLOR + SHAPE.</p>
+      /* ---- Revealed / chosen tile: illustrated-agent stand-in (tinted, struck) ---- */
+      .revealed {
+        position: relative;
+        min-height: 96px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        opacity: 0.82;
+        transform: scale(0.96);
+        filter: saturate(0.75);
+      }
+      .revealed.red {
+        background: var(--cn-red-grad);
+      }
+      .revealed.blue {
+        background: var(--cn-blue-grad);
+      }
+      .revealed.neutral {
+        background: var(--cn-neutral-grad);
+      }
+      .revealed.assassin {
+        background: var(--cn-assassin-grad);
+      }
+      .revealed .ag {
+        font-size: 24px;
+        color: rgba(240, 246, 255, 0.88);
+      }
+      .revealed .w {
+        font-size: 11px;
+        color: rgba(240, 246, 255, 0.6);
+        text-decoration: line-through;
+      }
+      .revealed .chk {
+        position: absolute;
+        top: 4px;
+        right: 5px;
+        font-size: 13px;
+        color: rgba(240, 246, 255, 0.9);
+      }
+      .revealed .by {
+        position: absolute;
+        top: 5px;
+        left: 6px;
+        font-size: 9px;
+        color: rgba(240, 246, 255, 0.75);
+      }
+      .revealed.neutral .ag,
+      .revealed.neutral .w {
+        color: rgba(60, 48, 24, 0.78);
+      }
+      .revealed.neutral .chk,
+      .revealed.neutral .by {
+        color: rgba(60, 48, 24, 0.8);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>מצבי קלף · Card states</h1>
+    <p class="sub">
+      Team-agnostic: roles come from the key card (red / blue / neutral / assassin), never "mine /
+      theirs". Every role pairs COLOR + SHAPE.
+    </p>
 
-  <h2>In-play (cream word card)</h2>
-  <div class="row">
-    <div class="item"><div class="card red"><span class="hole"></span><i class="role ph-fill ph-diamond"></i><div class="mirror">חייל</div><div class="label">חייל</div></div><div class="cap">אדום ◆</div></div>
-    <div class="item"><div class="card blue"><span class="hole"></span><i class="role ph-fill ph-circle"></i><div class="mirror">חופש</div><div class="label">חופש</div></div><div class="cap">כחול ●</div></div>
-    <div class="item"><div class="card neutral"><span class="hole"></span><i class="role ph ph-minus"></i><div class="mirror">צל</div><div class="label">צל</div></div><div class="cap">ניטרלי −</div></div>
-    <div class="item"><div class="card assassin"><span class="hole"></span><i class="role ph-fill ph-skull"></i><div class="mirror">גשר</div><div class="label">גשר</div></div><div class="cap">מתנקש ☠</div></div>
-  </div>
+    <h2>In-play (cream word card)</h2>
+    <div class="row">
+      <div class="item">
+        <div class="card red">
+          <span class="hole"></span><i class="role ph-fill ph-diamond"></i>
+          <div class="mirror">חייל</div>
+          <div class="label">חייל</div>
+        </div>
+        <div class="cap">אדום ◆</div>
+      </div>
+      <div class="item">
+        <div class="card blue">
+          <span class="hole"></span><i class="role ph-fill ph-circle"></i>
+          <div class="mirror">חופש</div>
+          <div class="label">חופש</div>
+        </div>
+        <div class="cap">כחול ●</div>
+      </div>
+      <div class="item">
+        <div class="card neutral">
+          <span class="hole"></span><i class="role ph ph-minus"></i>
+          <div class="mirror">צל</div>
+          <div class="label">צל</div>
+        </div>
+        <div class="cap">ניטרלי −</div>
+      </div>
+      <div class="item">
+        <div class="card assassin">
+          <span class="hole"></span><i class="role ph-fill ph-skull"></i>
+          <div class="mirror">גשר</div>
+          <div class="label">גשר</div>
+        </div>
+        <div class="cap">מתנקש ☠</div>
+      </div>
+    </div>
 
-  <h2>Selected for a clue (accent ring + order badge, badge top-right for RTL)</h2>
-  <div class="row">
-    <div class="item"><div class="card red sel"><span class="hole"></span><i class="role ph-fill ph-diamond"></i><span class="badge">1</span><div class="mirror">פרס</div><div class="label">פרס</div></div><div class="cap">נבחר · 1</div></div>
-    <div class="item"><div class="card red sel"><span class="hole"></span><i class="role ph-fill ph-diamond"></i><span class="badge">2</span><div class="mirror">יהלום</div><div class="label">יהלום</div></div><div class="cap">נבחר · 2</div></div>
-  </div>
+    <h2>Selected for a clue (accent ring + order badge, badge top-right for RTL)</h2>
+    <div class="row">
+      <div class="item">
+        <div class="card red sel">
+          <span class="hole"></span><i class="role ph-fill ph-diamond"></i
+          ><span class="badge">1</span>
+          <div class="mirror">פרס</div>
+          <div class="label">פרס</div>
+        </div>
+        <div class="cap">נבחר · 1</div>
+      </div>
+      <div class="item">
+        <div class="card red sel">
+          <span class="hole"></span><i class="role ph-fill ph-diamond"></i
+          ><span class="badge">2</span>
+          <div class="mirror">יהלום</div>
+          <div class="label">יהלום</div>
+        </div>
+        <div class="cap">נבחר · 2</div>
+      </div>
+    </div>
 
-  <h2>Revealed / chosen (out of play — tinted agent, struck word, ✓ + role)</h2>
-  <div class="row">
-    <div class="item"><div class="revealed red"><i class="by ph-fill ph-diamond"></i><i class="ag ph-fill ph-detective"></i><span class="w">נורה</span><i class="chk ph-fill ph-check-circle"></i></div><div class="cap">נחשף · אדום</div></div>
-    <div class="item"><div class="revealed blue"><i class="by ph-fill ph-circle"></i><i class="ag ph-fill ph-detective"></i><span class="w">קוף</span><i class="chk ph-fill ph-check-circle"></i></div><div class="cap">נחשף · כחול</div></div>
-    <div class="item"><div class="revealed neutral"><i class="by ph ph-minus"></i><i class="ag ph-fill ph-detective"></i><span class="w">טיול</span><i class="chk ph-fill ph-check-circle"></i></div><div class="cap">נחשף · ניטרלי</div></div>
-    <div class="item"><div class="revealed assassin"><i class="by ph-fill ph-skull"></i><i class="ag ph-fill ph-skull"></i><span class="w">גשר</span><i class="chk ph-fill ph-x"></i></div><div class="cap">מתנקש · סוף משחק</div></div>
-  </div>
-</body>
+    <h2>Revealed / chosen (out of play — tinted agent, struck word, ✓ + role)</h2>
+    <div class="row">
+      <div class="item">
+        <div class="revealed red">
+          <i class="by ph-fill ph-diamond"></i><i class="ag ph-fill ph-detective"></i
+          ><span class="w">נורה</span><i class="chk ph-fill ph-check-circle"></i>
+        </div>
+        <div class="cap">נחשף · אדום</div>
+      </div>
+      <div class="item">
+        <div class="revealed blue">
+          <i class="by ph-fill ph-circle"></i><i class="ag ph-fill ph-detective"></i
+          ><span class="w">קוף</span><i class="chk ph-fill ph-check-circle"></i>
+        </div>
+        <div class="cap">נחשף · כחול</div>
+      </div>
+      <div class="item">
+        <div class="revealed neutral">
+          <i class="by ph ph-minus"></i><i class="ag ph-fill ph-detective"></i
+          ><span class="w">טיול</span><i class="chk ph-fill ph-check-circle"></i>
+        </div>
+        <div class="cap">נחשף · ניטרלי</div>
+      </div>
+      <div class="item">
+        <div class="revealed assassin">
+          <i class="by ph-fill ph-skull"></i><i class="ag ph-fill ph-skull"></i
+          ><span class="w">גשר</span><i class="chk ph-fill ph-x"></i>
+        </div>
+        <div class="cap">מתנקש · סוף משחק</div>
+      </div>
+    </div>
+  </body>
 </html>

@@ -3,13 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { postSpymaster } from '../../api/client';
 import { Button, RoleIcon, showToast } from '../../components';
 import { boardsMatch, liveBoard, useAppStore } from '../../state/store';
-import type {
-  ClueOption,
-  Risk,
-  Role,
-  TeamColor,
-  VocabMode,
-} from '../../types/api';
+import type { ClueOption, Risk, Role, TeamColor, VocabMode } from '../../types/api';
 import { FeedbackControls } from '../feedback';
 import './clue.css';
 
@@ -44,13 +38,7 @@ const vocabOptions: Array<{
   { value: 'conservative', label: 'מורחב' },
 ];
 
-function HoverWordChip({
-  role,
-  word,
-}: {
-  role?: Role;
-  word: string;
-}): JSX.Element {
+function HoverWordChip({ role, word }: { role?: Role; word: string }): JSX.Element {
   const setHoverWord = useAppStore((state) => state.setHoverWord);
 
   return (
@@ -92,10 +80,7 @@ function RankedRead({ option }: { option: ClueOption }): JSX.Element {
                 aria-valuemax={100}
                 aria-valuenow={score}
               >
-                <span
-                  className="clue-ranking__fill"
-                  style={{ width: `${score}%` }}
-                />
+                <span className="clue-ranking__fill" style={{ width: `${score}%` }} />
               </span>
               <span className="clue-ranking__score">{score}</span>
             </li>
@@ -132,17 +117,12 @@ export function CluePanel(): JSX.Element {
   const options = withCoverage.length > 0 ? withCoverage : allOptions;
   const optionIndex = Math.min(clue.optionIndex, options.length - 1);
   const option = options[optionIndex];
-  const selectedRoles = Object.fromEntries(
-    tiles.map((tile) => [tile.word, tile.role]),
-  );
+  const selectedRoles = Object.fromEntries(tiles.map((tile) => [tile.word, tile.role]));
   const selectedLabel = targetLabels[target];
   const isCurrentOptionUsed = clue.used?.option === option;
   const hasTopLevelEmptyState = Boolean(response?.error) && !option;
 
-  async function requestClue(
-    kind: RequestKind,
-    snapshot: RequestSnapshot,
-  ): Promise<void> {
+  async function requestClue(kind: RequestKind, snapshot: RequestSnapshot): Promise<void> {
     if (loading) return;
 
     setLoading(kind);
@@ -159,10 +139,7 @@ export function CluePanel(): JSX.Element {
         snapshot.risk,
         snapshot.vocabMode,
       );
-      const boardChanged = !boardsMatch(
-        board,
-        liveBoard(useAppStore.getState()),
-      );
+      const boardChanged = !boardsMatch(board, liveBoard(useAppStore.getState()));
       setClueResult(result, boardChanged);
 
       // "Find the best combination" is an engine-led flow: mirror the exact targets
@@ -337,9 +314,7 @@ export function CluePanel(): JSX.Element {
                 : void requestClue('auto', { risk, vocabMode, target })
             }
           >
-            {selected.length > 0
-              ? 'קבל רמז לקלפים שבחרתי'
-              : 'מצא לי את הצירוף הכי טוב'}
+            {selected.length > 0 ? 'קבל רמז לקלפים שבחרתי' : 'מצא לי את הצירוף הכי טוב'}
           </Button>
         </div>
 
@@ -397,17 +372,9 @@ export function CluePanel(): JSX.Element {
                       type="button"
                       className="clue-result__use-button"
                       data-testid="btn-use-clue"
-                      aria-label={
-                        isCurrentOptionUsed
-                          ? 'הרמז סומן לשימוש'
-                          : 'סמנו שאשתמש ברמז הזה'
-                      }
+                      aria-label={isCurrentOptionUsed ? 'הרמז סומן לשימוש' : 'סמנו שאשתמש ברמז הזה'}
                       aria-pressed={isCurrentOptionUsed}
-                      title={
-                        isCurrentOptionUsed
-                          ? 'הרמז סומן לשימוש'
-                          : 'אני משתמש ברמז הזה'
-                      }
+                      title={isCurrentOptionUsed ? 'הרמז סומן לשימוש' : 'אני משתמש ברמז הזה'}
                       disabled={isCurrentOptionUsed}
                       onClick={useCurrentClue}
                     >
@@ -428,7 +395,9 @@ export function CluePanel(): JSX.Element {
                     aria-label="האפשרות הבאה"
                     onClick={() => moveOption(1)}
                   >
-                    <span className="clue-carousel__chevron" aria-hidden="true">‹</span>
+                    <span className="clue-carousel__chevron" aria-hidden="true">
+                      ‹
+                    </span>
                     <span data-testid="next-option-label">הבא</span>
                   </Button>
                   <span data-testid="option-counter">
@@ -441,7 +410,9 @@ export function CluePanel(): JSX.Element {
                     onClick={() => moveOption(-1)}
                   >
                     <span data-testid="prev-option-label">הקודם</span>
-                    <span className="clue-carousel__chevron" aria-hidden="true">›</span>
+                    <span className="clue-carousel__chevron" aria-hidden="true">
+                      ›
+                    </span>
                   </Button>
                 </nav>
               ) : null}
@@ -450,11 +421,7 @@ export function CluePanel(): JSX.Element {
                 <span>מכוון אל</span>
                 <div className="clue-chip-list">
                   {option.intended.map((word) => (
-                    <HoverWordChip
-                      key={word}
-                      word={word}
-                      role={selectedRoles[word]}
-                    />
+                    <HoverWordChip key={word} word={word} role={selectedRoles[word]} />
                   ))}
                 </div>
               </div>
@@ -470,11 +437,7 @@ export function CluePanel(): JSX.Element {
                   {option.leak.length > 0 ? (
                     <div className="clue-chip-list" aria-label="מילים בסיכון">
                       {option.leak.map((entry) => (
-                        <HoverWordChip
-                          key={entry.word}
-                          word={entry.word}
-                          role={entry.role}
-                        />
+                        <HoverWordChip key={entry.word} word={entry.word} role={entry.role} />
                       ))}
                     </div>
                   ) : null}
@@ -519,9 +482,7 @@ export function CluePanel(): JSX.Element {
                       <span className="clue-candidates__intended">
                         {candidate.intended.join(', ')}
                       </span>
-                      <span className="clue-candidates__score">
-                        {candidate.score.toFixed(2)}
-                      </span>
+                      <span className="clue-candidates__score">{candidate.score.toFixed(2)}</span>
                     </button>
                   </li>
                 ))}

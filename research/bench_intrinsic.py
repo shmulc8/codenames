@@ -1,4 +1,5 @@
 import os
+
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
@@ -19,7 +20,6 @@ import numpy as np
 from scipy.stats import spearmanr
 
 from exp_encoders import make_exp_encoder
-
 
 DEFAULT_DATA = Path(__file__).resolve().parents[1] / "data" / "simlex_he.tsv"
 
@@ -135,10 +135,20 @@ def print_table(results: list[Result]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Compare Hebrew word encoders on SimLex similarity.")
-    parser.add_argument("--encoders", default="fasttext", help="comma-separated probe.py encoder keys")
-    parser.add_argument("--data", type=Path, default=DEFAULT_DATA, help="TSV with word1, word2, score columns")
-    parser.add_argument("--selftest", action="store_true", help="run with a deterministic fake encoder; never load a model")
+    parser = argparse.ArgumentParser(
+        description="Compare Hebrew word encoders on SimLex similarity."
+    )
+    parser.add_argument(
+        "--encoders", default="fasttext", help="comma-separated probe.py encoder keys"
+    )
+    parser.add_argument(
+        "--data", type=Path, default=DEFAULT_DATA, help="TSV with word1, word2, score columns"
+    )
+    parser.add_argument(
+        "--selftest",
+        action="store_true",
+        help="run with a deterministic fake encoder; never load a model",
+    )
     args = parser.parse_args()
 
     pairs = load_pairs(args.data)

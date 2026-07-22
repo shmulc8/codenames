@@ -23,9 +23,8 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "data" / "assoc_he.tsv"
@@ -34,9 +33,22 @@ API_URL = "https://api.openai.com/v1/chat/completions"
 DEFAULT_MODEL = os.environ.get("OPENAI_ASSOC_MODEL", "gpt-4o-mini")
 
 CATEGORIES = (
-    "technology", "science", "nature", "places", "food", "body", "emotion",
-    "society", "work", "culture", "history", "sports", "home", "travel",
-    "abstract ideas", "everyday actions",
+    "technology",
+    "science",
+    "nature",
+    "places",
+    "food",
+    "body",
+    "emotion",
+    "society",
+    "work",
+    "culture",
+    "history",
+    "sports",
+    "home",
+    "travel",
+    "abstract ideas",
+    "everyday actions",
 )
 
 
@@ -88,7 +100,10 @@ This is batch {batch}; maximize lexical diversity and avoid obvious pairs from c
         "model": model,
         "temperature": 0.8,
         "messages": [
-            {"role": "system", "content": "You produce conservative machine-readable Hebrew lexical data."},
+            {
+                "role": "system",
+                "content": "You produce conservative machine-readable Hebrew lexical data.",
+            },
             {"role": "user", "content": prompt},
         ],
         "response_format": {"type": "json_object"},
@@ -109,10 +124,20 @@ This is batch {batch}; maximize lexical diversity and avoid obvious pairs from c
     return pairs
 
 
-def clean_pairs(rows: list[dict], seen: set[tuple[str, str]], category: str, model: str, batch: int) -> list[dict]:
+def clean_pairs(
+    rows: list[dict], seen: set[tuple[str, str]], category: str, model: str, batch: int
+) -> list[dict]:
     output = []
-    now = datetime.now(timezone.utc).isoformat()
-    allowed_relations = {"thematic", "functional", "causal", "cultural", "situational", "taxonomic", "contrastive"}
+    now = datetime.now(UTC).isoformat()
+    allowed_relations = {
+        "thematic",
+        "functional",
+        "causal",
+        "cultural",
+        "situational",
+        "taxonomic",
+        "contrastive",
+    }
     for row in rows:
         if not isinstance(row, dict):
             continue
@@ -135,17 +160,19 @@ def clean_pairs(rows: list[dict], seen: set[tuple[str, str]], category: str, mod
         if relation not in allowed_relations:
             continue
         seen.add(key)
-        output.append({
-            "word1": a,
-            "word2": b,
-            "score": score,
-            "relation": relation,
-            "source": "openai_generated",
-            "category": category,
-            "model": model,
-            "batch": batch,
-            "generated_at": now,
-        })
+        output.append(
+            {
+                "word1": a,
+                "word2": b,
+                "score": score,
+                "relation": relation,
+                "source": "openai_generated",
+                "category": category,
+                "model": model,
+                "batch": batch,
+                "generated_at": now,
+            }
+        )
     return output
 
 
@@ -193,13 +220,26 @@ def main() -> int:
                         out.write(json.dumps(row, ensure_ascii=False) + "\n")
                     out.flush()
                     total += len(accepted)
-                    print(f"batch {batch}/{args.batches}: accepted {len(accepted)} ({total} total)", flush=True)
+                    print(
+                        f"batch {batch}/{args.batches}: accepted {len(accepted)} ({total} total)",
+                        flush=True,
+                    )
                     break
-                except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, ValueError, KeyError, json.JSONDecodeError) as exc:
+                except (
+                    urllib.error.HTTPError,
+                    urllib.error.URLError,
+                    TimeoutError,
+                    ValueError,
+                    KeyError,
+                    json.JSONDecodeError,
+                ) as exc:
                     if attempt >= args.max_retries:
-                        print(f"batch {batch} failed after retries: {type(exc).__name__}", file=sys.stderr)
+                        print(
+                            f"batch {batch} failed after retries: {type(exc).__name__}",
+                            file=sys.stderr,
+                        )
                         return 1
-                    delay = min(60, 2 ** attempt)
+                    delay = min(60, 2**attempt)
                     print(f"batch {batch} retry {attempt + 1}/{args.max_retries}", file=sys.stderr)
                     time.sleep(delay)
     return 0

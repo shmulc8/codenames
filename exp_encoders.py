@@ -17,7 +17,6 @@ from pathlib import Path
 
 import numpy as np
 
-
 DATA = Path(__file__).resolve().parent / "data"
 SERVILE_PREFIXES = frozenset("הובכלמש")
 
@@ -85,6 +84,7 @@ class BlendEncoder:
     def __init__(self, w_ft: float, w_nb: float) -> None:
         self.model_id = f"blend_ft_{w_ft}_nb_{w_nb}"
         from probe import make_encoder
+
         self.ft = make_encoder("fasttext")
         self.nb = NumberbatchEncoder()
         self.w_ft = w_ft
@@ -97,7 +97,7 @@ class BlendEncoder:
         V_nb_clean = np.nan_to_num(V_nb, nan=0.0)
         V_blend = np.concatenate([self.w_ft * V_ft, self.w_nb * V_nb_clean], axis=-1)
         norms = np.linalg.norm(V_blend, axis=1, keepdims=True)
-        V_blend /= (norms + 1e-9)
+        V_blend /= norms + 1e-9
         return V_blend
 
 
@@ -125,7 +125,7 @@ def _selftest() -> None:
     print(f"dim={encoder.dim} N={len(encoder.vocab)}")
     print("pairwise_cosines")
     print("       " + " ".join(f"{word:>8}" for word in words))
-    for word, row in zip(words, cosines):
+    for word, row in zip(words, cosines, strict=False):
         print(f"{word:>6} " + " ".join(f"{value:8.4f}" for value in row))
     oov = encoder.embed(["זזזזזזז"])[0]
     print(f"oov_all_nan={bool(np.isnan(oov).all())}")

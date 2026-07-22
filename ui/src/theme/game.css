@@ -1,7 +1,7 @@
 :root {
   /* Hebrew must resolve before Inter, which does not contain Hebrew glyphs. */
-  --font-heading: "Noto Sans Hebrew", "Inter", system-ui, sans-serif;
-  --font-body: "Noto Sans Hebrew", "Inter", system-ui, sans-serif;
+  --font-heading: 'Noto Sans Hebrew', 'Inter', system-ui, sans-serif;
+  --font-body: 'Noto Sans Hebrew', 'Inter', system-ui, sans-serif;
 }
 
 html {
@@ -86,7 +86,7 @@ button {
   gap: var(--space-2);
 }
 
-.cn-button[data-loading="true"] .cn-button__content {
+.cn-button[data-loading='true'] .cn-button__content {
   visibility: hidden;
 }
 
@@ -173,7 +173,9 @@ button {
   opacity: 0;
   pointer-events: none;
   transform: translate(50%, var(--space-1));
-  transition: opacity 120ms ease, transform 120ms ease;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
 }
 
 .cn-tooltip:hover .cn-tooltip__content,

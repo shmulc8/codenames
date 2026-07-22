@@ -92,9 +92,7 @@ test.describe('check my word', () => {
     await expect(page.getByText('אילו מילים זה עלול למשוך?')).toBeVisible();
     await expect(page.getByText('ציון קרבה (0–100)')).toBeVisible();
     await expect(
-      page.getByText(
-        'המספרים מסמנים אילו מילים אחרות עלולות להתבלבל עם הרמז שלך',
-      ),
+      page.getByText('המספרים מסמנים אילו מילים אחרות עלולות להתבלבל עם הרמז שלך'),
     ).toBeVisible();
 
     const rankedList = page.getByTestId('check-ranked-list');
@@ -111,15 +109,11 @@ test.describe('check my word', () => {
     expect(request?.roles['ים']).toBe('opp');
 
     await expect
-      .poll(() =>
-        page.evaluate(() => window.__store?.getState().checkedClue ?? null),
-      )
+      .poll(() => page.evaluate(() => window.__store?.getState().checkedClue ?? null))
       .toBe('טבעות');
   });
 
-  test('a board word remains informative but is clearly marked illegal', async ({
-    page,
-  }) => {
+  test('a board word remains informative but is clearly marked illegal', async ({ page }) => {
     await openCheckPanel(page);
     await submitCheck(page, 'אריה');
 
@@ -133,9 +127,7 @@ test.describe('check my word', () => {
     await expect(page.getByText('בטוח ל-9 מילים')).toBeVisible();
   });
 
-  test('target switching changes the request perspective and safety summary', async ({
-    page,
-  }) => {
+  test('target switching changes the request perspective and safety summary', async ({ page }) => {
     await openCheckPanel(page);
 
     await expect(page.getByTestId('target-red')).toBeChecked();
@@ -164,21 +156,15 @@ test.describe('check my word', () => {
     await page.getByTestId('check-input').fill('טבעות');
     await page.getByTestId('btn-check').click();
 
-    await expect(
-      page.getByTestId('btn-check').getByTestId('loading-spinner'),
-    ).toBeVisible();
+    await expect(page.getByTestId('btn-check').getByTestId('loading-spinner')).toBeVisible();
     await expect(page.getByTestId('btn-check')).toBeDisabled();
     await expect(page.getByTestId('check-input')).toBeDisabled();
     await expect(page.getByTestId('target-red')).toBeDisabled();
     await expect(page.getByTestId('check-result')).toBeVisible();
-    await expect(
-      page.getByTestId('btn-check').getByTestId('loading-spinner'),
-    ).toHaveCount(0);
+    await expect(page.getByTestId('btn-check').getByTestId('loading-spinner')).toHaveCount(0);
   });
 
-  test('hovering a ranked row synchronizes hoverWord and clears it on exit', async ({
-    page,
-  }) => {
+  test('hovering a ranked row synchronizes hoverWord and clears it on exit', async ({ page }) => {
     await openCheckPanel(page);
     await submitCheck(page, 'טבעות');
 
@@ -194,9 +180,7 @@ test.describe('check my word', () => {
       .toBeNull();
   });
 
-  test('a backend failure produces a Hebrew error toast and no result', async ({
-    page,
-  }) => {
+  test('a backend failure produces a Hebrew error toast and no result', async ({ page }) => {
     await openCheckPanel(page);
     await page.evaluate(() => {
       const fetchWithMocks = window.fetch;
@@ -216,15 +200,11 @@ test.describe('check my word', () => {
 
     await expect(page.getByTestId('toast')).toContainText('בדיקת הרמז נכשלה');
     await expect(page.getByTestId('check-result')).toHaveCount(0);
-    await expect(
-      page.getByTestId('btn-check').getByTestId('loading-spinner'),
-    ).toHaveCount(0);
+    await expect(page.getByTestId('btn-check').getByTestId('loading-spinner')).toHaveCount(0);
     await expect(page.getByTestId('btn-check')).toBeEnabled();
   });
 
-  test('a failed replacement check clears the prior result and semantic hint', async ({
-    page,
-  }) => {
+  test('a failed replacement check clears the prior result and semantic hint', async ({ page }) => {
     await openCheckPanel(page);
     await submitCheck(page, 'טבע');
 
@@ -253,9 +233,7 @@ test.describe('check my word', () => {
     await expect(page.getByTestId('toast')).toContainText('בדיקה זמנית נכשלה');
     await expect(page.getByTestId('check-result')).toHaveCount(0);
     await expect
-      .poll(() =>
-        page.evaluate(() => window.__store?.getState().checkedClue ?? null),
-      )
+      .poll(() => page.evaluate(() => window.__store?.getState().checkedClue ?? null))
       .toBeNull();
     await expect(page.getByTestId('semantic-map')).not.toHaveAttribute(
       'aria-label',
@@ -264,9 +242,7 @@ test.describe('check my word', () => {
     await expect(page.getByTestId('map-hint-node')).toHaveCount(0);
   });
 
-  test('a check response is discarded when the live board changes in flight', async ({
-    page,
-  }) => {
+  test('a check response is discarded when the live board changes in flight', async ({ page }) => {
     await openCheckPanel(page);
     await installCheckResponseGate(page);
 
@@ -280,23 +256,17 @@ test.describe('check my word', () => {
 
       await page.getByTestId('btn-lifecycle-0').click();
       await expect
-        .poll(() =>
-          page.evaluate(() => window.__store?.getState().tiles[0]?.lifecycle),
-        )
+        .poll(() => page.evaluate(() => window.__store?.getState().tiles[0]?.lifecycle))
         .toBe('chosen');
     } finally {
       await releaseCheckResponse(page);
     }
 
-    await expect(page.getByTestId('toast')).toContainText(
-      'הלוח השתנה בזמן הבדיקה — בדקו שוב',
-    );
+    await expect(page.getByTestId('toast')).toContainText('הלוח השתנה בזמן הבדיקה — בדקו שוב');
     await expect(page.getByTestId('check-result')).toHaveCount(0);
     await expect(page.getByTestId('ranked-row-אריה')).toHaveCount(0);
     await expect
-      .poll(() =>
-        page.evaluate(() => window.__store?.getState().checkedClue ?? null),
-      )
+      .poll(() => page.evaluate(() => window.__store?.getState().checkedClue ?? null))
       .toBeNull();
     await expect(page.getByTestId('semantic-map')).not.toHaveAttribute(
       'aria-label',

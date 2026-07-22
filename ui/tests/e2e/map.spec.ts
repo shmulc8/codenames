@@ -56,18 +56,10 @@ test.describe('semantic map', () => {
     await waitForMap(page);
 
     await expect(page.getByTestId('semantic-map').getByRole('button')).toHaveCount(25);
-    await expect(page.getByTestId('map-dot-אריה')).toHaveAccessibleName(
-      'אריה, אדום, קרבה 91',
-    );
-    await expect(page.getByTestId('map-dot-ים')).toHaveAccessibleName(
-      'ים, כחול, קרבה 82',
-    );
-    await expect(page.getByTestId('map-dot-כדור')).toHaveAccessibleName(
-      'כדור, ניטרלי, קרבה 74',
-    );
-    await expect(page.getByTestId('map-dot-נחש')).toHaveAccessibleName(
-      'נחש, מתנקש, קרבה 67',
-    );
+    await expect(page.getByTestId('map-dot-אריה')).toHaveAccessibleName('אריה, אדום, קרבה 91');
+    await expect(page.getByTestId('map-dot-ים')).toHaveAccessibleName('ים, כחול, קרבה 82');
+    await expect(page.getByTestId('map-dot-כדור')).toHaveAccessibleName('כדור, ניטרלי, קרבה 74');
+    await expect(page.getByTestId('map-dot-נחש')).toHaveAccessibleName('נחש, מתנקש, קרבה 67');
 
     const legend = page.getByTestId('map-legend');
     await expect(legend).toContainText('קרוב למרכז = קרוב לרמז');
@@ -85,9 +77,7 @@ test.describe('semantic map', () => {
     const sizes = await page.evaluate(() => {
       const frame = document.querySelector<HTMLElement>('.semantic-map__frame');
       const map = document.querySelector<SVGSVGElement>('.semantic-map');
-      const background = document.querySelector<SVGRectElement>(
-        '.semantic-map__background',
-      );
+      const background = document.querySelector<SVGRectElement>('.semantic-map__background');
       const grid = document.querySelector<SVGRectElement>('.semantic-map__grid');
       if (!frame || !map || !background || !grid) {
         throw new Error('Semantic map surface was not rendered');
@@ -122,9 +112,7 @@ test.describe('semantic map', () => {
     expect(sizes.surfaceTop).toBeGreaterThanOrEqual(0);
   });
 
-  test('renders a hint node and one connection for each intended target', async ({
-    page,
-  }) => {
+  test('renders a hint node and one connection for each intended target', async ({ page }) => {
     await setBoard(page, true);
     await waitForMap(page);
 
@@ -137,24 +125,18 @@ test.describe('semantic map', () => {
     expect(request?.words).toEqual(fixtureBoard.words);
   });
 
-  test('without a clue it renders dots only and explains the hint-less state', async ({
-    page,
-  }) => {
+  test('without a clue it renders dots only and explains the hint-less state', async ({ page }) => {
     await setBoard(page);
     await waitForMap(page);
 
     await expect(page.getByTestId('map-hint-node')).toHaveCount(0);
     await expect(page.getByTestId('semantic-map').locator('line')).toHaveCount(0);
     await expect(page.getByText('ללא רמז פעיל')).toBeVisible();
-    await expect(
-      page.getByText('בחרו רמז או בדקו מילה כדי לראות את מרכז המשיכה'),
-    ).toBeVisible();
+    await expect(page.getByText('בחרו רמז או בדקו מילה כדי לראות את מרכז המשיכה')).toBeVisible();
     expect((await page.evaluate(() => window.__lastSpaceReq))?.clue).toBeUndefined();
   });
 
-  test('hover shows a scored readout, updates hoverWord, and clears on exit', async ({
-    page,
-  }) => {
+  test('hover shows a scored readout, updates hoverWord, and clears on exit', async ({ page }) => {
     await setBoard(page, true);
     await waitForMap(page);
 
@@ -197,14 +179,10 @@ test.describe('semantic map', () => {
     await waitForMap(page);
 
     await expect(page.getByTestId('map-danger-נחש')).toBeVisible();
-    await expect(page.getByTestId('map-dot-נחש')).toHaveAccessibleName(
-      /מתנקש/,
-    );
+    await expect(page.getByTestId('map-dot-נחש')).toHaveAccessibleName(/מתנקש/);
   });
 
-  test('removes a chosen word and refreshes the live-board request', async ({
-    page,
-  }) => {
+  test('removes a chosen word and refreshes the live-board request', async ({ page }) => {
     await setBoard(page, true);
     await waitForMap(page);
     await expect(page.getByTestId('map-dot-אריה')).toBeVisible();
@@ -215,12 +193,8 @@ test.describe('semantic map', () => {
     });
 
     await expect(page.getByTestId('map-dot-אריה')).toHaveCount(0);
-    await expect
-      .poll(() => page.evaluate(() => window.__lastSpaceReq?.words.length ?? 0))
-      .toBe(24);
-    expect((await page.evaluate(() => window.__lastSpaceReq))?.words).not.toContain(
-      'אריה',
-    );
+    await expect.poll(() => page.evaluate(() => window.__lastSpaceReq?.words.length ?? 0)).toBe(24);
+    expect((await page.evaluate(() => window.__lastSpaceReq))?.words).not.toContain('אריה');
   });
 
   test('check-mode success supplies the checked clue and remembered score to the map', async ({
@@ -233,9 +207,7 @@ test.describe('semantic map', () => {
     await expect(page.getByTestId('check-result')).toBeVisible();
 
     await expect(page.getByTestId('map-hint-node')).toContainText('טבעות');
-    await expect(page.getByTestId('map-dot-אריה')).toHaveAccessibleName(
-      'אריה, אדום, קרבה 95',
-    );
+    await expect(page.getByTestId('map-dot-אריה')).toHaveAccessibleName('אריה, אדום, קרבה 95');
     await expect(page.getByTestId('semantic-map').locator('line')).toHaveCount(0);
     expect((await page.evaluate(() => window.__lastSpaceReq))?.clue).toBe('טבעות');
   });
@@ -258,10 +230,7 @@ test.describe('semantic map', () => {
         return fetchWithMocks(input, init);
       };
       if (!window.__store) throw new Error('The dev store hook was not installed');
-      window.__store.getState().setBoard(
-        board.words,
-        board.roles,
-      );
+      window.__store.getState().setBoard(board.words, board.roles);
     }, fixtureBoard);
 
     await expect(page.getByText('ממקמים את מילות הלוח…')).toBeVisible();

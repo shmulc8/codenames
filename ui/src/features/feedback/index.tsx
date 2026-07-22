@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { fullBoard, useAppStore, type UsedClue } from '../../state/store';
-import type {
-  ClueOption,
-  FeedbackPayload,
-  RevealedEntry,
-  Risk,
-} from '../../types/api';
+import type { ClueOption, FeedbackPayload, RevealedEntry, Risk } from '../../types/api';
 import { enqueueFeedback } from './queue';
 import './feedback.css';
 
@@ -82,11 +77,7 @@ function buildFeedbackPayload(
   };
 }
 
-export function FeedbackControls({
-  option,
-  mode,
-  risk,
-}: FeedbackControlsProps): JSX.Element {
+export function FeedbackControls({ option, mode, risk }: FeedbackControlsProps): JSX.Element {
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [why, setWhy] = useState<Why | null>(null);
   const [comment, setComment] = useState('');
@@ -106,14 +97,7 @@ export function FeedbackControls({
   ): Promise<void> => {
     setSendState('sending');
     await enqueueFeedback(
-      buildFeedbackPayload(
-        option,
-        mode,
-        risk,
-        nextVerdict,
-        nextWhy,
-        nextComment,
-      ),
+      buildFeedbackPayload(option, mode, risk, nextVerdict, nextWhy, nextComment),
     );
     setSendState('sent');
   };
@@ -219,7 +203,11 @@ export function FeedbackControls({
 
       {sendState === 'sending' ? (
         <p className="feedback-controls__status" role="status">
-          <span className="feedback-controls__spinner" data-testid="loading-spinner" aria-hidden="true" />
+          <span
+            className="feedback-controls__spinner"
+            data-testid="loading-spinner"
+            aria-hidden="true"
+          />
           שומרים את המשוב…
         </p>
       ) : null}
@@ -237,9 +225,7 @@ export function FeedbackControls({
 function markOutcomeSent(used: UsedClue): void {
   useAppStore.setState((state) => {
     const currentUsed =
-      state.clue.used?.ts === used.ts
-        ? { ...state.clue.used, outcomeSent: true }
-        : state.clue.used;
+      state.clue.used?.ts === used.ts ? { ...state.clue.used, outcomeSent: true } : state.clue.used;
 
     return {
       clue: { ...state.clue, used: currentUsed },

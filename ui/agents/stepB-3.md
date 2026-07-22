@@ -6,7 +6,7 @@ Framing (locked product decision): there is no "guesser" persona. Check-mode is 
 
 ## Part 1 — CheckPanel (`src/features/check/`) — build `agents/design/screens/desktop-2c-check-word.png`
 
-1. `check-input` (Hebrew text input) + `btn-check` → `postCheck(liveBoard(state), store.target, clue)` → render `check-result`. Loading + `ApiError` toast. Check-mode inherits `store.target` (the team you're testing the word *for*, so "בטוח ל-N" is meaningful); surface a small read-only target indicator with the team `RoleIcon`, and let the same `target-color` control (shared store) switch it. Team-agnostic — no `myColor`.
+1. `check-input` (Hebrew text input) + `btn-check` → `postCheck(liveBoard(state), store.target, clue)` → render `check-result`. Loading + `ApiError` toast. Check-mode inherits `store.target` (the team you're testing the word _for_, so "בטוח ל-N" is meaningful); surface a small read-only target indicator with the team `RoleIcon`, and let the same `target-color` control (shared store) switch it. Team-agnostic — no `myColor`.
 2. **Illegal clue** (`illegal: true`) → `check-illegal` red banner: "המילה הזו לא חוקית — היא מילה מהלוח או חולקת שורש עם אחת מהן" — still render the read list below (it's informative).
 3. **Ranked list** (`check-ranked-list`, rows `ranked-row-{word}`): all live words from `read`, best-first: rank, word, `RoleIcon`, bar of `conf*100` with numeric `sim-score-{word}`, header labeled "ציון קרבה (0–100)". Row hover → `setHoverWord` (board + map highlight). Use this copy: "המספרים מסמנים אילו מילים אחרות עלולות להתבלבל עם הרמז שלך".
 4. **Verdict summary**: "בטוח ל-{safe} מילים" chip; `first_danger` line ("הסכנה הראשונה: {word} ({role})"); assassin line with rank: warn strongly (red) if `assassin.rank < safe + 2`.

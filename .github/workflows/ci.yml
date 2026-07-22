@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# The clue-legality regression is NOT run here: it needs the 237 MB fastText model, which is
+# git-ignored and not available in CI. It runs at deploy time (scripts/deploy.py legality_gate)
+# and locally via `make check`. CI covers the fast, model-free quality gates.
+
+jobs:
+  python:
+    name: Python lint + format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - run: pip install "ruff>=0.6" "mypy>=1.10"
+      - name: ruff lint
+        run: ruff check .
+      - name: ruff format
+        run: ruff format --check .
+      - name: mypy (advisory — known baseline, does not fail the build)
+        run: mypy || true
+
+  frontend:
+    name: Frontend typecheck + lint + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ui/.nvmrc
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - run: npm ci
+      - name: typecheck
+        run: npm run typecheck
+      - name: eslint
+        run: npm run lint
+      - name: prettier
+        run: npm run format:check
+      - name: build
+        run: npm run build

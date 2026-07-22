@@ -69,4 +69,3 @@ export const fixtureBoard: BoardPayload = {
 export const FIXTURE_WORDS = fixtureWords;
 export const FIXTURE_ROLES = fixtureRoles;
 export const FIXTURE_BOARD = fixtureBoard;
-

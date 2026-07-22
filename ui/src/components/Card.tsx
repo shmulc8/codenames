@@ -12,14 +12,21 @@ export interface CardProps {
 }
 
 // ponytail: whole palette derived from one --card-color via color-mix; no per-shade props.
-export function Card({ color = '#e8d4b9', children, className = '', style }: CardProps): JSX.Element {
+export function Card({
+  color = '#e8d4b9',
+  children,
+  className = '',
+  style,
+}: CardProps): JSX.Element {
   const vars = { '--card-color': color, ...style } as CSSProperties;
 
   return (
     <div className={`cn-card ${className}`.trim()} style={vars}>
       <svg viewBox="0 0 400 260" width="100%" height="100%" role="img" aria-hidden={!children}>
         <defs>
-          <clipPath id="cardClip"><rect x="14" y="12" width="372" height="236" rx="16" /></clipPath>
+          <clipPath id="cardClip">
+            <rect x="14" y="12" width="372" height="236" rx="16" />
+          </clipPath>
         </defs>
 
         {/* drop shadow + parchment base */}
@@ -27,8 +34,28 @@ export function Card({ color = '#e8d4b9', children, className = '', style }: Car
         <rect x="14" y="12" width="372" height="236" rx="16" fill="var(--card-color)" />
 
         {/* subtle embossed inner frame */}
-        <rect x="23" y="21" width="354" height="218" rx="11" fill="none" stroke="var(--card-shade-1)" strokeWidth="1.5" opacity="0.45" />
-        <rect x="24" y="22" width="354" height="218" rx="11" fill="none" stroke="var(--card-tint-2)" strokeWidth="1.5" opacity="0.6" />
+        <rect
+          x="23"
+          y="21"
+          width="354"
+          height="218"
+          rx="11"
+          fill="none"
+          stroke="var(--card-shade-1)"
+          strokeWidth="1.5"
+          opacity="0.45"
+        />
+        <rect
+          x="24"
+          y="22"
+          width="354"
+          height="218"
+          rx="11"
+          fill="none"
+          stroke="var(--card-tint-2)"
+          strokeWidth="1.5"
+          opacity="0.6"
+        />
 
         {/* faint agent figure, upper-right */}
         <g fill="var(--card-shade-2)" opacity="0.3" transform="translate(130,-8)">
@@ -37,9 +64,27 @@ export function Card({ color = '#e8d4b9', children, className = '', style }: Car
         </g>
 
         {/* white word box (lower third) */}
-        <rect x="40" y="150" width="320" height="66" rx="7" fill="var(--card-shade-0)" opacity="0.35" />
+        <rect
+          x="40"
+          y="150"
+          width="320"
+          height="66"
+          rx="7"
+          fill="var(--card-shade-0)"
+          opacity="0.35"
+        />
         <rect x="40" y="148" width="320" height="66" rx="7" fill="#faf8f2" />
-        <rect x="40" y="148" width="320" height="66" rx="7" fill="none" stroke="var(--card-shade-1)" strokeWidth="1.5" opacity="0.55" />
+        <rect
+          x="40"
+          y="148"
+          width="320"
+          height="66"
+          rx="7"
+          fill="none"
+          stroke="var(--card-shade-1)"
+          strokeWidth="1.5"
+          opacity="0.55"
+        />
 
         {/* diagonal gloss */}
         <g clipPath="url(#cardClip)">

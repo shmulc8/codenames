@@ -37,7 +37,11 @@
   font-size: 1rem;
   filter: grayscale(1);
   opacity: 0.78;
-  transition: border-color 140ms ease, background 140ms ease, filter 140ms ease, opacity 140ms ease;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    filter 140ms ease,
+    opacity 140ms ease;
 }
 
 .feedback-controls__vote:hover:not(:disabled),

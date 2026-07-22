@@ -52,10 +52,7 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
-export async function imageFileToCanvas(
-  file: File,
-  grayscale = false,
-): Promise<HTMLCanvasElement> {
+export async function imageFileToCanvas(file: File, grayscale = false): Promise<HTMLCanvasElement> {
   const image = await loadImage(file);
   const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
   const canvas = document.createElement('canvas');
@@ -89,10 +86,7 @@ function onlyHebrew(value: string): string {
 }
 
 export async function recognizeBoard(file: File): Promise<OcrCell[]> {
-  const [worker, canvas] = await Promise.all([
-    warmOcrWorker(),
-    imageFileToCanvas(file, true),
-  ]);
+  const [worker, canvas] = await Promise.all([warmOcrWorker(), imageFileToCanvas(file, true)]);
   const result = await worker.recognize(canvas, {}, { blocks: true, text: true });
   const words =
     result.data.blocks
@@ -111,7 +105,7 @@ export async function recognizeBoard(file: File): Promise<OcrCell[]> {
 
   const ordered = words
     .sort((left, right) => left.y - right.y)
-    .reduce<typeof words[]>((rows, word) => {
+    .reduce<(typeof words)[]>((rows, word) => {
       const nearest = rows.find((row) => {
         const averageY = row.reduce((total, item) => total + item.y, 0) / row.length;
         return Math.abs(averageY - word.y) < canvas.height / 12;

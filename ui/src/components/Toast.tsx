@@ -1,17 +1,9 @@
 import { useSyncExternalStore } from 'react';
 
-import {
-  getToastSnapshot,
-  hideToast,
-  subscribeToToast,
-} from '../state/toast';
+import { getToastSnapshot, hideToast, subscribeToToast } from '../state/toast';
 
 export function Toast(): JSX.Element | null {
-  const toast = useSyncExternalStore(
-    subscribeToToast,
-    getToastSnapshot,
-    getToastSnapshot,
-  );
+  const toast = useSyncExternalStore(subscribeToToast, getToastSnapshot, getToastSnapshot);
 
   if (!toast) {
     return null;
@@ -38,4 +30,3 @@ export function Toast(): JSX.Element | null {
     </div>
   );
 }
-

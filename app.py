@@ -17,6 +17,7 @@ when selected. Encoders and the clue vocabulary load lazily on first use.
 """
 
 import os
+
 # Force the hub online: feedback persistence (the CommitScheduler) pushes via huggingface_hub,
 # which HF_HUB_OFFLINE=1 would gag. Models never need the hub at runtime — they load from the
 # local cache (local_files_only=True in morph), so nothing here reaches out except feedback.
@@ -31,7 +32,7 @@ import threading
 import time
 
 import numpy as np
-from flask import Flask, request, jsonify, send_file, send_from_directory, abort
+from flask import Flask, abort, jsonify, request, send_file, send_from_directory
 
 import morph
 import probe
@@ -60,10 +61,10 @@ RISK_PROFILES = {
     # ordering stays cautious >= balanced >= bold.
     "cautious": dict(m=2, lam_a=3.0, lam_opp=1.3, lam_neu=0.7, keep=0.68, safe_margin=0.05),
     "balanced": dict(m=2, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.68, safe_margin=0.05),
-    "bold":     dict(m=4, lam_a=1.8, lam_opp=0.7, lam_neu=0.4, keep=0.62, safe_margin=0.0),
+    "bold": dict(m=4, lam_a=1.8, lam_opp=0.7, lam_neu=0.4, keep=0.62, safe_margin=0.0),
 }
 _CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu", "safe_margin")
-LAM_F = 0.14                # weight on the mid-frequency (DETECT-FREQ) prior in candidate scoring
+LAM_F = 0.14  # weight on the mid-frequency (DETECT-FREQ) prior in candidate scoring
 # Listener-competition (RSA-style) danger term: penalise clues by the softmax share a literal
 # guesser would put on the assassin/opponent words (see probe._listener_danger). One global pair
 # across risk profiles; SOFT_TAU is the softmax temperature. LAM_SOFT=0 restores hinge-only scoring.
@@ -87,8 +88,10 @@ COH_FLOOR, COH_MODE = 0.20, "head"
 # token are configured, mirrored to a private HF Dataset on a schedule. Nothing here can take
 # the co-pilot down — every step is wrapped and the app serves regardless.
 FEEDBACK_DIR = os.environ.get("FEEDBACK_DIR", "feedback")
-FEEDBACK_DATASET = os.environ.get("FEEDBACK_DATASET")          # e.g. "shmulc/codenames-feedback"
-_FB_SALT = os.environ.get("FEEDBACK_SALT", "cn-feedback-v1")   # salts the IP hash (coarse anti-evasion signal, never the raw IP)
+FEEDBACK_DATASET = os.environ.get("FEEDBACK_DATASET")  # e.g. "shmulc/codenames-feedback"
+_FB_SALT = os.environ.get(
+    "FEEDBACK_SALT", "cn-feedback-v1"
+)  # salts the IP hash (coarse anti-evasion signal, never the raw IP)
 _fb_lock = threading.Lock()
 _fb_scheduler = None
 
@@ -105,18 +108,30 @@ def _init_feedback():
         if not os.path.exists(local_fb):
             try:
                 from huggingface_hub import hf_hub_download
-                src = hf_hub_download(FEEDBACK_DATASET, "data/feedback.jsonl",
-                                      repo_type="dataset", token=os.environ["HF_TOKEN"])
+
+                src = hf_hub_download(
+                    FEEDBACK_DATASET,
+                    "data/feedback.jsonl",
+                    repo_type="dataset",
+                    token=os.environ["HF_TOKEN"],
+                )
                 shutil.copyfile(src, local_fb)
                 app.logger.info("seeded local feedback log from dataset")
             except Exception:
                 app.logger.info("no existing feedback in dataset to seed — starting fresh")
         try:
             from huggingface_hub import CommitScheduler
+
             _fb_scheduler = CommitScheduler(
-                repo_id=FEEDBACK_DATASET, repo_type="dataset", folder_path=FEEDBACK_DIR,
-                path_in_repo="data", every=1, private=True, token=os.environ["HF_TOKEN"],
-                squash_history=True)
+                repo_id=FEEDBACK_DATASET,
+                repo_type="dataset",
+                folder_path=FEEDBACK_DIR,
+                path_in_repo="data",
+                every=1,
+                private=True,
+                token=os.environ["HF_TOKEN"],
+                squash_history=True,
+            )
             app.logger.info("feedback mirrored to dataset %s", FEEDBACK_DATASET)
         except Exception:
             app.logger.exception("feedback scheduler init failed — logging locally only")
@@ -128,6 +143,7 @@ def on_error(e):
     errors (e.g. a 404 for /favicon.ico) pass through with their own status — no 500, no
     traceback noise in the logs."""
     from werkzeug.exceptions import HTTPException
+
     if isinstance(e, HTTPException):
         return e
     app.logger.exception("request failed")
@@ -138,20 +154,21 @@ def on_error(e):
 def favicon():
     return ("", 204)
 
+
 MODELS = [
     {"id": probe.LLM_FAST, "label": "1.7B (מהיר)"},
-    {"id": probe.LLM_BIG,  "label": "12B (איכותי)"},
+    {"id": probe.LLM_BIG, "label": "12B (איכותי)"},
 ]
 ENCODER_KEYS = list(probe.ENCODERS.keys())
-GEO_ENC = "blend_0.7_0.3"     # Concatenated L2-normalized fastText + Numberbatch blend
-XENC = "neodictabert"          # cross-engine second opinion for the operative (no LLM)
+GEO_ENC = "blend_0.7_0.3"  # Concatenated L2-normalized fastText + Numberbatch blend
+XENC = "neodictabert"  # cross-engine second opinion for the operative (no LLM)
 
 _llms: dict = {}
 _encs: dict = {}
 _clue_vocab: dict[str, list[str]] = {}
 _clue_freq: dict[str, np.ndarray] = {}
 _clue_lemmas: dict[str, list[str]] = {}
-_clue_emb: dict[str, dict[str, np.ndarray]] = {} # mode -> encoder -> embedding
+_clue_emb: dict[str, dict[str, np.ndarray]] = {}  # mode -> encoder -> embedding
 
 _ambiguity_lexicon = None
 
@@ -163,7 +180,10 @@ _DEFAULT_AMBIGUITY = {
 
 def get_llm(mid):
     mid = mid or probe.LLM_FAST
-    if mid not in (probe.LLM_FAST, probe.LLM_BIG):    # never hand an arbitrary client string to mlx_lm.load
+    if mid not in (
+        probe.LLM_FAST,
+        probe.LLM_BIG,
+    ):  # never hand an arbitrary client string to mlx_lm.load
         abort(400, f"unknown model {mid!r}")
     if mid not in _llms:
         app.logger.info("loading LLM %s ...", mid)
@@ -218,7 +238,9 @@ def geo_assets(mode: str = "curated"):
             if os.path.exists(curated_vocab):
                 with open(curated_vocab, encoding="utf-8") as f:
                     saved = json.load(f)
-                rows = [[word, meta["count"], meta["pos"]] for word, meta in saved["entries"].items()]
+                rows = [
+                    [word, meta["count"], meta["pos"]] for word, meta in saved["entries"].items()
+                ]
                 vocab = [row[0] for row in rows]
                 counts = np.asarray([row[1] for row in rows], dtype=np.float32)
                 freq = probe.freq_scores(counts, lo=500, hi=50000)
@@ -228,7 +250,7 @@ def geo_assets(mode: str = "curated"):
                 freq = probe.freq_scores(counts, lo=500, hi=50000)
         else:
             vocab, counts = probe.clue_vocab_band(20000, mode=mode)
-            
+
             # Calculate freq scores using adjusted floors for the mode
             if mode == "conservative":
                 freq = probe.freq_scores(counts, lo=1500, hi=40000)
@@ -238,19 +260,19 @@ def geo_assets(mode: str = "curated"):
                 freq = probe.freq_scores(counts, lo=200, hi=75000)
             else:
                 freq = probe.freq_scores(counts, lo=1000, hi=80000)
-            
+
         _clue_vocab[mode] = vocab
         _clue_lemmas[mode] = list(vocab)
         _clue_freq[mode] = freq
-        
+
         app.logger.info("clue vocab mode %s: %d words", mode, len(vocab))
-        
+
     if mode not in _clue_emb:
         _clue_emb[mode] = {}
-        
+
     if GEO_ENC not in _clue_emb[mode]:
         _clue_emb[mode][GEO_ENC] = get_enc(GEO_ENC).embed(_clue_vocab[mode])
-        
+
     return _clue_vocab[mode], _clue_emb[mode][GEO_ENC], _clue_lemmas[mode], _clue_freq[mode]
 
 
@@ -278,8 +300,8 @@ def board_from(j) -> probe.Board:
     role = {}
     for w in words:
         r = roles.get(w, "neutral")
-        if r not in _VALID_ROLES:              # reject unknown roles: a typo must not silently
-            abort(400, f"invalid role {r!r} for word {w!r}")   # hide a word from the safety terms
+        if r not in _VALID_ROLES:  # reject unknown roles: a typo must not silently
+            abort(400, f"invalid role {r!r} for word {w!r}")  # hide a word from the safety terms
         role[w] = r
     return probe.Board(words=words, role=role)
 
@@ -297,8 +319,15 @@ def _read_clue(board: probe.Board, clue: str):
     role + cosine + confidence. The operative-eye view that powers the danger panel."""
     order, sims = probe.encoder_rank(get_enc(GEO_ENC), board, clue)
     conf = _conf(sims)
-    return [{"word": w, "role": board.role.get(w, "neutral"),
-             "sim": round(sims[w], 4), "conf": round(conf[w], 4)} for w in order]
+    return [
+        {
+            "word": w,
+            "role": board.role.get(w, "neutral"),
+            "sim": round(sims[w], 4),
+            "conf": round(conf[w], 4),
+        }
+        for w in order
+    ]
 
 
 def _whiten_abtt(X: np.ndarray, k: int = 3) -> np.ndarray:
@@ -311,9 +340,9 @@ def _whiten_abtt(X: np.ndarray, k: int = 3) -> np.ndarray:
     k = min(k, min(Xc.shape) - 1)
     if k > 0:
         _, _, Vt = np.linalg.svd(Xc, full_matrices=False)
-        comps = Vt[:k]                       # (k, d) leading directions
-        Xc = Xc - (Xc @ comps.T) @ comps     # project them out
-    Xc /= (np.linalg.norm(Xc, axis=1, keepdims=True) + 1e-9)
+        comps = Vt[:k]  # (k, d) leading directions
+        Xc = Xc - (Xc @ comps.T) @ comps  # project them out
+    Xc /= np.linalg.norm(Xc, axis=1, keepdims=True) + 1e-9
     return Xc
 
 
@@ -322,8 +351,8 @@ def _classical_mds(D: np.ndarray, dim: int = 2) -> np.ndarray:
     B = -0.5 · J·D²·J and take the top-`dim` eigenvectors scaled by √eigenvalue."""
     n = D.shape[0]
     J = np.eye(n) - np.ones((n, n)) / n
-    B = -0.5 * J @ (D ** 2) @ J
-    w, V = np.linalg.eigh((B + B.T) / 2)     # symmetric → real eigenpairs
+    B = -0.5 * J @ (D**2) @ J
+    w, V = np.linalg.eigh((B + B.T) / 2)  # symmetric → real eigenpairs
     idx = np.argsort(-w)[:dim]
     L = np.sqrt(np.clip(w[idx], 0.0, None))
     return V[:, idx] * L
@@ -366,8 +395,9 @@ def game():
 
 @app.get("/api/health")
 def health():
-    return jsonify(ok=True, models=([] if EMBED_ONLY else MODELS),
-                   encoders=ENCODER_KEYS, geo=GEO_ENC)
+    return jsonify(
+        ok=True, models=([] if EMBED_ONLY else MODELS), encoders=ENCODER_KEYS, geo=GEO_ENC
+    )
 
 
 @app.get("/api/deal")
@@ -397,7 +427,7 @@ def space():
     if whiten:
         X = _whiten_abtt(X, k=3)
     sims = np.clip(X @ X.T, -1.0, 1.0)
-    D = 1.0 - sims                              # cosine distance
+    D = 1.0 - sims  # cosine distance
     Y = _classical_mds(D, dim=2)
 
     # normalise into a tidy [-1, 1] box so the client can scale to any canvas.
@@ -405,8 +435,9 @@ def space():
     # whole cloud into a tiny central blob; the few points beyond are clipped to the edge.
     scale = float(np.percentile(np.abs(Y), 90)) or float(np.abs(Y).max()) or 1.0
     Y = np.clip(Y / scale, -1.0, 1.0)
-    coords = {w: [round(float(Y[i, 0]), 4), round(float(Y[i, 1]), 4)]
-              for i, w in enumerate(board.words)}
+    coords = {
+        w: [round(float(Y[i, 0]), 4), round(float(Y[i, 1]), 4)] for i, w in enumerate(board.words)
+    }
     clue_xy = [round(float(Y[-1, 0]), 4), round(float(Y[-1, 1]), 4)] if clue else None
     return jsonify(coords=coords, roles=board.role, clue=clue, clue_xy=clue_xy)
 
@@ -415,9 +446,18 @@ def space():
 # Co-pilot
 # --------------------------------------------------------------------------- #
 
-def _analyze_clue(board: probe.Board, word: str, targets, count, score,
-                  focus, reason: str = "", keep_rel: float = 0.66,
-                  max_count: int | None = None) -> dict:
+
+def _analyze_clue(
+    board: probe.Board,
+    word: str,
+    targets,
+    count,
+    score,
+    focus,
+    reason: str = "",
+    keep_rel: float = 0.66,
+    max_count: int | None = None,
+) -> dict:
     """Full operative-eye analysis of one candidate clue: how the board reads, the *safe run*
     (team words a guesser reaches before any enemy), what it leaks, assassin proximity, a
     geometry rationale, and an honest no-clue verdict. Each entry in the spymaster `options`
@@ -467,8 +507,10 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
     elif leak:
         risky = True
         e = leak[0]
-        note = (f"⚠ זהירות: '{e['word']}' ({ROLE_HE.get(e['role'], 'זרה')}) קרובה לרמז כמעט "
-                f"כמו המילים שלך — מנחש עלול לבחור בה. בטוח ל-{safe} בלבד.")
+        note = (
+            f"⚠ זהירות: '{e['word']}' ({ROLE_HE.get(e['role'], 'זרה')}) קרובה לרמז כמעט "
+            f"כמו המילים שלך — מנחש עלול לבחור בה. בטוח ל-{safe} בלבד."
+        )
 
     focusset = set(focus or [])
     disp_intended = []
@@ -476,19 +518,38 @@ def _analyze_clue(board: probe.Board, word: str, targets, count, score,
         encoder = get_enc(GEO_ENC)
         cliff_factor = 0.4 if getattr(encoder, "model_id", "").startswith("blend_") else 0.5
         coh_floor = 0.15 if getattr(encoder, "model_id", "").startswith("blend_") else COH_FLOOR
-        disp_intended = probe.served_count(read, keep_rel=keep_rel, pin=focusset,
-                                           enc=encoder, cohesion_floor=coh_floor,
-                                           cohesion_mode=COH_MODE, cliff=cliff_factor)
+        disp_intended = probe.served_count(
+            read,
+            keep_rel=keep_rel,
+            pin=focusset,
+            enc=encoder,
+            cohesion_floor=coh_floor,
+            cohesion_mode=COH_MODE,
+            cliff=cliff_factor,
+        )
         if max_count is not None:
             disp_intended = disp_intended[:max_count]
     disp_count = len(disp_intended)
     reason = reason or _geo_reason(disp_intended or targets, board, read)
-    return {"word": word, "count": disp_count, "intended": disp_intended, "score": score,
-            "reason": reason, "read": read, "leak": leak, "safe": safe,
-            "assassin": {"word": aw, "rank": arank, "sim": asim},
-            "ambiguity": {"score": ambiguity_score, "senses": ambiguity.get("senses", []),
-                          "flags": ambiguity.get("flags", [])},
-            "no_clue": no_clue, "risky": risky, "note": note}
+    return {
+        "word": word,
+        "count": disp_count,
+        "intended": disp_intended,
+        "score": score,
+        "reason": reason,
+        "read": read,
+        "leak": leak,
+        "safe": safe,
+        "assassin": {"word": aw, "rank": arank, "sim": asim},
+        "ambiguity": {
+            "score": ambiguity_score,
+            "senses": ambiguity.get("senses", []),
+            "flags": ambiguity.get("flags", []),
+        },
+        "no_clue": no_clue,
+        "risky": risky,
+        "note": note,
+    }
 
 
 def _risk_order(options: list[dict], risk: str) -> list[int]:
@@ -496,19 +557,40 @@ def _risk_order(options: list[dict], risk: str) -> list[int]:
     refuse-clues always sink last; a single-word clue is a last resort, so any multi-word clue
     outranks it; bold then maximises coverage (count) then safety; cautious and balanced put
     safety first, then coverage. Returns option indices best-first."""
+
     def single(i: int) -> int:
         return 1 if options[i]["count"] <= 1 else 0
-    if risk == "bold":
-        key = lambda i: (1 if options[i]["no_clue"] else 0, single(i),
-                         -options[i]["count"], -options[i]["safe"], -options[i]["score"])
-    else:
-        key = lambda i: (1 if options[i]["no_clue"] else 0, single(i),
-                         1 if options[i]["risky"] else 0,
-                         -options[i]["safe"], -options[i]["count"], -options[i]["score"])
+
+    def key(i: int):
+        if risk == "bold":
+            # bold maximises coverage (count) then safety
+            return (
+                1 if options[i]["no_clue"] else 0,
+                single(i),
+                -options[i]["count"],
+                -options[i]["safe"],
+                -options[i]["score"],
+            )
+        # cautious/balanced put safety first, then coverage
+        return (
+            1 if options[i]["no_clue"] else 0,
+            single(i),
+            1 if options[i]["risky"] else 0,
+            -options[i]["safe"],
+            -options[i]["count"],
+            -options[i]["score"],
+        )
+
     return sorted(range(len(options)), key=key)
 
 
-def serve_clue(board: probe.Board, risk: str = "balanced", focus=None, profile=None, vocab_mode: str = "curated"):
+def serve_clue(
+    board: probe.Board,
+    risk: str = "balanced",
+    focus=None,
+    profile=None,
+    vocab_mode: str = "curated",
+):
     """The geometry engine's clue options for a board, ordered exactly as
     /api/coach/spymaster serves them (best first). Pure — no request context — so the
     endpoint, the benchmarks, and tests all measure the identical served clue.
@@ -518,11 +600,33 @@ def serve_clue(board: probe.Board, risk: str = "balanced", focus=None, profile=N
     focus = [w for w in (focus or []) if w in board.my] or None
     vocab, emb, lems, freq = geo_assets(vocab_mode)
     cands = probe.encoder_clue_candidates(
-        get_enc(GEO_ENC), board, vocab, emb, vocab_lemmas=lems, vocab_freq=freq,
-        lam_f=LAM_F, lam_soft=LAM_SOFT, soft_tau=SOFT_TAU, lam_div=LAM_DIV,
-        n=10, targets=focus, **{k: prof[k] for k in _CAND_KEYS})
-    options = [_analyze_clue(board, c["word"], c["intended"], c["count"], c["score"], focus,
-                             keep_rel=prof["keep"], max_count=prof["m"]) for c in cands]
+        get_enc(GEO_ENC),
+        board,
+        vocab,
+        emb,
+        vocab_lemmas=lems,
+        vocab_freq=freq,
+        lam_f=LAM_F,
+        lam_soft=LAM_SOFT,
+        soft_tau=SOFT_TAU,
+        lam_div=LAM_DIV,
+        n=10,
+        targets=focus,
+        **{k: prof[k] for k in _CAND_KEYS},
+    )
+    options = [
+        _analyze_clue(
+            board,
+            c["word"],
+            c["intended"],
+            c["count"],
+            c["score"],
+            focus,
+            keep_rel=prof["keep"],
+            max_count=prof["m"],
+        )
+        for c in cands
+    ]
     order = _risk_order(options, risk)
     return [options[i] for i in order], [cands[i] for i in order]
 
@@ -542,7 +646,9 @@ def coach_spymaster():
         abort(400, "board has no team (my) words")
     engine = "geometry" if EMBED_ONLY else (j.get("engine") or "geometry")
     mid = j.get("model")
-    focus = [w for w in (j.get("focus") or []) if w in board.my] or None  # optional target subset (team only)
+    focus = [
+        w for w in (j.get("focus") or []) if w in board.my
+    ] or None  # optional target subset (team only)
     risk = j.get("risk") if j.get("risk") in RISK_PROFILES else "balanced"
     prof = RISK_PROFILES[risk]
     cand_kw = {k: prof[k] for k in _CAND_KEYS}
@@ -553,23 +659,55 @@ def coach_spymaster():
         clue = probe.llm_spymaster(get_llm(mid), board)
         if not clue or probe.llm_root_conflicts(get_llm(mid), [clue.word], board.words):
             return jsonify(error="DictaLM לא הצליח להחזיר רמז חוקי, נסה שוב או עבור לגאומטריה")
-        options = [_analyze_clue(board, clue.word, clue.intended, clue.count, clue.margin,
-                                 focus, reason=clue.reason, keep_rel=keep_rel, max_count=prof["m"])]
-    elif engine == "hybrid":       # geometry proposes a legal shortlist, DictaLM gates + picks first
+        options = [
+            _analyze_clue(
+                board,
+                clue.word,
+                clue.intended,
+                clue.count,
+                clue.margin,
+                focus,
+                reason=clue.reason,
+                keep_rel=keep_rel,
+                max_count=prof["m"],
+            )
+        ]
+    elif engine == "hybrid":  # geometry proposes a legal shortlist, DictaLM gates + picks first
         vocab, emb, lems, freq = geo_assets(vocab_mode)
-        cands = probe.encoder_clue_candidates(get_enc(GEO_ENC), board, vocab, emb,
-                                              vocab_lemmas=lems, vocab_freq=freq, lam_f=LAM_F,
-                                              lam_soft=LAM_SOFT, soft_tau=SOFT_TAU, lam_div=LAM_DIV,
-                                              n=10, targets=focus, **cand_kw)
+        cands = probe.encoder_clue_candidates(
+            get_enc(GEO_ENC),
+            board,
+            vocab,
+            emb,
+            vocab_lemmas=lems,
+            vocab_freq=freq,
+            lam_f=LAM_F,
+            lam_soft=LAM_SOFT,
+            soft_tau=SOFT_TAU,
+            lam_div=LAM_DIV,
+            n=10,
+            targets=focus,
+            **cand_kw,
+        )
         bad = probe.llm_root_conflicts(get_llm(mid), [c["word"] for c in cands], board.words)
-        cands = [c for c in cands if c["word"] not in bad] or cands   # keep >=1
+        cands = [c for c in cands if c["word"] not in bad] or cands  # keep >=1
         shortlist = cands
         chosen = probe.llm_pick_clue(get_llm(mid), board, cands)
         picked = next((i for i, c in enumerate(cands) if c["word"] == chosen.word), 0)
-        options = [_analyze_clue(board, c["word"], c["intended"], c["count"], c["score"], focus,
-                                 keep_rel=keep_rel, max_count=prof["m"])
-                   for c in cands]
-    else:                          # geometry: the same ordered options serve_clue / the benchmark use
+        options = [
+            _analyze_clue(
+                board,
+                c["word"],
+                c["intended"],
+                c["count"],
+                c["score"],
+                focus,
+                keep_rel=keep_rel,
+                max_count=prof["m"],
+            )
+            for c in cands
+        ]
+    else:  # geometry: the same ordered options serve_clue / the benchmark use
         options, shortlist = serve_clue(board, risk, focus, vocab_mode=vocab_mode)
         options, shortlist = options[:10], shortlist[:10]
 
@@ -577,11 +715,21 @@ def coach_spymaster():
         return jsonify(error="לא נמצא רמז חוקי ללוח הזה", no_clue=True, options=[]), 200
     top = options[picked]
     return jsonify(
-        engine=engine, options=options, picked=picked, shortlist=shortlist,
-        clue=top["word"], count=top["count"], intended=top["intended"],
-        reason=top["reason"], read=top["read"], leak=top["leak"],
-        assassin=top["assassin"], no_clue=top["no_clue"], risky=top["risky"],
-        safe=top["safe"], note=top["note"],
+        engine=engine,
+        options=options,
+        picked=picked,
+        shortlist=shortlist,
+        clue=top["word"],
+        count=top["count"],
+        intended=top["intended"],
+        reason=top["reason"],
+        read=top["read"],
+        leak=top["leak"],
+        assassin=top["assassin"],
+        no_clue=top["no_clue"],
+        risky=top["risky"],
+        safe=top["safe"],
+        note=top["note"],
     )
 
 
@@ -599,10 +747,12 @@ def coach_check():
     # (DictaBERT lemma), or shares a root (Wiktionary lexicon) with a board word it is transparent
     # to (fastText cosine). The optional DictaLM root-judge adds extra coverage on opt-in.
     illegal = probe.shares_lemma(clue, board, enc=get_enc(GEO_ENC))
-    if not illegal and j.get("use_llm") and not EMBED_ONLY:   # embed-only deploy never touches the LLM
+    if (
+        not illegal and j.get("use_llm") and not EMBED_ONLY
+    ):  # embed-only deploy never touches the LLM
         illegal = bool(probe.llm_root_conflicts(get_llm(j.get("model")), [clue], board.words))
     read = _read_clue(board, clue)
-    safe = 0                                   # team words from the top before any non-team word
+    safe = 0  # team words from the top before any non-team word
     for r in read:
         if r["role"] == "my":
             safe += 1
@@ -611,8 +761,14 @@ def coach_check():
     first_danger = next((r for r in read if r["role"] != "my"), None)
     assassin_word = board.assassin
     arank = next((i for i, r in enumerate(read) if r["word"] == assassin_word), -1)
-    return jsonify(clue=clue, illegal=illegal, read=read, safe=safe,
-                   first_danger=first_danger, assassin={"word": assassin_word, "rank": arank})
+    return jsonify(
+        clue=clue,
+        illegal=illegal,
+        read=read,
+        safe=safe,
+        first_danger=first_danger,
+        assassin={"word": assassin_word, "rank": arank},
+    )
 
 
 @app.post("/api/coach/operative")
@@ -636,7 +792,7 @@ def coach_operative():
     if engine == "geometry":
         order = geo_order
         if SECOND_OPINION:
-            try:                   # honest second opinion: an independent encoder (no LLM)
+            try:  # honest second opinion: an independent encoder (no LLM)
                 _, x_sims = probe.encoder_rank(get_enc(XENC), board, clue)
                 x_order = sorted(board.words, key=lambda w: -x_sims[w])
                 agree = len(set(order[:count]) & set(x_order[:count]))
@@ -648,11 +804,21 @@ def coach_operative():
         agree = len(set(order[:count]) & set(geo_order[:count]))
         agree_with = "גאומטריה"
 
-    ranking = [{"word": w, "sim": round(geo_sims[w], 4), "conf": round(geo_conf[w], 4),
-                "rank": i} for i, w in enumerate(order)]
+    ranking = [
+        {"word": w, "sim": round(geo_sims[w], 4), "conf": round(geo_conf[w], 4), "rank": i}
+        for i, w in enumerate(order)
+    ]
     picks = order[:count]
-    return jsonify(engine=engine, clue=clue, count=count, ranking=ranking, picks=picks,
-                   geo_order=geo_order, agreement=agree, agree_with=agree_with)
+    return jsonify(
+        engine=engine,
+        clue=clue,
+        count=count,
+        ranking=ranking,
+        picks=picks,
+        geo_order=geo_order,
+        agreement=agree,
+        agree_with=agree_with,
+    )
 
 
 @app.post("/api/feedback")
@@ -664,18 +830,31 @@ def feedback():
     xff = request.headers.get("X-Forwarded-For", "") or (request.remote_addr or "")
     ip = xff.split(",")[0].strip()
     ipsig = hashlib.sha256((_FB_SALT + ip).encode()).hexdigest()[:12] if ip else ""
-    row = {"ts": round(time.time(), 1),
-           "uid": (j.get("uid") or "")[:64], "ipsig": ipsig,
-           "verdict": j.get("verdict"), "comment": (j.get("comment") or "")[:500],
-           "mode": j.get("mode"), "risk": j.get("risk"), "side": j.get("side"),
-           "clue": j.get("clue"), "count": j.get("count"), "intended": j.get("intended"),
-           "focus": j.get("focus"),         # targets the user pinned — needed to reproduce the clue
-           "why": (j.get("why") or "")[:40],# structured 👎 reason tag (opposite/vague/wrong/risky/overreach)
-           "board": j.get("board"),         # {words, roles} — the full board + colors
-           "revealed": j.get("revealed"),   # cards already flipped (excluded from the engine board)
-           "option": j.get("option")}       # full clue option: reason, leak, assassin, score, read…
+    row = {
+        "ts": round(time.time(), 1),
+        "uid": (j.get("uid") or "")[:64],
+        "ipsig": ipsig,
+        "verdict": j.get("verdict"),
+        "comment": (j.get("comment") or "")[:500],
+        "mode": j.get("mode"),
+        "risk": j.get("risk"),
+        "side": j.get("side"),
+        "clue": j.get("clue"),
+        "count": j.get("count"),
+        "intended": j.get("intended"),
+        "focus": j.get("focus"),  # targets the user pinned — needed to reproduce the clue
+        "why": (j.get("why") or "")[
+            :40
+        ],  # structured 👎 reason tag (opposite/vague/wrong/risky/overreach)
+        "board": j.get("board"),  # {words, roles} — the full board + colors
+        "revealed": j.get("revealed"),  # cards already flipped (excluded from the engine board)
+        "option": j.get("option"),
+    }  # full clue option: reason, leak, assassin, score, read…
     try:
-        with _fb_lock, open(os.path.join(FEEDBACK_DIR, "feedback.jsonl"), "a", encoding="utf-8") as f:
+        with (
+            _fb_lock,
+            open(os.path.join(FEEDBACK_DIR, "feedback.jsonl"), "a", encoding="utf-8") as f,
+        ):
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
     except Exception:
         app.logger.exception("feedback write failed")
@@ -686,9 +865,10 @@ if __name__ == "__main__":
     _init_feedback()
     if os.environ.get("WARMUP", "").lower() in ("1", "true", "yes"):
         app.logger.info("warming up geometry assets ...")
-        geo_assets("curated")                    # load fastText + embed the clue vocab before serving
+        geo_assets("curated")  # load fastText + embed the clue vocab before serving
         import morph
-        morph.lemmas(["מילה"])     # preload DictaBERT-lex (legality) so the first clue isn't slow
+
+        morph.lemmas(["מילה"])  # preload DictaBERT-lex (legality) so the first clue isn't slow
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "7860"))
     app.run(host=host, port=port, debug=False, threaded=True)

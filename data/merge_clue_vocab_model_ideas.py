@@ -20,23 +20,35 @@ DECK = ROOT / "data" / "yaeldau_hebrew.json"
 
 
 def main() -> int:
-    document = json.loads(CURATED.read_text(encoding="utf-8")) if CURATED.exists() else {"entries": {}}
+    document = (
+        json.loads(CURATED.read_text(encoding="utf-8")) if CURATED.exists() else {"entries": {}}
+    )
     entries = document.setdefault("entries", {})
     for meta in entries.values():
         meta.setdefault("origin", "openai_curated")
         meta.setdefault("review_required", False)
-    source = {r[0]: {"count": r[1], "pos": r[2]} for r in json.loads(SOURCE.read_text(encoding="utf-8"))
-              if isinstance(r, list) and len(r) == 3}
-    blocked = {l.strip() for l in BLOCKLIST.read_text(encoding="utf-8").splitlines()
-               if l.strip() and not l.lstrip().startswith("#")}
+    source = {
+        r[0]: {"count": r[1], "pos": r[2]}
+        for r in json.loads(SOURCE.read_text(encoding="utf-8"))
+        if isinstance(r, list) and len(r) == 3
+    }
+    blocked = {
+        l.strip()
+        for l in BLOCKLIST.read_text(encoding="utf-8").splitlines()
+        if l.strip() and not l.lstrip().startswith("#")
+    }
     deck = set(json.loads(DECK.read_text(encoding="utf-8")))
     added = 0
     for line in ASSOC.read_text(encoding="utf-8").splitlines():
         row = json.loads(line)
         for word_key in ("word1", "word2"):
             word = str(row.get(word_key, "")).strip()
-            if (word in entries or word in blocked or word in deck
-                    or not re.fullmatch(r"[א-ת]{2,}", word)):
+            if (
+                word in entries
+                or word in blocked
+                or word in deck
+                or not re.fullmatch(r"[א-ת]{2,}", word)
+            ):
                 continue
             meta = source.get(word)
             entries[word] = {

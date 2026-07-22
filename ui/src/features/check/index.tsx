@@ -54,18 +54,12 @@ function TargetControl({
   target: TeamColor;
 }): JSX.Element {
   return (
-    <fieldset
-      className="check-target"
-      data-testid="target-color"
-      disabled={disabled}
-    >
+    <fieldset className="check-target" data-testid="target-color" disabled={disabled}>
       <legend>בודקים עבור</legend>
       <div className="check-target__options" role="radiogroup">
         {(['red', 'blue'] as const).map((color) => (
           <label
-            className={`check-target__option role-${color}${
-              target === color ? ' is-active' : ''
-            }`}
+            className={`check-target__option role-${color}${target === color ? ' is-active' : ''}`}
             key={color}
           >
             <input
@@ -175,9 +169,7 @@ export function CheckPanel(): JSX.Element {
       setCheckedClue(clue);
     } catch (caughtError) {
       const message =
-        caughtError instanceof Error
-          ? caughtError.message
-          : 'לא הצלחנו לבדוק את המילה';
+        caughtError instanceof Error ? caughtError.message : 'לא הצלחנו לבדוק את המילה';
       setError(message);
       showToast(message, { tone: 'error' });
     } finally {
@@ -186,9 +178,7 @@ export function CheckPanel(): JSX.Element {
   };
 
   const assassinIsClose =
-    result !== null &&
-    result.assassin.rank >= 0 &&
-    result.assassin.rank < result.safe + 2;
+    result !== null && result.assassin.rank >= 0 && result.assassin.rank < result.safe + 2;
 
   const boardStale =
     result !== null &&
@@ -212,11 +202,7 @@ export function CheckPanel(): JSX.Element {
         <p>רק אתם רואים אותה. בדקו לאן הרמז שאתם שוקלים עלול להוביל.</p>
       </div>
 
-      <TargetControl
-        disabled={loading}
-        target={target}
-        onChange={handleTargetChange}
-      />
+      <TargetControl disabled={loading} target={target} onChange={handleTargetChange} />
 
       <form className="check-form" onSubmit={handleSubmit} noValidate>
         <label htmlFor="check-clue">המילה שאני שוקל</label>
@@ -283,9 +269,7 @@ export function CheckPanel(): JSX.Element {
           {result.illegal ? (
             <div className="check-illegal" data-testid="check-illegal" role="alert">
               <strong>הרמז אינו חוקי</strong>
-              <span>
-                המילה הזו לא חוקית — היא מילה מהלוח או חולקת שורש עם אחת מהן
-              </span>
+              <span>המילה הזו לא חוקית — היא מילה מהלוח או חולקת שורש עם אחת מהן</span>
             </div>
           ) : null}
 
@@ -303,7 +287,11 @@ export function CheckPanel(): JSX.Element {
               <p>לא נמצאה מילה מסוכנת ברשימה.</p>
             )}
             {result.assassin.word ? (
-              <p className={assassinIsClose ? 'check-summary__assassin is-close' : 'check-summary__assassin'}>
+              <p
+                className={
+                  assassinIsClose ? 'check-summary__assassin is-close' : 'check-summary__assassin'
+                }
+              >
                 <RoleIcon role="assassin" /> המתנקש: {result.assassin.word} · מקום{' '}
                 {result.assassin.rank + 1}
                 {assassinIsClose ? ' — קרוב מדי לרמז' : ''}

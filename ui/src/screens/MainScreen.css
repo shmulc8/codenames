@@ -78,7 +78,7 @@
   border-inline-start: 1px solid var(--color-divider);
 }
 
-.main-screen__mode-option[aria-pressed="true"] {
+.main-screen__mode-option[aria-pressed='true'] {
   color: var(--color-accent-300);
   background: color-mix(in srgb, var(--color-accent) 16%, transparent);
 }

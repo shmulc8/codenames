@@ -135,14 +135,10 @@ export const liveBoard = (state: AppState): BoardPayload => {
   };
 };
 
-export const boardsMatch = (
-  left: BoardPayload,
-  right: BoardPayload,
-): boolean =>
+export const boardsMatch = (left: BoardPayload, right: BoardPayload): boolean =>
   left.words.length === right.words.length &&
   left.words.every(
-    (word, index) =>
-      word === right.words[index] && left.roles[word] === right.roles[word],
+    (word, index) => word === right.words[index] && left.roles[word] === right.roles[word],
   );
 
 export const selectedColor = (state: AppState): TeamColor | null => {
@@ -282,14 +278,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   setClueResult: (current, stale = false) =>
     set((state) => {
       const picked = current?.picked ?? 0;
-      const optionIndex =
-        current && picked >= 0 && picked < current.options.length ? picked : 0;
+      const optionIndex = current && picked >= 0 && picked < current.options.length ? picked : 0;
 
       return { clue: { ...state.clue, current, optionIndex, stale } };
     }),
 
-  setOptionIndex: (optionIndex) =>
-    set((state) => ({ clue: { ...state.clue, optionIndex } })),
+  setOptionIndex: (optionIndex) => set((state) => ({ clue: { ...state.clue, optionIndex } })),
 
   useCurrentClue: () => {
     const state = get();

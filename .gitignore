@@ -1,17 +1,34 @@
 # Python
 .venv/
-data/novita_eval_results.json
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
 
+# Tooling caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
 # Large fastText model artifacts (hundreds of MB; downloaded or generated, see SETUP.md)
 data/cc.he.300.*
 hf_space/data/cc.he.300.*
 
-# Secrets
+# Generated deploy bundle: hf_space/ code is synced from the repo root by scripts/deploy.py
+# (single source of truth) and the UI is built into hf_space/webapp/ — none of it is committed.
+hf_space/app.py
+hf_space/probe.py
+hf_space/morph.py
+hf_space/exp_encoders.py
+hf_space/deck_he.py
+hf_space/copilot.html
+hf_space/methods.html
+hf_space/webapp/
+
+# Secrets / local credentials
 .env
+.env.*
+!.env.example
 
 # Codex orchestrator artifacts
 agents.log
@@ -29,7 +46,8 @@ runs/
 /bench_results.json
 /data/gemini*_eval_results.json
 /data/optuna_results.json
-# Local credentials
-.env
-.env.*
-!.env.example
+/data/novita_eval_results.json
+
+# Scratch / backup artifacts
+*.backup.json
+*.new.json

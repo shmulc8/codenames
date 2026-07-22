@@ -22,11 +22,9 @@ function classify(color: [number, number, number]): Role {
   const lightness = (Math.max(...color) + Math.min(...color)) / 2;
   if (lightness < 55) return 'assassin';
 
-  return (Object.entries(referenceColors) as Array<[Role, [number, number, number]]>)
-    .sort(
-      ([, left], [, right]) =>
-        colorDistance(color, left) - colorDistance(color, right),
-    )[0][0];
+  return (Object.entries(referenceColors) as Array<[Role, [number, number, number]]>).sort(
+    ([, left], [, right]) => colorDistance(color, left) - colorDistance(color, right),
+  )[0][0];
 }
 
 export async function classifyKeyCard(file: File): Promise<Role[]> {
