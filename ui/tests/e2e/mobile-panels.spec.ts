@@ -3,7 +3,6 @@ import { expect, test, type Page } from '@playwright/test';
 import { fixtureBoard } from '../../src/mocks/fixtures/board';
 import {
   DESKTOP_VIEWPORT,
-  MOBILE_VIEWPORT,
   mountMobilePanels,
   openMobileTab,
   requestAutoClue,
@@ -231,8 +230,8 @@ test.describe('desktop regression — mobile panels stay out of the desktop app'
       window.__store.getState().setBoard(board.words, board.roles);
     }, fixtureBoard);
 
-    // No mobile host, tabbar, or mobile-only tabs on desktop.
-    await expect(page.locator('#mobile-root')).toHaveCount(0);
+    // No mobile shell, tabbar, or mobile-only tabs on desktop.
+    await expect(page.getByTestId('mobile-shell')).toHaveCount(0);
     await expect(page.getByTestId('tabbar')).toHaveCount(0);
     await expect(page.getByTestId('tab-map')).toHaveCount(0);
     await expect(page.getByTestId('tab-board')).toHaveCount(0);
