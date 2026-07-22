@@ -404,7 +404,22 @@
   direction: rtl;
 }
 
+.clue-carousel__label,
 .clue-carousel__chevron {
+  display: inline-flex;
+  height: 1.25rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.clue-carousel__label {
+  direction: rtl;
+  unicode-bidi: isolate;
+  line-height: 1.25rem;
+}
+
+.clue-carousel__chevron {
+  width: 1rem;
   direction: ltr;
   unicode-bidi: isolate;
   font-size: 1rem;

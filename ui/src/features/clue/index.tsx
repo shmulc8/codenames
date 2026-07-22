@@ -417,8 +417,8 @@ export function CluePanel(): JSX.Element {
                 aria-label="האפשרות הבאה"
                 onClick={() => moveOption(1)}
               >
-                <span className="clue-carousel__chevron" aria-hidden="true">‹</span>
-                <span data-testid="next-option-label">הבא</span>
+                <span className="clue-carousel__chevron" aria-hidden="true">›</span>
+                <span className="clue-carousel__label" data-testid="next-option-label">הבא</span>
               </Button>
               <span data-testid="option-counter">
                 אפשרות {clue.optionIndex + 1} מתוך {options.length}
@@ -430,8 +430,8 @@ export function CluePanel(): JSX.Element {
                 aria-label="האפשרות הקודמת"
                 onClick={() => moveOption(-1)}
               >
-                <span data-testid="prev-option-label">הקודם</span>
-                <span className="clue-carousel__chevron" aria-hidden="true">›</span>
+                <span className="clue-carousel__label" data-testid="prev-option-label">הקודם</span>
+                <span className="clue-carousel__chevron" aria-hidden="true">‹</span>
               </Button>
             </nav>
           ) : null}

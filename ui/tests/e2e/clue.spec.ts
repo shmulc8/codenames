@@ -170,17 +170,33 @@ test('carousel wraps and renders risky and no-clue states', async ({ page }) => 
     if (!nextLabel || !previousLabel || !nextChevron || !previousChevron) {
       throw new Error('Carousel controls were not rendered');
     }
+    const nextChevronRect = nextChevron.getBoundingClientRect();
+    const nextLabelRect = nextLabel.getBoundingClientRect();
+    const previousChevronRect = previousChevron.getBoundingClientRect();
+    const previousLabelRect = previousLabel.getBoundingClientRect();
     return {
-      nextChevron: nextChevron.getBoundingClientRect().x,
-      nextLabel: nextLabel.getBoundingClientRect().x,
-      previousChevron: previousChevron.getBoundingClientRect().x,
-      previousLabel: previousLabel.getBoundingClientRect().x,
+      nextChevronX: nextChevronRect.x,
+      nextChevronY: nextChevronRect.y + nextChevronRect.height / 2,
+      nextLabelX: nextLabelRect.x,
+      nextLabelY: nextLabelRect.y + nextLabelRect.height / 2,
+      previousChevronX: previousChevronRect.x,
+      previousChevronY: previousChevronRect.y + previousChevronRect.height / 2,
+      previousLabelX: previousLabelRect.x,
+      previousLabelY: previousLabelRect.y + previousLabelRect.height / 2,
     };
   });
-  expect(controlPositions.nextChevron).toBeGreaterThan(controlPositions.nextLabel);
-  expect(controlPositions.previousLabel).toBeGreaterThan(
-    controlPositions.previousChevron,
-  );
+  expect(controlPositions.nextChevronX).toBeGreaterThan(controlPositions.nextLabelX);
+  expect(controlPositions.previousLabelX).toBeGreaterThan(controlPositions.previousChevronX);
+  expect(Math.abs(controlPositions.nextChevronY - controlPositions.nextLabelY)).toBeLessThan(1);
+  expect(
+    Math.abs(controlPositions.previousChevronY - controlPositions.previousLabelY),
+  ).toBeLessThan(1);
+  await expect(
+    page.getByTestId('btn-next-option').locator('.clue-carousel__chevron'),
+  ).toHaveText('›');
+  await expect(
+    page.getByTestId('btn-prev-option').locator('.clue-carousel__chevron'),
+  ).toHaveText('‹');
 
   await page.getByTestId('btn-prev-option').click();
   await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 3 מתוך 3');
