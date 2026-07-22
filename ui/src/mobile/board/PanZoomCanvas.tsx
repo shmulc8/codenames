@@ -70,12 +70,6 @@ export function PanZoomCanvas(): JSX.Element {
 
       {viewMode === 'visual' ? (
         <>
-          <div className="mobile-board__rotate" data-testid="board-rotate-prompt">
-            <span aria-hidden="true">↻</span>
-            <strong>סובבו את המכשיר לרוחב</strong>
-            <small>הלוח נפתח לרוחב כדי שכל מילה תישאר קריאה</small>
-          </div>
-
           <div
             className={`mobile-board__viewport${panZoom.gesturing ? ' is-gesturing' : ''}`}
             ref={viewportRef}

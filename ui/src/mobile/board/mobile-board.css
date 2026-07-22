@@ -94,33 +94,6 @@
   font-weight: 700;
 }
 
-.mobile .mobile-board__rotate {
-  height: clamp(16rem, 40svh, 20rem);
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: var(--space-2);
-  padding: var(--space-6);
-  text-align: center;
-  color: var(--cn-text-muted);
-  background: var(--cn-board-void);
-}
-
-.mobile .mobile-board__rotate span {
-  color: var(--color-accent-400);
-  font-size: 2.5rem;
-}
-
-.mobile .mobile-board__rotate strong {
-  color: var(--cn-text);
-  font-size: 1.1rem;
-}
-
-.mobile .mobile-board__rotate small {
-  max-width: 26ch;
-  font-size: .78rem;
-}
-
 .mobile .mobile-board__viewport {
   position: relative;
   display: none;
@@ -313,10 +286,6 @@
 
   .mobile .mobile-board__list ul {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .mobile .mobile-board__rotate {
-    display: none;
   }
 
   .mobile .mobile-board__viewport {
