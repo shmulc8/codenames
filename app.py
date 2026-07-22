@@ -51,15 +51,15 @@ SECOND_OPINION = os.environ.get("SECOND_OPINION", "1").lower() not in ("0", "fal
 # how hard to avoid enemy/neutral/assassin words (lam_*). Cautious only plays rock-solid
 # clues (and refuses more); bold reaches for more words and tolerates a tighter enemy.
 RISK_PROFILES = {
-    # Scoring weights (m, lam_*, safe_margin) validated on bench_clue.py (the real serve_clue path).
-    # The count-trim `keep` (keep_rel) sets the coverage↔calibration point: a team word is claimed
-    # only when its similarity is >= keep · the top target's. Higher `keep` sheds marginal words a
-    # human guesser would not actually recover, so the claimed count tracks what a strong human-proxy
-    # (the LLM guesser/judge) recovers and `over_claim` stays near zero. cautious claims fewest via
-    # its m=2 cap (raising its keep only reshuffles selection, so it holds at 0.68); bold reaches
-    # furthest. keep ordering stays cautious >= balanced >= bold.
+    # Scoring weights (m, lam_*, safe_margin) validated on the real serve_clue path — bench_clue.py
+    # plus a neutral LLM-guesser eval. balanced and cautious share conservative coverage (m=2,
+    # safe_margin=0.05); together with the listener-danger term below this keeps the claimed words to
+    # what a strong human-proxy guesser recovers and best avoids the assassin. They differ only in
+    # enemy avoidance (cautious uses higher lam_*); bold reaches furthest (m=4). The count-trim `keep`
+    # (keep_rel) claims a team word only when its similarity is >= keep · the top target's; keep
+    # ordering stays cautious >= balanced >= bold.
     "cautious": dict(m=2, lam_a=3.0, lam_opp=1.3, lam_neu=0.7, keep=0.68, safe_margin=0.05),
-    "balanced": dict(m=3, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.68, safe_margin=0.02),
+    "balanced": dict(m=2, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.68, safe_margin=0.05),
     "bold":     dict(m=4, lam_a=1.8, lam_opp=0.7, lam_neu=0.4, keep=0.62, safe_margin=0.0),
 }
 _CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu", "safe_margin")
