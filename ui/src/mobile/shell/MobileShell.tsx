@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { CheckPanel } from '../../features/check';
-import { CluePanel } from '../../features/clue';
-import { SemanticMap } from '../../features/map';
+import { PanZoomCanvas } from '../board';
+import { CaptureFlow } from '../capture';
+import { MobileCheckPanel, MobileCluePanel, MobileMapPanel } from '../panels';
 import { useAppStore } from '../../state/store';
 import { MobileHome } from './MobileHome';
 import './shell.css';
@@ -19,22 +19,13 @@ const tabs: Array<{ id: MobileTab; icon: string; label: string }> = [
 function MobileGamePanel({ tab }: { tab: MobileTab }): JSX.Element {
   switch (tab) {
     case 'clue':
-      return <CluePanel />;
+      return <MobileCluePanel />;
     case 'check':
-      return <CheckPanel />;
+      return <MobileCheckPanel />;
     case 'map':
-      return <SemanticMap />;
+      return <MobileMapPanel />;
     case 'board':
-      return (
-        <section
-          className="mobile-shell__placeholder"
-          data-testid="mobile-board-placeholder"
-        >
-          <span aria-hidden="true">▦</span>
-          <h2>הלוח הנייד בדרך</h2>
-          <p>תצוגת הלוח תתחבר כאן בשלב הבא.</p>
-        </section>
-      );
+      return <PanZoomCanvas />;
   }
 }
 
@@ -76,16 +67,29 @@ export function MobileShell(): JSX.Element {
   const screen = useAppStore((state) => state.screen);
   const setActiveTab = useAppStore((state) => state.setActiveTab);
   const [mobileTab, setMobileTab] = useState<MobileTab>('board');
+  const [capturing, setCapturing] = useState(false);
 
   function selectTab(tab: MobileTab): void {
     setMobileTab(tab);
     if (tab === 'clue' || tab === 'check') setActiveTab(tab);
   }
 
+  if (screen === 'setup' && capturing) {
+    return (
+      <div className="mobile mobile-shell" data-testid="mobile-shell" dir="rtl">
+        <CaptureFlow onClose={() => setCapturing(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="mobile mobile-shell" data-testid="mobile-shell" dir="rtl">
       {screen === 'setup' ? <MobileHeader /> : null}
-      {screen === 'setup' ? <MobileHome /> : <MobilePanel tab={mobileTab} />}
+      {screen === 'setup' ? (
+        <MobileHome onShoot={() => setCapturing(true)} />
+      ) : (
+        <MobilePanel tab={mobileTab} />
+      )}
       <MobileTabBar activeTab={mobileTab} onSelect={selectTab} />
     </div>
   );

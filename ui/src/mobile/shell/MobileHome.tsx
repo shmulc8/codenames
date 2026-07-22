@@ -79,14 +79,14 @@ function ResumeButton(): JSX.Element | null {
   );
 }
 
-function HomeActions(): JSX.Element {
+function HomeActions({ onShoot }: { onShoot?: () => void }): JSX.Element {
   return (
     <div className="mobile-home__actions">
       <button
         className="mobile-home__shoot btn btn-primary"
         data-testid="btn-shoot"
         type="button"
-        onClick={() => showToast('הצילום יהיה זמין בקרוב')}
+        onClick={onShoot ?? (() => showToast('הצילום יהיה זמין בקרוב'))}
       >
         <CameraIcon />
         <span>
@@ -107,8 +107,7 @@ function HomeActions(): JSX.Element {
   );
 }
 
-export function MobileHome(): JSX.Element {
-
+export function MobileHome({ onShoot }: { onShoot?: () => void }): JSX.Element {
   return (
     <main className="mobile-home" data-testid="mobile-home">
       <section className="mobile-home__intro" aria-labelledby="mobile-home-title">
@@ -117,7 +116,7 @@ export function MobileHome(): JSX.Element {
         <p>צלמו את הלוח ואת כרטיס המפתח — ונעזור להכין את הרמז הבא.</p>
       </section>
 
-      <HomeActions />
+      <HomeActions onShoot={onShoot} />
 
       <p className="mobile-home__privacy">הכול נשמר על המכשיר בלבד</p>
     </main>

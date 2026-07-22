@@ -38,7 +38,7 @@ test.describe('mobile app shell', () => {
     }, fixtureBoard);
 
     await expect(page.getByTestId('mobile-home')).toHaveCount(0);
-    await expect(page.getByTestId('mobile-board-placeholder')).toBeVisible();
+    await expect(page.getByTestId('board-canvas')).toBeVisible();
 
     await page.getByTestId('tab-clue').click();
     await expect(page.getByTestId('stub-clue')).toBeVisible();
@@ -58,7 +58,7 @@ test.describe('mobile app shell', () => {
     expect(await page.evaluate(() => window.__store?.getState().activeTab)).toBe('check');
 
     await page.getByTestId('tab-board').click();
-    await expect(page.getByTestId('mobile-board-placeholder')).toBeVisible();
+    await expect(page.getByTestId('board-canvas')).toBeVisible();
     expect(await page.evaluate(() => window.__store?.getState().activeTab)).toBe('check');
   });
 
@@ -92,7 +92,7 @@ test.describe('mobile app shell', () => {
       release();
     });
 
-    await expect(page.getByTestId('mobile-board-placeholder')).toBeVisible();
+    await expect(page.getByTestId('board-canvas')).toBeVisible();
     await expect(page.getByTestId('loading-spinner')).toHaveCount(0);
     expect(
       await page.evaluate(() => {
@@ -154,14 +154,7 @@ test.describe('mobile app shell', () => {
 test.describe('desktop regression', () => {
   test('keeps the mobile shell absent and the desktop layout mounted', async ({ page }) => {
     await page.setViewportSize({ width: 1320, height: 900 });
-    await page.goto('/?mobile=1');
-    await page.addScriptTag({
-      content: `
-        import { mountMobileShellForDevelopment } from '/src/mobile/shell/dev-entry.tsx';
-        mountMobileShellForDevelopment();
-      `,
-      type: 'module',
-    });
+    await page.goto('/');
 
     await expect(page.getByTestId('mobile-shell')).toHaveCount(0);
     await page.evaluate((board) => {
@@ -173,7 +166,9 @@ test.describe('desktop regression', () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.getByTestId('mobile-shell')).toBeVisible();
-    await expect(page.getByTestId('mobile-board-placeholder')).toBeVisible();
+    await expect(page.getByTestId('board-canvas')).toBeVisible();
+    await expect(page.getByTestId('board-grid')).toHaveCount(0);
+
     await page.setViewportSize({ width: 1320, height: 900 });
     await expect(page.getByTestId('mobile-shell')).toHaveCount(0);
     await expect(page.locator('.main-screen')).toBeVisible();
