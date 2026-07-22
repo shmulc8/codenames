@@ -7,7 +7,7 @@ export async function mountMobileBoard(page: Page): Promise<void> {
   await page.goto('/?mobile=1');
   await page.addScriptTag({
     type: 'module',
-    content: "void import('/src/mobile/board/TestHarness.tsx')",
+    content: "void import('/tests/harnesses/mobile-board.tsx')",
   });
   await page.waitForFunction(
     () =>

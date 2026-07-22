@@ -1,8 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { Toast } from '../../components/Toast';
-import { PanZoomCanvas } from './PanZoomCanvas';
+import { Toast } from '../../src/components/Toast';
+import { PanZoomCanvas } from '../../src/mobile/board/PanZoomCanvas';
 
 declare global {
   interface Window {
@@ -21,9 +21,6 @@ const root = document.createElement('div');
 root.className = 'mobile';
 root.id = 'mobile-board-test-root';
 root.style.height = '100vh';
-// The standalone harness has no MobileShell parent to size the canvas, and the
-// injected context makes 100svh collapse; pin a deterministic viewport height so
-// fit-to-screen matches a real device instead of flooring fitScale to its minimum.
 const harnessStyle = document.createElement('style');
 harnessStyle.textContent =
   '.mobile-board-harness .mobile-board{height:100vh!important}' +

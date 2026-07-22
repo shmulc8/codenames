@@ -65,7 +65,7 @@ export async function openCapture(
 ): Promise<void> {
   await page.setViewportSize(viewport);
   await page.goto('/?mobile=1');
-  await page.evaluate(() => import('/src/mobile/capture/mount.tsx'));
+  await page.evaluate(() => import('/tests/harnesses/mobile-capture.tsx'));
 }
 
 export async function pickGallery(page: Page, buffer = ONE_PX_PNG): Promise<void> {

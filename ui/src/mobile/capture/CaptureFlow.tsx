@@ -18,7 +18,7 @@ import {
   normalizedWords,
   wordsComplete,
 } from './keyGrid';
-import { getRecognizers } from './recognizers';
+import { getRecognizers, hasRecognizerOverride } from './recognizers';
 import './capture.css';
 
 type Step = 1 | 2;
@@ -58,7 +58,7 @@ export function CaptureFlow({ onClose }: CaptureFlowProps): JSX.Element {
     );
     // Warm the shared Tesseract worker up front for real captures; skip when a
     // test injects deterministic recognizers so no traineddata is fetched.
-    if (typeof window === 'undefined' || !window.__captureRecognizers) {
+    if (!hasRecognizerOverride()) {
       void warmOcrWorker().catch(() => undefined);
     }
     return () => {
