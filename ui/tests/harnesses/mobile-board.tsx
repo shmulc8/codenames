@@ -21,11 +21,6 @@ const root = document.createElement('div');
 root.className = 'mobile';
 root.id = 'mobile-board-test-root';
 root.style.height = '100vh';
-const harnessStyle = document.createElement('style');
-harnessStyle.textContent =
-  '.mobile-board-harness .mobile-board{height:100vh!important}' +
-  '.mobile-board-harness .mobile-board__viewport{min-height:78vh!important}';
-document.head.append(harnessStyle);
 document.body.append(root);
 createRoot(root).render(
   <StrictMode>

@@ -41,16 +41,17 @@ function midpoint(left: Point, right: Point): Point {
 }
 
 function fitFor(viewport: HTMLDivElement): TransformState {
-  const fitScale = Math.min(
-    Math.max(0.1, (viewport.clientWidth - 16) / BOARD_WIDTH),
-    Math.max(0.1, (viewport.clientHeight - 16) / BOARD_HEIGHT),
-    1,
-  );
+  const widthScale = Math.max(0.1, (viewport.clientWidth - 16) / BOARD_WIDTH);
+  const heightScale = Math.max(0.1, (viewport.clientHeight - 16) / BOARD_HEIGHT);
+  const landscape = viewport.clientWidth > viewport.clientHeight;
+  const fitScale = landscape
+    ? Math.min(widthScale, 1)
+    : Math.min(widthScale, heightScale, 1);
   return {
     fitScale,
     scale: fitScale,
     x: (viewport.clientWidth - BOARD_WIDTH * fitScale) / 2,
-    y: (viewport.clientHeight - BOARD_HEIGHT * fitScale) / 2,
+    y: landscape ? 0 : (viewport.clientHeight - BOARD_HEIGHT * fitScale) / 2,
   };
 }
 

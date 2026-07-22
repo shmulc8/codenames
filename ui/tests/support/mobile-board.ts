@@ -3,7 +3,7 @@ import { expect, type Page } from '@playwright/test';
 import { fixtureBoard } from '../../src/mocks/fixtures/board';
 
 export async function mountMobileBoard(page: Page): Promise<void> {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 844, height: 390 });
   await page.goto('/?mobile=1');
   await page.addScriptTag({
     type: 'module',
