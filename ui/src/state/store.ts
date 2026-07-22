@@ -305,7 +305,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       target: state.target,
       option,
       board: fullBoard(state),
-      revealedAfter: [],
+      // Seed with cards already marked revealed so the natural reveal-then-mark-used
+      // order still attributes the outcome (otherwise pre-heart reveals are lost).
+      revealedAfter: state.tiles
+        .filter((tile) => tile.lifecycle === 'chosen')
+        .map((tile) => ({ word: tile.word, chosenBy: tile.chosenBy ?? tile.role })),
       outcomeSent: false,
     };
 

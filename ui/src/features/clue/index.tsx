@@ -408,7 +408,7 @@ export function CluePanel(): JSX.Element {
                           ? 'הרמז סומן לשימוש'
                           : 'אני משתמש ברמז הזה'
                       }
-                      disabled={isCurrentOptionUsed || clue.stale}
+                      disabled={isCurrentOptionUsed}
                       onClick={useCurrentClue}
                     >
                       <span aria-hidden="true">{isCurrentOptionUsed ? '♥' : '♡'}</span>
