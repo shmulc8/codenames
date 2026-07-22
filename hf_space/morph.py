@@ -114,7 +114,11 @@ _CUSTOM_ROOTS = {
 def _get_lex_roots(w: str, lex: dict) -> set[str]:
     if w in _CUSTOM_ROOTS:
         return set(_CUSTOM_ROOTS[w])
-    return set(lex.get(w, ()))
+    # Exact spelling is authoritative, final-letter variant is fallback
+    roots_found = set(lex.get(w, ()))
+    if not roots_found:
+        roots_found.update(lex.get(w.translate(_FINALS), ()))
+    return roots_found
 
 
 def root_sig(word: str) -> str:
@@ -144,13 +148,15 @@ def root_sig(word: str) -> str:
 
 _ROOT_LEXICON_PATH = os.path.join(os.path.dirname(__file__), "data", "word2root.json")
 _NIQQUD = re.compile(r"[֑-ׇ]")   # cantillation + niqqud range
+_PUNCT = re.compile(r"[׳׳'\"“”‘’`]")
+_FINAL_FORMS = str.maketrans("ךםןףץ", "כמנפצ")
 
 
 def _norm_lookup(word: str) -> str:
     """Normalise a surface word to the lexicon's key form: NFC, niqqud stripped, maqaf/hyphen
     removed. Final letters are left intact (correct standalone spelling), matching the keys."""
     w = _NIQQUD.sub("", unicodedata.normalize("NFC", word)).strip()
-    return w.replace("־", "").replace("-", "")
+    return _PUNCT.sub("", w).replace("־", "").replace("-", "")
 
 
 @functools.lru_cache(maxsize=1)
