@@ -48,21 +48,21 @@ export function CameraView({ step, onFile, onClose }: CameraViewProps): JSX.Elem
       <CaptureHeader step={step} title={TITLE[step]} onClose={onClose} leading="flash" />
 
       <div className="cn-capture__stage">
-        {status === 'live' ? (
-          <video
-            ref={videoRef}
-            className="cn-capture__video"
-            autoPlay
-            muted
-            playsInline
-          />
-        ) : (
+        <video
+          ref={videoRef}
+          className={`cn-capture__video${status === 'live' ? '' : ' is-hidden'}`}
+          autoPlay
+          muted
+          playsInline
+          aria-hidden={status !== 'live'}
+        />
+        {status !== 'live' ? (
           <p className="cn-capture__fallback">
             {status === 'starting'
               ? 'פותח מצלמה…'
               : 'המצלמה אינה זמינה — העלו תמונה מהגלריה'}
           </p>
-        )}
+        ) : null}
 
         <div className="cn-capture__viewfinder" data-testid="viewfinder">
           <span className="cn-capture__tick cn-capture__tick--tl" aria-hidden="true" />

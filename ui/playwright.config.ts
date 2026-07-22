@@ -16,7 +16,22 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: '**/mobile-camera-smoke.spec.ts',
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'chromium-fake-camera',
+      testMatch: '**/mobile-camera-smoke.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['camera'],
+        launchOptions: {
+          args: [
+            '--use-fake-device-for-media-stream',
+            '--use-fake-ui-for-media-stream',
+          ],
+        },
+      },
     },
   ],
   webServer: {
@@ -26,4 +41,3 @@ export default defineConfig({
     timeout: 120_000,
   },
 });
-
