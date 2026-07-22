@@ -4,6 +4,8 @@ import { fixtureBoard } from '../../src/mocks/fixtures/board';
 import { openMobileShell } from '../support/mobile-shell';
 
 test.describe('mobile app shell', () => {
+  test.use({ hasTouch: true });
+
   test('shows the camera-first home and four accessible navigation tabs', async ({
     page,
   }) => {
@@ -39,6 +41,36 @@ test.describe('mobile app shell', () => {
 
     await expect(page.getByTestId('mobile-home')).toHaveCount(0);
     await expect(page.getByTestId('board-canvas')).toBeVisible();
+    await expect(page.getByTestId('board-rotate-prompt')).toBeVisible();
+    await expect(page.locator('.mobile-board__viewport')).toBeHidden();
+
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(page.getByTestId('board-rotate-prompt')).toBeHidden();
+    await expect(page.getByTestId('tile-0')).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const viewport = document.querySelector<HTMLElement>('.mobile-board__viewport');
+          const tile = document.querySelector<HTMLElement>('[data-testid="tile-0"]');
+          if (!viewport || !tile) return false;
+          const viewportRect = viewport.getBoundingClientRect();
+          const tileRect = tile.getBoundingClientRect();
+          return tileRect.top >= viewportRect.top && tileRect.bottom <= viewportRect.bottom;
+        }),
+      )
+      .toBe(true);
+    const boardGeometry = await page.evaluate(() => {
+      const viewport = document.querySelector<HTMLElement>('.mobile-board__viewport');
+      if (!viewport) throw new Error('Mobile board geometry is unavailable');
+      const viewportRect = viewport.getBoundingClientRect();
+      return {
+        viewportHeight: viewportRect.height,
+        viewportWidth: viewportRect.width,
+      };
+    });
+    expect(boardGeometry.viewportHeight).toBeGreaterThanOrEqual(224);
+    expect(boardGeometry.viewportHeight).toBeLessThanOrEqual(321);
+    expect(boardGeometry.viewportWidth / boardGeometry.viewportHeight).toBeGreaterThan(2);
 
     await page.getByTestId('tab-clue').click();
     await expect(page.getByTestId('stub-clue')).toBeVisible();

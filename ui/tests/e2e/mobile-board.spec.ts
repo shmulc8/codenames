@@ -16,6 +16,20 @@ test.describe('mobile pan and zoom board', () => {
     await expect(canvas.getByTestId(/^tile-\d+$/)).toHaveCount(25);
     await expect(page.getByTestId('minimap')).toBeVisible();
     await expect(page.getByTestId('btn-fit-board')).toBeVisible();
+    const minimapPlacement = await page.evaluate(() => {
+      const viewport = document.querySelector<HTMLElement>('.mobile-board__viewport');
+      const minimap = document.querySelector<HTMLElement>('[data-testid="minimap"]');
+      if (!viewport || !minimap) throw new Error('Board overview controls were not rendered');
+      const viewportRect = viewport.getBoundingClientRect();
+      const minimapRect = minimap.getBoundingClientRect();
+      return {
+        minimapTop: minimapRect.top,
+        viewportBottom: viewportRect.bottom,
+      };
+    });
+    expect(minimapPlacement.minimapTop).toBeGreaterThanOrEqual(
+      minimapPlacement.viewportBottom,
+    );
 
     for (let index = 0; index < fixtureBoard.words.length; index += 1) {
       const word = fixtureBoard.words[index];
@@ -87,16 +101,30 @@ test.describe('mobile pan and zoom board', () => {
     await expect(layer).toHaveAttribute('style', initialTransform ?? '');
   });
 
-  test('shows a loading state and an explicit non-gesture board fallback', async ({ page }) => {
+  test('switches between the visual board and a readable card list', async ({ page }) => {
     await mountMobileBoard(page);
 
     await expect(page.getByTestId('loading-spinner')).toBeVisible();
-    await expect(page.getByText('רשימת קלפים נגישה ללא מחוות')).toBeVisible();
+    await expect(page.getByTestId('board-view-visual')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('board-card-list')).toHaveCount(0);
 
     await setFixtureBoard(page);
     await expect(page.getByTestId('loading-spinner')).toHaveCount(0);
-    await page.getByText('רשימת קלפים נגישה ללא מחוות').click();
-    await expect(page.getByText(fixtureBoard.words[0], { exact: true }).last()).toBeVisible();
+    await page.getByTestId('board-view-list').click();
+
+    await expect(page.getByTestId('board-card-list')).toBeVisible();
+    await expect(page.getByTestId('board-view-list')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('minimap')).toHaveCount(0);
+    await expect(page.getByTestId('board-list-item-0')).toContainText(fixtureBoard.words[0]);
+    await expect(page.getByTestId('board-list-item-0')).toContainText('אדום');
+
+    await page.getByTestId('board-list-item-0').click();
+    await expect(page.getByTestId('sheet-mark-revealed')).toBeVisible();
+    await page.getByRole('button', { name: 'ביטול' }).click();
+
+    await page.getByTestId('board-view-visual').click();
+    await expect(page.getByTestId('board-card-list')).toHaveCount(0);
+    await expect(page.getByTestId('minimap')).toBeVisible();
   });
 
   test('pinches between fit and one-card scale and double-tap toggles point zoom', async ({ page }) => {

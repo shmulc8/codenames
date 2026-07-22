@@ -12,6 +12,7 @@ export function PanZoomCanvas(): JSX.Element {
   const tiles = useAppStore((state) => state.tiles);
   const selected = useAppStore((state) => state.selected);
   const [focusedWord, setFocusedWord] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'visual' | 'list'>('visual');
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const panZoom = usePanZoom(viewportRef, setFocusedWord);
 
@@ -26,15 +27,39 @@ export function PanZoomCanvas(): JSX.Element {
           <h1>הלוח</h1>
           <p>{tiles.length > 0 ? `${tiles.length} קלפים · לפי כרטיס המפתח` : 'מכינים את הלוח…'}</p>
         </div>
-        <button
-          type="button"
-          className="mobile-board__fit"
-          data-testid="btn-fit-board"
-          onClick={panZoom.resetToFit}
-        >
-          <span aria-hidden="true">⌗</span>
-          התאימו למסך
-        </button>
+        <div className="mobile-board__toolbar-actions">
+          <div className="mobile-board__view-switch" role="group" aria-label="תצוגת הלוח">
+            <button
+              type="button"
+              className={viewMode === 'visual' ? 'is-active' : ''}
+              data-testid="board-view-visual"
+              aria-pressed={viewMode === 'visual'}
+              onClick={() => setViewMode('visual')}
+            >
+              לוח
+            </button>
+            <button
+              type="button"
+              className={viewMode === 'list' ? 'is-active' : ''}
+              data-testid="board-view-list"
+              aria-pressed={viewMode === 'list'}
+              onClick={() => setViewMode('list')}
+            >
+              רשימה
+            </button>
+          </div>
+          {viewMode === 'visual' ? (
+            <button
+              type="button"
+              className="mobile-board__fit"
+              data-testid="btn-fit-board"
+              onClick={panZoom.resetToFit}
+            >
+              <span aria-hidden="true">⌗</span>
+              התאימו למסך
+            </button>
+          ) : null}
+        </div>
       </header>
 
       {assassinRevealed ? (
@@ -43,60 +68,88 @@ export function PanZoomCanvas(): JSX.Element {
         </div>
       ) : null}
 
-      <div
-        className={`mobile-board__viewport${panZoom.gesturing ? ' is-gesturing' : ''}`}
-        ref={viewportRef}
-        onPointerDown={panZoom.pointerDown}
-        onPointerMove={panZoom.pointerMove}
-        onPointerUp={panZoom.pointerUp}
-        onPointerCancel={panZoom.pointerCancel}
-      >
-        {tiles.length === 0 ? (
-          <div className="mobile-board__loading" role="status">
-            <span className="cn-loading-spinner" data-testid="loading-spinner" aria-hidden="true" />
-            טוענים את קלפי הלוח…
+      {viewMode === 'visual' ? (
+        <>
+          <div className="mobile-board__rotate" data-testid="board-rotate-prompt">
+            <span aria-hidden="true">↻</span>
+            <strong>סובבו את המכשיר לרוחב</strong>
+            <small>הלוח נפתח לרוחב כדי שכל מילה תישאר קריאה</small>
           </div>
-        ) : (
+
           <div
-            className="mobile-board__transform"
-            data-board-transform="true"
-            data-at-fit={panZoom.atFit ? 'true' : 'false'}
-            style={{ transform: `translate3d(${panZoom.transform.x}px, ${panZoom.transform.y}px, 0) scale(${panZoom.transform.scale})` }}
+            className={`mobile-board__viewport${panZoom.gesturing ? ' is-gesturing' : ''}`}
+            ref={viewportRef}
+            onPointerDown={panZoom.pointerDown}
+            onPointerMove={panZoom.pointerMove}
+            onPointerUp={panZoom.pointerUp}
+            onPointerCancel={panZoom.pointerCancel}
           >
-            <div className="mobile-board__grid">
-              {tiles.map((tile, index) => (
-                <MobileBoardTile
-                  index={index}
-                  key={tile.word}
-                  selectedIndex={selected.indexOf(tile.word)}
-                  tile={tile}
-                />
+            {tiles.length === 0 ? (
+              <div className="mobile-board__loading" role="status">
+                <span className="cn-loading-spinner" data-testid="loading-spinner" aria-hidden="true" />
+                טוענים את קלפי הלוח…
+              </div>
+            ) : (
+              <div
+                className="mobile-board__transform"
+                data-board-transform="true"
+                data-at-fit={panZoom.atFit ? 'true' : 'false'}
+                style={{ transform: `translate3d(${panZoom.transform.x}px, ${panZoom.transform.y}px, 0) scale(${panZoom.transform.scale})` }}
+              >
+                <div className="mobile-board__grid">
+                  {tiles.map((tile, index) => (
+                    <MobileBoardTile
+                      index={index}
+                      key={tile.word}
+                      selectedIndex={selected.indexOf(tile.word)}
+                      tile={tile}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mobile-board__footer">
+            <div className="mobile-board__minimap" data-testid="minimap" aria-label="מפת הלוח">
+              {tiles.map((tile) => (
+                <span className={`role-${tile.role}`} key={tile.word} />
               ))}
             </div>
           </div>
-        )}
-
-        <div className="mobile-board__minimap" data-testid="minimap" aria-label="מפת הלוח">
-          {tiles.map((tile) => (
-            <span className={`role-${tile.role}`} key={tile.word} />
-          ))}
+        </>
+      ) : (
+        <div className="mobile-board__list" data-testid="board-card-list">
+          {tiles.length === 0 ? (
+            <div className="mobile-board__list-empty" role="status">טוענים את קלפי הלוח…</div>
+          ) : (
+          <ul>
+            {tiles.map((tile, index) => (
+              <li key={tile.word}>
+                <button
+                  type="button"
+                  className={`role-${tile.role}${tile.lifecycle === 'chosen' ? ' is-chosen' : ''}`}
+                  data-testid={`board-list-item-${index}`}
+                  onClick={() => setFocusedWord(tile.word)}
+                >
+                  <span className="mobile-board__list-icon" aria-hidden="true">
+                    <RoleIcon role={tile.role} />
+                  </span>
+                  <span className="mobile-board__list-copy">
+                    <strong>{tile.word}</strong>
+                    <small>
+                      {roleLabel[tile.role]}
+                      {tile.lifecycle === 'chosen' ? ' · נחשף' : ''}
+                    </small>
+                  </span>
+                  <span className="mobile-board__list-action" aria-hidden="true">‹</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          )}
         </div>
-      </div>
-
-      <details className="mobile-board__fallback">
-        <summary>רשימת קלפים נגישה ללא מחוות</summary>
-        <ul>
-          {tiles.map((tile) => (
-            <li key={tile.word}>
-              <button type="button" onClick={() => setFocusedWord(tile.word)}>
-                <RoleIcon role={tile.role} />
-                <span>{tile.word}</span>
-                <span>{roleLabel[tile.role]}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </details>
+      )}
       {focusedWord ? (
         <MarkRevealedSheet onClose={() => setFocusedWord(null)} word={focusedWord} />
       ) : null}
