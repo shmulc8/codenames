@@ -70,6 +70,46 @@ test.describe('mobile bulk board actions', () => {
     });
   });
 
+  test('recovers a mixed selection with a clear majority via the trim action', async ({ page }) => {
+    await openSeededBoard(page);
+
+    // Three red, one blue — red has a clear majority.
+    await page.getByTestId('tile-0').click();
+    await page.getByTestId('tile-1').click();
+    await page.getByTestId('tile-2').click();
+    await page.getByTestId('tile-9').click();
+    await expect(page.getByTestId('board-selection-count')).toHaveText('4');
+    await expect(page.getByTestId('board-action-clue')).toBeDisabled();
+    await expect(page.getByTestId('board-clue-unavailable')).toBeVisible();
+
+    const trim = page.getByTestId('board-clue-trim');
+    await expect(trim).toBeVisible();
+    await expect(trim).toContainText('אדום');
+
+    await trim.click();
+    const modal = page.getByTestId('mobile-clue-modal');
+    await expect(modal).toBeVisible();
+    // Trimming opens the clue modal the same way the board action bar does: auto-generated.
+    await expect(modal.getByTestId('clue-word')).toHaveText('טבע');
+
+    expect(
+      await page.evaluate(() => {
+        const state = window.__store?.getState();
+        return {
+          clueModalOpen: state?.clueModalOpen,
+          mobileSelection: state?.mobileSelection,
+          selected: state?.selected,
+          target: state?.target,
+        };
+      }),
+    ).toEqual({
+      clueModalOpen: true,
+      mobileSelection: [fixtureBoard.words[0], fixtureBoard.words[1], fixtureBoard.words[2]],
+      selected: [fixtureBoard.words[0], fixtureBoard.words[1], fixtureBoard.words[2]],
+      target: 'red',
+    });
+  });
+
   test('eliminates a batch, undoes it, and directly restores an eliminated tile', async ({
     page,
   }) => {

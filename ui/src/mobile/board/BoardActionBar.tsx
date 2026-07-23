@@ -1,4 +1,6 @@
-import { mobileClueFocusTeam, useAppStore } from '../../state/store';
+import { mobileClueFocusTeam, mobileSelectionMajorityTeam, useAppStore } from '../../state/store';
+
+const TEAM_LABEL = { red: 'אדום', blue: 'כחול' } as const;
 
 function ClueIcon(): JSX.Element {
   return (
@@ -22,9 +24,11 @@ export function BoardActionBar(): JSX.Element | null {
   const count = useAppStore((state) => state.mobileSelection.length);
   const mode = useAppStore((state) => state.mode);
   const clueFocusTeam = useAppStore(mobileClueFocusTeam);
+  const majorityTeam = useAppStore(mobileSelectionMajorityTeam);
   const clearMobileSelection = useAppStore((state) => state.clearMobileSelection);
   const eliminateMobileSelection = useAppStore((state) => state.eliminateMobileSelection);
   const openMobileClue = useAppStore((state) => state.openMobileClue);
+  const trimMobileSelectionForClue = useAppStore((state) => state.trimMobileSelectionForClue);
 
   if (count === 0) return null;
 
@@ -33,9 +37,21 @@ export function BoardActionBar(): JSX.Element | null {
   return (
     <div className="mobile-board-action-context">
       {clueUnavailable ? (
-        <p className="mobile-board-action-context__reason" data-testid="board-clue-unavailable">
-          בחרו קלפים מאותה קבוצה
-        </p>
+        <div className="mobile-board-action-context__hint">
+          <p className="mobile-board-action-context__reason" data-testid="board-clue-unavailable">
+            בחרו קלפים מאותה קבוצה
+          </p>
+          {majorityTeam ? (
+            <button
+              type="button"
+              className="mobile-board-action-context__recover"
+              data-testid="board-clue-trim"
+              onClick={() => trimMobileSelectionForClue(majorityTeam)}
+            >
+              השאירו רק {TEAM_LABEL[majorityTeam]}
+            </button>
+          ) : null}
+        </div>
       ) : null}
       <div
         className="mobile-board-action-bar"

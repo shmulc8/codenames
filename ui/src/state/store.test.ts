@@ -273,20 +273,27 @@ describe('mobile state resets', () => {
     expectMobileStateCleared();
   });
 
-  it('clears mobile state when entering operative mode', () => {
+  it('preserves the card selection when entering operative mode, but drops the clue modal and undo', () => {
     primeMobileState();
 
     useAppStore.getState().setMode('operative');
 
-    expectMobileStateCleared();
+    const state = useAppStore.getState();
+    expect(state.mobileSelection).toEqual(['כחול']);
+    expect(state.clueModalOpen).toBe(false);
+    expect(state.lastElimination).toBeNull();
+    expect(state.selected).toEqual([]);
   });
 
-  it('clears mobile state when returning to spymaster mode', () => {
+  it('preserves the card selection when returning to spymaster mode', () => {
     useAppStore.getState().setMode('operative');
     primeMobileState();
 
     useAppStore.getState().setMode('spymaster');
 
-    expectMobileStateCleared();
+    const state = useAppStore.getState();
+    expect(state.mobileSelection).toEqual(['כחול']);
+    expect(state.clueModalOpen).toBe(false);
+    expect(state.lastElimination).toBeNull();
   });
 });

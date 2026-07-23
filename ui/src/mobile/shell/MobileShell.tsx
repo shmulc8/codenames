@@ -1,12 +1,6 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-} from 'react';
+import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 
+import { OCR_ENABLED } from '../../features/photo/flags';
 import { PanZoomCanvas } from '../board';
 import { CaptureFlow } from '../capture';
 import { MobileCheckPanel, MobileCluePanel, MobileMapPanel, MobileOperativePanel } from '../panels';
@@ -96,8 +90,8 @@ export function MobileShell(): JSX.Element {
   const setMode = useAppStore((state) => state.setMode);
   const setActiveTab = useAppStore((state) => state.setActiveTab);
   const closeMobileClue = useAppStore((state) => state.closeMobileClue);
+  const openMobileClue = useAppStore((state) => state.openMobileClue);
   const [mobileTab, setMobileTab] = useState<MobileTab>('board');
-  const [manualClueOpen, setManualClueOpen] = useState(false);
   const [capturing, setCapturing] = useState(false);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const backgroundRef = useRef<HTMLDivElement | null>(null);
@@ -136,17 +130,15 @@ export function MobileShell(): JSX.Element {
     };
   }, [clueModalOpen]);
 
-  useEffect(() => {
-    if (!clueModalOpen && manualClueOpen) setManualClueOpen(false);
-  }, [clueModalOpen, manualClueOpen]);
-
   function selectTab(tab: MobileTab): void {
     if (tab === 'clue') {
       clueOpenerRef.current =
         document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setActiveTab('clue');
-      setManualClueOpen(true);
-      useAppStore.setState({ clueModalOpen: true });
+      // A same-team card selection auto-generates the clue (matching the board action bar);
+      // with no valid selection we just open the manual clue form.
+      if (clueFocusTeam !== null) openMobileClue();
+      else useAppStore.setState({ clueModalOpen: true });
       return;
     }
     setMobileTab(tab);
@@ -155,14 +147,12 @@ export function MobileShell(): JSX.Element {
 
   function changeMode(nextMode: GameMode): void {
     setMode(nextMode);
-    setManualClueOpen(false);
     setMobileTab(nextMode === 'operative' ? 'operative' : 'board');
     if (nextMode === 'spymaster') setActiveTab('clue');
   }
 
   const closeClue = useCallback((): void => {
     closeMobileClue();
-    setManualClueOpen(false);
     const opener = clueOpenerRef.current;
     clueOpenerRef.current = null;
     // Restore on a macrotask so it runs after the shell clears `inert` on the background
@@ -177,7 +167,6 @@ export function MobileShell(): JSX.Element {
       dir="rtl"
       ref={shellRef}
     >
-      <MobileLandscapePrompt />
       <div
         className="mobile-shell__background"
         ref={backgroundRef}
@@ -192,7 +181,7 @@ export function MobileShell(): JSX.Element {
               <MobileGameBar onModeChange={changeMode} boardActive={mobileTab === 'board'} />
             ) : null}
             {screen === 'setup' ? (
-              <MobileHome onShoot={() => setCapturing(true)} />
+              <MobileHome onShoot={OCR_ENABLED ? () => setCapturing(true) : undefined} />
             ) : (
               <MobilePanel tab={mobileTab} />
             )}
@@ -205,26 +194,9 @@ export function MobileShell(): JSX.Element {
         )}
       </div>
       {clueModalOpen ? (
-        <MobileClueModal
-          autoRequest={!manualClueOpen && clueFocusTeam !== null}
-          onClose={closeClue}
-        />
+        <MobileClueModal autoRequest={clueFocusTeam !== null} onClose={closeClue} />
       ) : null}
     </div>
-  );
-}
-
-function MobileLandscapePrompt(): JSX.Element {
-  return (
-    <main
-      className="mobile-shell__orientation-gate"
-      data-testid="mobile-landscape-prompt"
-      role="status"
-    >
-      <span aria-hidden="true">↻</span>
-      <h1>סובבו את המכשיר לרוחב</h1>
-      <p>הצילום, הגדרת הלוח והמשחק פועלים בתצוגה אופקית</p>
-    </main>
   );
 }
 

@@ -14,6 +14,7 @@ import type {
 import {
   computeClueFocusTeam,
   computeEliminationBatch,
+  computeMajorityClueTeam,
   type MobileElimination,
 } from './mobile-selection';
 
@@ -72,6 +73,7 @@ export interface AppState {
   eliminateMobileSelection(): void;
   undoLastElimination(): void;
   openMobileClue(): void;
+  trimMobileSelectionForClue(team: TeamColor): void;
   closeMobileClue(): void;
   setBoardView(view: 'visual' | 'list'): void;
   requestBoardFit(): void;
@@ -101,6 +103,7 @@ type StateValues = Omit<
   | 'eliminateMobileSelection'
   | 'undoLastElimination'
   | 'openMobileClue'
+  | 'trimMobileSelectionForClue'
   | 'closeMobileClue'
   | 'setBoardView'
   | 'requestBoardFit'
@@ -183,6 +186,9 @@ export const selectedColor = (state: AppState): TeamColor | null => {
 
 export const mobileClueFocusTeam = (state: AppState): TeamColor | null =>
   computeClueFocusTeam(state.tiles, state.mobileSelection);
+
+export const mobileSelectionMajorityTeam = (state: AppState): TeamColor | null =>
+  computeMajorityClueTeam(state.tiles, state.mobileSelection);
 
 export const useAppStore = create<AppState>((set, get) => ({
   ...initialValues(),
@@ -359,6 +365,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       clueModalOpen: true,
     });
   },
+  trimMobileSelectionForClue: (team) => {
+    const state = get();
+    const words = state.mobileSelection.filter((word) => {
+      const tile = state.tiles.find((candidate) => candidate.word === word);
+      return tile?.lifecycle === 'inPlay' && tile.role === team;
+    });
+    if (words.length === 0) return;
+    set({ mobileSelection: words, selected: words, target: team, clueModalOpen: true });
+  },
   closeMobileClue: () => set({ clueModalOpen: false }),
   setBoardView: (boardView) => set({ boardView }),
   requestBoardFit: () => set((state) => ({ boardFitNonce: state.boardFitNonce + 1 })),
@@ -367,7 +382,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   setMode: (mode) =>
     set((state) => ({
       mode,
-      mobileSelection: [],
       clueModalOpen: false,
       lastElimination: null,
       ...(mode === 'operative'

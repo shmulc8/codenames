@@ -13,7 +13,11 @@ function CameraIcon(): JSX.Element {
   );
 }
 
-function RandomBoardButton(): JSX.Element {
+function RandomBoardButton({
+  variant = 'secondary',
+}: {
+  variant?: 'primary' | 'secondary';
+}): JSX.Element {
   const setBoard = useAppStore((state) => state.setBoard);
   const [loading, setLoading] = useState(false);
 
@@ -41,7 +45,7 @@ function RandomBoardButton(): JSX.Element {
       className="mobile-home__random"
       data-testid="btn-random"
       loading={loading}
-      variant="secondary"
+      variant={variant}
       onClick={() => void handleRandomBoard()}
     >
       <span aria-hidden="true">⚄</span>
@@ -67,41 +71,50 @@ function ResumeButton(): JSX.Element | null {
 
   return (
     <button
-      className="mobile-home__resume btn btn-ghost"
+      className="mobile-home__resume btn btn-primary"
       data-testid="btn-resume"
       type="button"
       onClick={handleResume}
     >
-      <span aria-hidden="true">↶</span>
-      המשך המשחק האחרון
+      <strong>
+        <span aria-hidden="true">↶</span> המשיכו מהלוח האחרון
+      </strong>
+      <small>25 הקלפים שכבר סרקתם</small>
     </button>
   );
 }
 
 function HomeActions({ onShoot }: { onShoot?: () => void }): JSX.Element {
+  const canResume = useAppStore((state) => state.tiles.length === 25);
+  const cameraEnabled = Boolean(onShoot);
+
   return (
     <div className="mobile-home__actions">
-      <button
-        className="mobile-home__shoot btn btn-primary"
-        data-testid="btn-shoot"
-        type="button"
-        onClick={onShoot ?? (() => showToast('הצילום יהיה זמין בקרוב'))}
-      >
-        <CameraIcon />
-        <span>
-          <strong>צלמו את הלוח</strong>
-          <small>25 הקלפים שעל השולחן</small>
-        </span>
-      </button>
-
-      <div className="mobile-home__separator" aria-hidden="true">
-        <span />
-        או
-        <span />
-      </div>
-
-      <RandomBoardButton />
       <ResumeButton />
+      {cameraEnabled ? (
+        <>
+          <button
+            className={`mobile-home__shoot btn ${canResume ? 'btn-secondary' : 'btn-primary'}`}
+            data-testid="btn-shoot"
+            type="button"
+            onClick={onShoot}
+          >
+            <CameraIcon />
+            <span>
+              <strong>צלמו את הלוח</strong>
+              <small>25 הקלפים שעל השולחן</small>
+            </span>
+          </button>
+
+          <div className="mobile-home__separator" aria-hidden="true">
+            <span />
+            או
+            <span />
+          </div>
+        </>
+      ) : null}
+
+      <RandomBoardButton variant={!cameraEnabled && !canResume ? 'primary' : 'secondary'} />
     </div>
   );
 }
@@ -112,7 +125,11 @@ export function MobileHome({ onShoot }: { onShoot?: () => void }): JSX.Element {
       <section className="mobile-home__intro" aria-labelledby="mobile-home-title">
         <p className="mobile-home__eyebrow">קופיילוט · שם קוד</p>
         <h1 id="mobile-home-title">מתחילים מהלוח שעל השולחן</h1>
-        <p>צלמו את הלוח ואת כרטיס המפתח — ונעזור להכין את הרמז הבא.</p>
+        <p>
+          {onShoot
+            ? 'צלמו את הלוח ואת כרטיס המפתח — ונעזור להכין את הרמז הבא.'
+            : 'טענו לוח אקראי לתרגול — ונעזור להכין את הרמז הבא.'}
+        </p>
       </section>
 
       <HomeActions onShoot={onShoot} />

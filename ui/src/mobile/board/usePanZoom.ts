@@ -46,6 +46,9 @@ interface GestureContext {
 
 const TAP_DISTANCE = 10;
 const RUBBER_BAND = 0.32;
+// When the board is smaller than the viewport (e.g. fit-to-width in portrait), rest it near the
+// top rather than floating in the vertical center, so it sits under the game bar.
+const FIT_TOP_MARGIN = 12;
 
 function distance(left: Point, right: Point): number {
   return Math.hypot(left.x - right.x, left.y - right.y);
@@ -59,17 +62,26 @@ function fitFor(viewport: HTMLDivElement): TransformState {
   const widthScale = Math.max(0.1, (viewport.clientWidth - 16) / BOARD_WIDTH);
   const heightScale = Math.max(0.1, (viewport.clientHeight - 16) / BOARD_HEIGHT);
   const fitScale = Math.min(widthScale, heightScale, 1);
+  const contentHeight = BOARD_HEIGHT * fitScale;
 
   return {
     fitScale,
     scale: fitScale,
     x: (viewport.clientWidth - BOARD_WIDTH * fitScale) / 2,
-    y: (viewport.clientHeight - BOARD_HEIGHT * fitScale) / 2,
+    y:
+      viewport.clientHeight > contentHeight
+        ? FIT_TOP_MARGIN
+        : (viewport.clientHeight - contentHeight) / 2,
   };
 }
 
-function axisBounds(viewportSize: number, contentSize: number): [number, number] {
+function axisBounds(
+  viewportSize: number,
+  contentSize: number,
+  alignStart = false,
+): [number, number] {
   if (contentSize <= viewportSize) {
+    if (alignStart) return [FIT_TOP_MARGIN, FIT_TOP_MARGIN];
     const centered = (viewportSize - contentSize) / 2;
     return [centered, centered];
   }
@@ -84,7 +96,7 @@ function constrainAxis(value: number, min: number, max: number, soft: boolean): 
 
 function constrain(viewport: HTMLDivElement, next: TransformState, soft: boolean): TransformState {
   const [minX, maxX] = axisBounds(viewport.clientWidth, BOARD_WIDTH * next.scale);
-  const [minY, maxY] = axisBounds(viewport.clientHeight, BOARD_HEIGHT * next.scale);
+  const [minY, maxY] = axisBounds(viewport.clientHeight, BOARD_HEIGHT * next.scale, true);
   return {
     ...next,
     x: constrainAxis(next.x, minX, maxX, soft),
