@@ -7,6 +7,7 @@ import { roleColor } from '../board';
 import { useAppStore } from '../../state/store';
 import { showToast } from '../../state/toast';
 import type { Role } from '../../types/api';
+import { OCR_ENABLED } from './flags';
 import { classifyKeyCard, rotateRolesClockwise } from './keyCard';
 import { recognizeBoard, subscribeToOcrProgress, warmOcrWorker } from './ocr';
 import './photo.css';
@@ -23,10 +24,6 @@ const roleLabel: Record<Role, string> = {
 };
 
 type InputMode = 'manual' | 'photo';
-// Photo/OCR board capture is still being finished — gated off in production, on in
-// dev/tests (VITE_ENABLE_OCR=1). Manual entry + random deal stay the default setup path.
-const OCR_ENABLED =
-  import.meta.env.VITE_ENABLE_OCR === '1' || import.meta.env.VITE_ENABLE_OCR === 'true';
 
 type OcrState = 'warming' | 'ready' | 'recognizing' | 'success' | 'error';
 

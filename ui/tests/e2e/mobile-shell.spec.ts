@@ -6,15 +6,13 @@ import { MOBILE_LANDSCAPE, MOBILE_PORTRAIT, openMobileShell } from '../support/m
 test.describe('mobile app shell', () => {
   test.use({ hasTouch: true });
 
-  test('requires landscape before setup or gameplay is available', async ({ page }) => {
+  test('works in both portrait and landscape', async ({ page }) => {
     await openMobileShell(page, MOBILE_PORTRAIT);
 
-    await expect(page.getByTestId('mobile-landscape-prompt')).toBeVisible();
-    await expect(page.getByTestId('mobile-home')).toBeHidden();
-    await expect(page.getByTestId('tabbar')).toBeHidden();
+    await expect(page.getByTestId('mobile-home')).toBeVisible();
+    await expect(page.getByTestId('tabbar')).toBeVisible();
 
     await page.setViewportSize(MOBILE_LANDSCAPE);
-    await expect(page.getByTestId('mobile-landscape-prompt')).toBeHidden();
     await expect(page.getByTestId('mobile-home')).toBeVisible();
     await expect(page.getByTestId('tabbar')).toBeVisible();
   });
@@ -215,8 +213,7 @@ test.describe('desktop regression', () => {
 
     await page.setViewportSize(MOBILE_PORTRAIT);
     await expect(page.getByTestId('mobile-shell')).toBeVisible();
-    await expect(page.getByTestId('mobile-landscape-prompt')).toBeVisible();
-    await expect(page.getByTestId('board-canvas')).toBeHidden();
+    await expect(page.getByTestId('board-canvas')).toBeVisible();
     await expect(page.getByTestId('board-grid')).toHaveCount(0);
 
     await page.setViewportSize(MOBILE_LANDSCAPE);

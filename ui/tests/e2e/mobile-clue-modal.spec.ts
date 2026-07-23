@@ -95,6 +95,27 @@ test.describe('mobile clue modal', () => {
     await expect.poll(() => page.evaluate(() => window.__store?.getState().log.length)).toBe(1);
   });
 
+  test('tapping the clue tab with a same-team board selection auto-generates the clue', async ({
+    page,
+  }) => {
+    await openMobileShell(page, MOBILE_LANDSCAPE);
+    await installBoard(page);
+
+    // Board taps (not the clue modal) build the selection, matching the board action bar flow.
+    await page.getByTestId('tile-0').click();
+    await page.getByTestId('tile-1').click();
+
+    await page.getByTestId('tab-clue').click();
+    const modal = page.getByTestId('mobile-clue-modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.getByTestId('btn-get-clue').getByTestId('loading-spinner')).toBeVisible();
+    await expect(modal.getByTestId('clue-word')).toHaveText('טבע');
+
+    expect((await page.evaluate(() => window.__lastSpymasterReq))?.focus).toEqual(
+      fixtureBoard.words.slice(0, 2),
+    );
+  });
+
   test('the clue tab keeps manual controls available and generates only after the user asks', async ({
     page,
   }) => {

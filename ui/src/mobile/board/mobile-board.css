@@ -27,7 +27,7 @@
   position: relative;
   flex: 1;
   min-height: 0;
-  display: none;
+  display: block;
   overflow: hidden;
   background: var(--cn-board-void);
   touch-action: none;
@@ -87,14 +87,22 @@
 .mobile .mobile-board-tile.role-red {
   --tile-ring: var(--cn-red-ring);
   --tile-tint: var(--cn-red-tint);
+  background: var(--cn-red-grad);
 }
 .mobile .mobile-board-tile.role-blue {
   --tile-ring: var(--cn-blue-ring);
   --tile-tint: var(--cn-blue-tint);
+  background: var(--cn-blue-grad);
 }
 .mobile .mobile-board-tile.role-assassin {
   --tile-ring: var(--cn-assassin-ring);
   --tile-tint: var(--cn-assassin-tint);
+  background: var(--cn-assassin-grad);
+}
+.mobile .mobile-board-tile.role-red .mobile-board-tile__mirror,
+.mobile .mobile-board-tile.role-blue .mobile-board-tile__mirror,
+.mobile .mobile-board-tile.role-assassin .mobile-board-tile__mirror {
+  color: rgba(255, 255, 255, 0.58);
 }
 .mobile .mobile-board-tile__hole {
   position: absolute;
@@ -299,6 +307,13 @@
   pointer-events: none;
 }
 
+.mobile .mobile-board-action-context__hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
 .mobile .mobile-board-action-context__reason {
   margin: 0;
   padding: 0.35rem 0.65rem;
@@ -307,6 +322,18 @@
   background: color-mix(in srgb, var(--cn-board-void) 90%, transparent);
   color: var(--cn-text-muted);
   font-size: 0.7rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+}
+
+.mobile .mobile-board-action-context__recover {
+  pointer-events: auto;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent-400) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--cn-sheet));
+  color: var(--cn-text);
+  font: 600 0.72rem/1 var(--font-hebrew);
+  cursor: pointer;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
 }
 
@@ -413,12 +440,6 @@
 @media (orientation: landscape) {
   .mobile .mobile-board__list ul {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .mobile .mobile-board__viewport {
-    display: block;
-    flex: 1;
-    min-height: 0;
   }
 }
 

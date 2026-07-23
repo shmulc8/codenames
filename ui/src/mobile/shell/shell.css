@@ -39,40 +39,6 @@
   overflow: hidden;
 }
 
-.mobile .mobile-shell__orientation-gate {
-  width: 100%;
-  min-height: calc(100svh - var(--space-8));
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: var(--space-2);
-  text-align: center;
-}
-
-.mobile .mobile-shell__orientation-gate > span {
-  color: var(--color-accent-400);
-  font-size: 3rem;
-}
-
-.mobile .mobile-shell__orientation-gate h1 {
-  margin: var(--space-2) 0 0;
-  color: var(--cn-text);
-  font: 700 1.35rem/1.2 var(--font-hebrew);
-}
-
-.mobile .mobile-shell__orientation-gate p {
-  max-width: 28ch;
-  margin: 0;
-  color: var(--cn-text-muted);
-  font-size: 0.88rem;
-}
-
-@media (orientation: portrait) {
-  .mobile.mobile-shell > :not(.mobile-shell__orientation-gate) {
-    display: none !important;
-  }
-}
-
 .mobile .mobile-shell__header {
   position: absolute;
   inset-block-start: max(env(safe-area-inset-top), var(--space-4));
@@ -204,7 +170,19 @@
 }
 
 .mobile .mobile-home__resume {
-  color: var(--color-accent-400);
+  min-height: 72px !important;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mobile .mobile-home__resume strong {
+  font-size: 18px;
+}
+
+.mobile .mobile-home__resume small {
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  font-size: 13px;
 }
 
 .mobile .mobile-home__privacy {
@@ -326,6 +304,22 @@
 .mobile .mobile-shell__fit:focus-visible {
   outline: 2px solid var(--color-accent-300);
   outline-offset: -2px;
+}
+
+/* Narrow portrait phones: the consolidated game bar can't fit its controls on one row,
+   so wrap them into centered rows instead of clipping. Landscape keeps its single row. */
+@media (max-width: 480px) {
+  .mobile .mobile-shell__gamebar {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: var(--space-1);
+    overflow: visible;
+  }
+
+  .mobile .mobile-shell__gamebar-end {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
 
 .mobile .mobile-shell__content--clue,
@@ -499,10 +493,6 @@
 }
 
 @media (orientation: landscape) {
-  .mobile .mobile-shell__orientation-gate {
-    display: none;
-  }
-
   .mobile.mobile-shell {
     padding: var(--space-3) calc(84px + env(safe-area-inset-right)) var(--space-3)
       max(env(safe-area-inset-left), var(--space-3));

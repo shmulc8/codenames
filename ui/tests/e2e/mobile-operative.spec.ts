@@ -230,7 +230,9 @@ test.describe('mobile operative mode', () => {
     await expect(page.getByTestId('operative-result-clue')).toHaveText('תקלה');
   });
 
-  test('clears spymaster selections before exposing the operative board', async ({ page }) => {
+  test('keeps the board card selection but hides roles when switching to operative', async ({
+    page,
+  }) => {
     await openMobileShell(page, MOBILE_LANDSCAPE);
     await installBoard(page);
 
@@ -239,13 +241,17 @@ test.describe('mobile operative mode', () => {
     await page.getByTestId('tile-1').click();
     await expect(page.locator('[data-mobile-tile][aria-pressed="true"]')).toHaveCount(2);
 
-    // Switching to operative must scrub that selection and expose a fully blind board.
+    // Switching to operative keeps the card picks (an in-progress reveal survives the mode
+    // switch) — but the board stays fully blind, since role hiding is independent of selection.
     await page.getByTestId('mobile-mode-operative').click();
     await page.getByTestId('tab-board').click();
-    await expect(page.locator('[data-mobile-tile][aria-pressed="true"]')).toHaveCount(0);
-    await expect(page.locator('[data-mobile-tile].is-selected')).toHaveCount(0);
+    await expect(page.locator('[data-mobile-tile][aria-pressed="true"]')).toHaveCount(2);
+    await expect(page.locator('[data-mobile-tile].is-selected')).toHaveCount(2);
     await expect(page.locator('[data-mobile-tile][data-role="neutral"]')).toHaveCount(25);
-    expect(await page.evaluate(() => window.__store?.getState().mobileSelection)).toEqual([]);
+    expect(await page.evaluate(() => window.__store?.getState().mobileSelection)).toEqual([
+      fixtureBoard.words[0],
+      fixtureBoard.words[1],
+    ]);
 
     await page.getByTestId('tab-map').click();
     await expect(page.getByTestId('map-hint-node')).toHaveCount(0);
