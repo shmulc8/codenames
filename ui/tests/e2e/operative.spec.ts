@@ -48,7 +48,9 @@ test.describe('desktop operative mode', () => {
     expect((await page.evaluate(() => window.__lastOperativeReq))?.count).toBe(2);
   });
 
-  test('drops clue-focus selection and refuses to re-select in operative mode', async ({ page }) => {
+  test('drops clue-focus selection and refuses to re-select in operative mode', async ({
+    page,
+  }) => {
     await openDesktopBoard(page);
 
     // As spymaster, a team card can be picked into a clue focus (aria-pressed).
