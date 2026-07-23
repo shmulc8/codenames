@@ -104,7 +104,7 @@ export function SessionLog(): JSX.Element {
             aria-controls="session-log-content"
             onClick={() => setOpen((value) => !value)}
           >
-            <span>יומן רמזים</span>
+            <span>היסטוריית רמזים</span>
             <span className="session-log__total" aria-label={`${log.length} רמזים`}>
               {log.length}
             </span>

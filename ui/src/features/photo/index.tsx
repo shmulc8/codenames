@@ -359,9 +359,9 @@ export function PhotoSetup(): JSX.Element {
               <h2 id="words-heading">25 המילים שעל הלוח</h2>
               <p id="words-help">Tab או Enter עוברים למילה הבאה · ↑/↓ מחליפים תפקיד.</p>
             </div>
-            <span className={`photo-setup__key-status ${validKey ? 'is-valid' : ''}`}>
-              {validKey ? '9·8·7·1 מפתח תקין' : 'חלוקת המפתח עדיין לא 9·8·7·1'}
-            </span>
+            {!validKey ? (
+              <span className="photo-setup__key-status">חלוקת המפתח עדיין לא 9·8·7·1</span>
+            ) : null}
           </div>
 
           <div className="photo-setup__key-tools">
@@ -372,8 +372,14 @@ export function PhotoSetup(): JSX.Element {
                 </span>
               ))}
             </div>
-            <button className="btn btn-secondary" type="button" onClick={rotateRoles}>
-              סובב ↻
+            <button
+              className="btn btn-secondary photo-setup__rotate"
+              type="button"
+              aria-label="סובב את המפתח"
+              title="סובב את המפתח"
+              onClick={rotateRoles}
+            >
+              ↻
             </button>
           </div>
 
@@ -435,7 +441,7 @@ export function PhotoSetup(): JSX.Element {
 
           <button
             type="button"
-            className="btn btn-primary photo-setup__confirm"
+            className="btn cn-cta photo-setup__confirm"
             data-testid="btn-confirm-board"
             disabled={demoBusy || ocrState === 'recognizing' || keyBusy}
             onClick={confirmBoard}

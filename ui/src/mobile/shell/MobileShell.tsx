@@ -188,7 +188,9 @@ export function MobileShell(): JSX.Element {
         ) : (
           <>
             {screen === 'setup' ? <MobileHeader /> : null}
-            {screen === 'game' ? <MobileGameBar onModeChange={changeMode} /> : null}
+            {screen === 'game' ? (
+              <MobileGameBar onModeChange={changeMode} boardActive={mobileTab === 'board'} />
+            ) : null}
             {screen === 'setup' ? (
               <MobileHome onShoot={() => setCapturing(true)} />
             ) : (

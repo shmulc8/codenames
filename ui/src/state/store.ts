@@ -46,6 +46,10 @@ export interface AppState {
   mobileSelection: string[];
   clueModalOpen: boolean;
   lastElimination: MobileElimination | null;
+  // Mobile board presentation, lifted so the slim game bar can host the view/fit controls
+  // instead of a second full-width toolbar row (boardFitNonce bumps to trigger a re-fit).
+  boardView: 'visual' | 'list';
+  boardFitNonce: number;
   hoverWord: string | null;
   risk: Risk;
   vocabMode: VocabMode;
@@ -69,6 +73,8 @@ export interface AppState {
   undoLastElimination(): void;
   openMobileClue(): void;
   closeMobileClue(): void;
+  setBoardView(view: 'visual' | 'list'): void;
+  requestBoardFit(): void;
   setRisk(risk: Risk): void;
   setVocabMode(mode: VocabMode): void;
   setMode(mode: 'spymaster' | 'operative'): void;
@@ -96,6 +102,8 @@ type StateValues = Omit<
   | 'undoLastElimination'
   | 'openMobileClue'
   | 'closeMobileClue'
+  | 'setBoardView'
+  | 'requestBoardFit'
   | 'setRisk'
   | 'setVocabMode'
   | 'setMode'
@@ -120,6 +128,8 @@ const initialValues = (): StateValues => ({
   mobileSelection: [],
   clueModalOpen: false,
   lastElimination: null,
+  boardView: 'visual',
+  boardFitNonce: 0,
   hoverWord: null,
   risk: 'balanced',
   vocabMode: 'curated',
@@ -189,6 +199,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       mobileSelection: [],
       clueModalOpen: false,
       lastElimination: null,
+      boardView: 'visual',
       hoverWord: null,
       checkedClue: null,
       clue: {
@@ -349,6 +360,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
   closeMobileClue: () => set({ clueModalOpen: false }),
+  setBoardView: (boardView) => set({ boardView }),
+  requestBoardFit: () => set((state) => ({ boardFitNonce: state.boardFitNonce + 1 })),
   setRisk: (risk) => set({ risk }),
   setVocabMode: (vocabMode) => set({ vocabMode }),
   setMode: (mode) =>

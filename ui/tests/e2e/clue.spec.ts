@@ -128,7 +128,7 @@ test('focused request posts the selected cluster and keyboard-selected risk', as
     window.__store.getState().toggleSelected(words[1]);
   }, fixtureBoard.words);
 
-  await expect(page.getByText('נבחרו: 2 קלפים בצבע אדום')).toBeVisible();
+  await expect(page.getByText('הקלפים שבחרתי · 2')).toBeVisible();
   await expect(page.getByTestId('btn-get-clue')).toBeEnabled();
 
   await page.getByTestId('risk-bold').focus();
@@ -230,7 +230,7 @@ test('target switch clears selection and blue-target requests use my/opp wire ro
     window.__store.getState().toggleSelected(word);
   }, fixtureBoard.words[0]);
 
-  await expect(page.getByText('נבחרו: 1 קלפים בצבע אדום')).toBeVisible();
+  await expect(page.getByText('הקלפים שבחרתי · 1')).toBeVisible();
   await page.getByTestId('target-blue').focus();
   await expect(page.getByTestId('target-blue')).toBeFocused();
   await expect(page.getByTestId('target-blue')).toHaveCSS('outline-offset', '-3px');

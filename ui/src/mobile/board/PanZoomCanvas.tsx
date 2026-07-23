@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { RoleIcon } from '../../components/RoleIcon';
 import { useAppStore } from '../../state/store';
@@ -16,9 +16,18 @@ export function PanZoomCanvas(): JSX.Element {
   const mobileSelection = useAppStore((state) => state.mobileSelection);
   const toggleLifecycle = useAppStore((state) => state.toggleLifecycle);
   const toggleMobileSelection = useAppStore((state) => state.toggleMobileSelection);
-  const [viewMode, setViewMode] = useState<'visual' | 'list'>('visual');
+  // View + fit are driven from the game bar (store) so the board owns no toolbar row of its own.
+  const viewMode = useAppStore((state) => state.boardView);
+  const boardFitNonce = useAppStore((state) => state.boardFitNonce);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const panZoom = usePanZoom(viewportRef);
+
+  const resetToFitRef = useRef(panZoom.resetToFit);
+  resetToFitRef.current = panZoom.resetToFit;
+  useEffect(() => {
+    if (boardFitNonce === 0) return;
+    resetToFitRef.current();
+  }, [boardFitNonce]);
 
   const assassinRevealed = tiles.some(
     (tile) => tile.role === 'assassin' && tile.lifecycle === 'chosen',
@@ -36,54 +45,6 @@ export function PanZoomCanvas(): JSX.Element {
 
   return (
     <section className="mobile-board" data-testid="board-canvas" dir="rtl" aria-label="לוח המשחק">
-      <header className={`mobile-board__toolbar${viewMode === 'visual' ? ' is-visual' : ''}`}>
-        {viewMode === 'list' ? (
-          <div>
-            <h1>הלוח</h1>
-            <p>
-              {tiles.length > 0
-                ? mode === 'operative'
-                  ? `${tiles.length} קלפים · הצבעים מוסתרים`
-                  : `${tiles.length} קלפים · לפי כרטיס המפתח`
-                : 'מכינים את הלוח…'}
-            </p>
-          </div>
-        ) : null}
-        <div className="mobile-board__toolbar-actions">
-          <div className="mobile-board__view-switch" role="group" aria-label="תצוגת הלוח">
-            <button
-              type="button"
-              className={viewMode === 'visual' ? 'is-active' : ''}
-              data-testid="board-view-visual"
-              aria-pressed={viewMode === 'visual'}
-              onClick={() => setViewMode('visual')}
-            >
-              לוח
-            </button>
-            <button
-              type="button"
-              className={viewMode === 'list' ? 'is-active' : ''}
-              data-testid="board-view-list"
-              aria-pressed={viewMode === 'list'}
-              onClick={() => setViewMode('list')}
-            >
-              רשימה
-            </button>
-          </div>
-          {viewMode === 'visual' ? (
-            <button
-              type="button"
-              className="mobile-board__fit"
-              data-testid="btn-fit-board"
-              onClick={panZoom.resetToFit}
-            >
-              <span aria-hidden="true">⌗</span>
-              התאימו למסך
-            </button>
-          ) : null}
-        </div>
-      </header>
-
       {assassinRevealed ? (
         <div className="mobile-board__game-over" role="alert">
           <RoleIcon role="assassin" /> המתנקש נחשף — סוף משחק

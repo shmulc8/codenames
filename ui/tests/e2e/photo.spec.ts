@@ -206,7 +206,7 @@ test.describe('PhotoSetup', () => {
     await fillWords(page);
     await assignValidKey(page);
 
-    await expect(page.getByText('9·8·7·1 מפתח תקין')).toBeVisible();
+    await expect(page.getByText('חלוקת המפתח עדיין לא 9·8·7·1')).toHaveCount(0);
     await page.getByTestId('btn-confirm-board').click();
     await expect(page.getByTestId('board-grid')).toBeVisible();
 
@@ -226,7 +226,7 @@ test.describe('PhotoSetup', () => {
     await page.getByTestId('btn-manual-entry').click();
     await fillWords(page);
     await cycleKeyCell(page, 0, 1); // cell 0 (top-right, RTL) -> assassin
-    await page.getByText('סובב ↻', { exact: true }).click();
+    await page.getByRole('button', { name: 'סובב את המפתח' }).click();
     // Clockwise: the assassin moves from the top-right (index 0) to the bottom-right
     // (index 20); index 0 becomes neutral.
     await expect(page.getByTestId('key-cell-0')).toHaveAccessibleName(/ניטרלי/);

@@ -306,7 +306,7 @@ test.describe('mobile operative mode', () => {
 
     await expect(page.getByRole('link', { name: 'איך זה עובד' })).toHaveAttribute(
       'href',
-      '/methods',
+      '/methods.html',
     );
     await page.getByTestId('mobile-edit-board').click();
     await expect(page.getByTestId('mobile-home')).toBeVisible();
