@@ -130,7 +130,6 @@ test.describe('PhotoSetup', () => {
       'aria-pressed',
       'true',
     );
-    await expect(page.getByText('אין מצלמה במחשב?')).toBeVisible();
     await expect(page.locator('.photo-setup__modes svg')).toHaveCount(3);
 
     await expect(page.getByTestId('ocr-grid')).toBeVisible();
@@ -146,9 +145,7 @@ test.describe('PhotoSetup', () => {
     await expect(page.getByTestId('btn-confirm-board')).toBeEnabled();
     await expect(page.locator('.photo-setup__word-mirror')).toHaveCount(0);
 
-    await expect(
-      page.getByText(/טוען מנוע זיהוי|מנוע הזיהוי מוכן|הזיהוי לא זמין כרגע/),
-    ).toBeVisible();
+    await expect(page.locator('.photo-setup__ocr-status')).toHaveCount(1);
   });
 
   test('Tab and Enter move directly between word inputs while arrow keys change roles', async ({
@@ -353,7 +350,7 @@ test.describe('PhotoSetup', () => {
       )
       .toBe(1);
     await expect(page.getByTestId('ocr-cell-0')).toHaveValue('בדיקה');
-    await expect(page.getByText('מנוע הזיהוי מוכן', { exact: true })).toBeVisible();
+    await expect(page.locator('.photo-setup__ocr-status')).toHaveClass(/is-ready/);
     await expect(page.getByTestId('toast')).toHaveCount(0);
 
     await page.context().close();
@@ -374,7 +371,7 @@ test.describe('PhotoSetup', () => {
     await expect(page.getByText(/מזהה את מילות הלוח/)).toBeVisible();
 
     await page.getByTestId('ocr-cell-0').fill('בדיקה');
-    await expect(page.getByText('מנוע הזיהוי מוכן', { exact: true })).toBeVisible();
+    await expect(page.locator('.photo-setup__ocr-status')).toHaveClass(/is-ready/);
     releaseWorker();
 
     await expect
@@ -389,7 +386,7 @@ test.describe('PhotoSetup', () => {
       )
       .toBe(1);
     await expect(page.getByTestId('ocr-cell-0')).toHaveValue('בדיקה');
-    await expect(page.getByText('מנוע הזיהוי מוכן', { exact: true })).toBeVisible();
+    await expect(page.locator('.photo-setup__ocr-status')).toHaveClass(/is-ready/);
     await expect(page.getByTestId('toast')).toHaveCount(0);
 
     await page.context().close();

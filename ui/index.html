@@ -3,8 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0e0f1a" />
+    <meta name="theme-color" content="#0e0f1a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4f2fb" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
     <title>שם קוד קופיילוט</title>
+    <meta
+      name="description"
+      content="עוזר חכם למשחק הלוח שם קוד — צלמו את הלוח, קבלו רמזים וניחושים."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="שם קוד קופיילוט" />
+    <meta
+      property="og:description"
+      content="עוזר חכם למשחק הלוח שם קוד — צלמו את הלוח, קבלו רמזים וניחושים."
+    />
+    <meta property="og:image" content="/og-image.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="שם קוד קופיילוט" />
+    <meta
+      name="twitter:description"
+      content="עוזר חכם למשחק הלוח שם קוד — צלמו את הלוח, קבלו רמזים וניחושים."
+    />
+    <meta name="twitter:image" content="/og-image.svg" />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      (function () {
+        try {
+          var t = localStorage.getItem('cn-theme');
+          if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+        } catch (e) {
+          /* ignore */
+        }
+      })();
+    </script>
     <style>
       html {
         font-family: 'Noto Sans Hebrew', 'Inter', system-ui, sans-serif;
