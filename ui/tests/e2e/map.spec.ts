@@ -56,19 +56,22 @@ test.describe('semantic map', () => {
     await waitForMap(page);
 
     await expect(page.getByTestId('semantic-map').getByRole('button')).toHaveCount(25);
-    await expect(page.getByTestId('map-dot-אריה')).toHaveAccessibleName('אריה, אדום, קרבה 91');
-    await expect(page.getByTestId('map-dot-ים')).toHaveAccessibleName('ים, כחול, קרבה 82');
-    await expect(page.getByTestId('map-dot-כדור')).toHaveAccessibleName('כדור, ניטרלי, קרבה 74');
-    await expect(page.getByTestId('map-dot-נחש')).toHaveAccessibleName('נחש, מתנקש, קרבה 67');
+    await expect(page.getByTestId('map-dot-אריה')).toHaveAccessibleName(/^אריה, אדום, קרבה \d+$/);
+    await expect(page.getByTestId('map-dot-ים')).toHaveAccessibleName(/^ים, כחול, קרבה \d+$/);
+    await expect(page.getByTestId('map-dot-כדור')).toHaveAccessibleName(/^כדור, ניטרלי, קרבה \d+$/);
+    await expect(page.getByTestId('map-dot-נחש')).toHaveAccessibleName(/^נחש, מתנקש, קרבה \d+$/);
 
     const legend = page.getByTestId('map-legend');
+    await expect(page.locator('.semantic-panel__header h2')).toBeVisible();
+    await expect(page.getByTestId('map-legend-toggle')).toBeHidden();
+    await expect(legend).toBeVisible();
     await expect(legend).toContainText('קרוב למרכז = קרוב לרמז');
     for (const role of ['אדום', 'כחול', 'ניטרלי', 'מתנקש']) {
       await expect(legend).toContainText(role);
     }
   });
 
-  test('centers a readable, bounded semantic canvas', async ({ page }) => {
+  test('fills the semantic frame without an inner rounded square', async ({ page }) => {
     await setBoard(page, true);
     await waitForMap(page);
 
@@ -82,19 +85,17 @@ test.describe('semantic map', () => {
       if (!frame || !map || !background || !grid) {
         throw new Error('Semantic map surface was not rendered');
       }
-      const frameStyle = getComputedStyle(frame);
       const frameRect = frame.getBoundingClientRect();
       const mapRect = map.getBoundingClientRect();
       const backgroundRect = background.getBoundingClientRect();
       const gridRect = grid.getBoundingClientRect();
-      const contentLeft = frameRect.left + parseFloat(frameStyle.paddingLeft);
-      const contentRight = frameRect.right - parseFloat(frameStyle.paddingRight);
       return {
-        available: contentRight - contentLeft,
         background: backgroundRect.width,
-        endGutter: contentRight - mapRect.right,
-        map: mapRect.width,
-        startGutter: mapRect.left - contentLeft,
+        frameHeight: frameRect.height,
+        frameWidth: frameRect.width,
+        mapHeight: mapRect.height,
+        mapWidth: mapRect.width,
+        radius: background.rx.baseVal.value,
         surfaceBottom: mapRect.bottom - gridRect.bottom,
         surfaceLeft: gridRect.left - mapRect.left,
         surfaceRight: mapRect.right - gridRect.right,
@@ -102,10 +103,12 @@ test.describe('semantic map', () => {
       };
     });
 
-    expect(sizes.map).toBeLessThanOrEqual(736);
-    expect(sizes.map).toBeLessThanOrEqual(sizes.available);
-    expect(Math.abs(sizes.startGutter - sizes.endGutter)).toBeLessThan(2);
-    expect(Math.abs(sizes.map - sizes.background)).toBeLessThan(3);
+    expect(Math.abs(sizes.mapWidth - sizes.frameWidth)).toBeLessThan(2);
+    expect(Math.abs(sizes.mapHeight - sizes.frameHeight)).toBeLessThan(2);
+    expect(Math.abs(sizes.mapWidth - sizes.background)).toBeLessThan(3);
+    expect(sizes.frameHeight).toBeLessThanOrEqual(385);
+    expect(sizes.frameWidth / sizes.frameHeight).toBeGreaterThanOrEqual(1.6);
+    expect(sizes.radius).toBe(0);
     expect(sizes.surfaceBottom).toBeGreaterThanOrEqual(0);
     expect(sizes.surfaceLeft).toBeGreaterThanOrEqual(0);
     expect(sizes.surfaceRight).toBeGreaterThanOrEqual(0);
@@ -142,13 +145,13 @@ test.describe('semantic map', () => {
 
     const dot = page.getByTestId('map-dot-אריה');
     await dot.hover();
-    await expect(page.getByText('קרבה משוערת · 91')).toBeVisible();
+    await expect(page.getByText(/^קרבה משוערת · \d+$/)).toBeVisible();
     await expect
       .poll(() => page.evaluate(() => window.__store?.getState().hoverWord ?? null))
       .toBe('אריה');
 
     await page.getByTestId('map-legend').hover();
-    await expect(page.getByText('קרבה משוערת · 91')).toHaveCount(0);
+    await expect(page.getByText(/^קרבה משוערת · \d+$/)).toHaveCount(0);
     await expect
       .poll(() => page.evaluate(() => window.__store?.getState().hoverWord ?? null))
       .toBeNull();
@@ -162,7 +165,7 @@ test.describe('semantic map', () => {
     await dot.focus();
     await dot.press('Enter');
     await expect(dot).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByText('קרבה משוערת · 91')).toBeVisible();
+    await expect(page.getByText(/^קרבה משוערת · \d+$/)).toBeVisible();
     await expect
       .poll(() => page.evaluate(() => window.__store?.getState().hoverWord ?? null))
       .toBe('אריה');

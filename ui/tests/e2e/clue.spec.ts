@@ -161,15 +161,33 @@ test('carousel wraps between the two best options and renders the risky state', 
     if (!nextLabel || !previousLabel || !nextChevron || !previousChevron) {
       throw new Error('Carousel controls were not rendered');
     }
+    const nextChevronRect = nextChevron.getBoundingClientRect();
+    const nextLabelRect = nextLabel.getBoundingClientRect();
+    const previousChevronRect = previousChevron.getBoundingClientRect();
+    const previousLabelRect = previousLabel.getBoundingClientRect();
     return {
-      nextChevron: nextChevron.getBoundingClientRect().x,
-      nextLabel: nextLabel.getBoundingClientRect().x,
-      previousChevron: previousChevron.getBoundingClientRect().x,
-      previousLabel: previousLabel.getBoundingClientRect().x,
+      nextChevronX: nextChevronRect.x,
+      nextChevronY: nextChevronRect.y + nextChevronRect.height / 2,
+      nextLabelX: nextLabelRect.x,
+      nextLabelY: nextLabelRect.y + nextLabelRect.height / 2,
+      previousChevronX: previousChevronRect.x,
+      previousChevronY: previousChevronRect.y + previousChevronRect.height / 2,
+      previousLabelX: previousLabelRect.x,
+      previousLabelY: previousLabelRect.y + previousLabelRect.height / 2,
     };
   });
-  expect(controlPositions.nextChevron).toBeGreaterThan(controlPositions.nextLabel);
-  expect(controlPositions.previousLabel).toBeGreaterThan(controlPositions.previousChevron);
+  expect(controlPositions.nextChevronX).toBeGreaterThan(controlPositions.nextLabelX);
+  expect(controlPositions.previousLabelX).toBeGreaterThan(controlPositions.previousChevronX);
+  expect(Math.abs(controlPositions.nextChevronY - controlPositions.nextLabelY)).toBeLessThan(1);
+  expect(
+    Math.abs(controlPositions.previousChevronY - controlPositions.previousLabelY),
+  ).toBeLessThan(1);
+  await expect(page.getByTestId('btn-next-option').locator('.clue-carousel__chevron')).toHaveText(
+    '›',
+  );
+  await expect(page.getByTestId('btn-prev-option').locator('.clue-carousel__chevron')).toHaveText(
+    '‹',
+  );
 
   // Only the two strongest options are shown; wrapping backwards lands on the risky one.
   await expect(page.getByTestId('option-counter')).toHaveText('אפשרות 1 מתוך 2');
@@ -277,7 +295,7 @@ test('lifecycle changes display the stale-result overlay', async ({ page }) => {
   await expect(page.getByText('הלוח השתנה — הרמז חושב על לוח ישן')).toBeVisible();
   await expect(page.getByText('כדאי לחשב שוב לפני שמשתמשים בו.')).toBeVisible();
   await expect(page.getByText('חשבו שוב')).toBeVisible();
-  await expect(page.getByTestId('btn-use-clue')).toBeDisabled();
+  await expect(page.getByTestId('btn-use-clue')).toBeEnabled();
 });
 
 test('a clue response is immediately stale when the live board changes in flight', async ({
@@ -310,7 +328,7 @@ test('a clue response is immediately stale when the live board changes in flight
 
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');
   await expect(page.getByText('הלוח השתנה — הרמז חושב על לוח ישן')).toBeVisible();
-  await expect(page.getByTestId('btn-use-clue')).toBeDisabled();
+  await expect(page.getByTestId('btn-use-clue')).toBeEnabled();
   await expect
     .poll(() =>
       page.evaluate(() => {

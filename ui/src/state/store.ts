@@ -11,6 +11,11 @@ import type {
   TeamColor,
   VocabMode,
 } from '../types/api';
+import {
+  computeClueFocusTeam,
+  computeEliminationBatch,
+  type MobileElimination,
+} from './mobile-selection';
 
 export interface TileState {
   word: string;
@@ -38,6 +43,9 @@ export interface AppState {
   activeTab: 'clue' | 'check';
   tiles: TileState[];
   selected: string[];
+  mobileSelection: string[];
+  clueModalOpen: boolean;
+  lastElimination: MobileElimination | null;
   hoverWord: string | null;
   risk: Risk;
   vocabMode: VocabMode;
@@ -55,6 +63,12 @@ export interface AppState {
   toggleSelected(word: string): void;
   selectSuggested(words: string[], target: TeamColor): void;
   clearSelected(): void;
+  toggleMobileSelection(word: string): void;
+  clearMobileSelection(): void;
+  eliminateMobileSelection(): void;
+  undoLastElimination(): void;
+  openMobileClue(): void;
+  closeMobileClue(): void;
   setRisk(risk: Risk): void;
   setVocabMode(mode: VocabMode): void;
   setMode(mode: 'spymaster' | 'operative'): void;
@@ -76,6 +90,12 @@ type StateValues = Omit<
   | 'toggleSelected'
   | 'selectSuggested'
   | 'clearSelected'
+  | 'toggleMobileSelection'
+  | 'clearMobileSelection'
+  | 'eliminateMobileSelection'
+  | 'undoLastElimination'
+  | 'openMobileClue'
+  | 'closeMobileClue'
   | 'setRisk'
   | 'setVocabMode'
   | 'setMode'
@@ -97,6 +117,9 @@ const initialValues = (): StateValues => ({
   activeTab: 'clue',
   tiles: [],
   selected: [],
+  mobileSelection: [],
+  clueModalOpen: false,
+  lastElimination: null,
   hoverWord: null,
   risk: 'balanced',
   vocabMode: 'curated',
@@ -148,6 +171,9 @@ export const selectedColor = (state: AppState): TeamColor | null => {
   return role === 'red' || role === 'blue' ? role : null;
 };
 
+export const mobileClueFocusTeam = (state: AppState): TeamColor | null =>
+  computeClueFocusTeam(state.tiles, state.mobileSelection);
+
 export const useAppStore = create<AppState>((set, get) => ({
   ...initialValues(),
 
@@ -160,6 +186,9 @@ export const useAppStore = create<AppState>((set, get) => ({
         lifecycle: 'inPlay',
       })),
       selected: [],
+      mobileSelection: [],
+      clueModalOpen: false,
+      lastElimination: null,
       hoverWord: null,
       checkedClue: null,
       clue: {
@@ -219,9 +248,125 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   clearSelected: () => set({ selected: [] }),
+  toggleMobileSelection: (word) => {
+    const state = get();
+
+    if (state.mobileSelection.includes(word)) {
+      set({
+        mobileSelection: state.mobileSelection.filter((selectedWord) => selectedWord !== word),
+      });
+      return;
+    }
+
+    const tile = state.tiles.find((candidate) => candidate.word === word);
+    if (!tile || tile.lifecycle !== 'inPlay') return;
+
+    set({ mobileSelection: [...state.mobileSelection, word] });
+  },
+  clearMobileSelection: () => set({ mobileSelection: [] }),
+  eliminateMobileSelection: () => {
+    const state = get();
+    const batch = computeEliminationBatch(state.tiles, state.mobileSelection);
+
+    if (!batch) {
+      if (state.mobileSelection.length > 0) set({ mobileSelection: [] });
+      return;
+    }
+
+    const eliminatedWords = new Set(batch.words);
+    const eliminatedTiles = state.tiles.filter((tile) => eliminatedWords.has(tile.word));
+    let used = state.clue.used;
+    let log = state.log;
+
+    if (used) {
+      const alreadyRevealed = new Set(used.revealedAfter.map(({ word }) => word));
+      const newReveals = eliminatedTiles
+        .filter((tile) => !alreadyRevealed.has(tile.word))
+        .map((tile) => ({ word: tile.word, chosenBy: tile.role }));
+      used = {
+        ...used,
+        revealedAfter: [...used.revealedAfter, ...newReveals],
+      };
+      log = log.map((entry) => (entry.ts === used?.ts ? used : entry));
+    }
+
+    set({
+      tiles: state.tiles.map((tile) =>
+        eliminatedWords.has(tile.word)
+          ? { ...tile, lifecycle: 'chosen', chosenBy: tile.role }
+          : tile,
+      ),
+      mobileSelection: [],
+      lastElimination: batch,
+      clue: { ...state.clue, stale: true, used },
+      log,
+    });
+  },
+  undoLastElimination: () => {
+    const state = get();
+    const batch = state.lastElimination;
+    if (!batch) return;
+
+    const previousByWord = new Map(batch.previous.map((previous) => [previous.word, previous]));
+    const eliminatedWords = new Set(batch.words);
+    let used = state.clue.used;
+    let log = state.log;
+
+    if (used) {
+      used = {
+        ...used,
+        revealedAfter: used.revealedAfter.filter(({ word }) => !eliminatedWords.has(word)),
+      };
+      log = log.map((entry) => (entry.ts === used?.ts ? used : entry));
+    }
+
+    set({
+      tiles: state.tiles.map((tile) => {
+        const previous = previousByWord.get(tile.word);
+        if (!previous) return tile;
+
+        return {
+          word: tile.word,
+          role: tile.role,
+          lifecycle: previous.lifecycle,
+          ...(previous.chosenBy === undefined ? {} : { chosenBy: previous.chosenBy }),
+        };
+      }),
+      lastElimination: null,
+      clue: { ...state.clue, used },
+      log,
+    });
+  },
+  openMobileClue: () => {
+    const state = get();
+    const team = mobileClueFocusTeam(state);
+    if (!team) return;
+
+    set({
+      selected: [...state.mobileSelection],
+      target: team,
+      clueModalOpen: true,
+    });
+  },
+  closeMobileClue: () => set({ clueModalOpen: false }),
   setRisk: (risk) => set({ risk }),
   setVocabMode: (vocabMode) => set({ vocabMode }),
-  setMode: (mode) => set({ mode }),
+  setMode: (mode) =>
+    set((state) => ({
+      mode,
+      mobileSelection: [],
+      clueModalOpen: false,
+      lastElimination: null,
+      ...(mode === 'operative'
+        ? {
+            selected: [],
+            hoverWord: null,
+            checkedClue: null,
+            activeTab: 'clue' as const,
+            clue: { ...state.clue, optionIndex: 0 },
+          }
+        : {}),
+    })),
   // Changing the team invalidates any clue on screen: it was generated for the old team,
   // so keeping it would mislabel the session log / feedback (see the cross-tab target bug).
   setTarget: (target) =>
@@ -315,7 +460,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Return to the setup screen for an in-game correction WITHOUT wiping the board — PhotoSetup
   // pre-fills its fields from the current tiles so a misread word/role can be fixed.
-  editBoard: () => set({ screen: 'setup' }),
+  editBoard: () =>
+    set({
+      screen: 'setup',
+      mobileSelection: [],
+      clueModalOpen: false,
+      lastElimination: null,
+    }),
 
   resetGame: () => set(initialValues()),
 }));

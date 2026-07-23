@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vertical Slice Architecture"
+  short_description: "Organize code by feature, not layer — add new files instead of editing existing ones"
+  default_prompt: "Use $vertical-slice to add this feature as a new self-contained slice (new folder with its own handler and endpoint) that the system auto-discovers, rather than editing an existing controller or service."

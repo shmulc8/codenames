@@ -5,10 +5,15 @@ import { SessionLog } from '../features/log';
 import { SemanticMap } from '../features/map';
 import { OperativePanel } from '../features/operative';
 import { PhotoSetup } from '../features/photo';
+import { MobileShell, useLayout } from '../mobile/shell';
 import { useAppStore } from '../state/store';
 import './MainScreen.css';
 
 export function MainScreen(): JSX.Element {
+  return useLayout() === 'mobile' ? <MobileShell /> : <DesktopMainScreen />;
+}
+
+function DesktopMainScreen(): JSX.Element {
   const screen = useAppStore((state) => state.screen);
   const mode = useAppStore((state) => state.mode);
   const setMode = useAppStore((state) => state.setMode);

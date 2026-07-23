@@ -1,0 +1,203 @@
+.mobile-panel {
+  width: 100%;
+}
+
+/* ---- Clue tab ---- */
+.mobile-clue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mobile-clue .clue-panel {
+  width: 100%;
+}
+
+/* At 390px the target segmented control drops below the heading text. */
+.mobile-clue .clue-builder__heading {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  row-gap: var(--space-3);
+}
+
+.mobile-clue__log {
+  border-top: 1px solid var(--color-divider);
+  padding-top: var(--space-4);
+}
+
+/* ---- Check tab ---- */
+.mobile-check .check-panel {
+  width: 100%;
+}
+
+.mobile-check {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-inline: 1px;
+}
+
+/* ---- Operative tab ---- */
+.mobile-operative {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin-inline: auto;
+  display: flex;
+  overflow: hidden;
+}
+
+.mobile-operative .operative-panel {
+  width: 100%;
+  min-height: 0;
+}
+
+@media (orientation: landscape) {
+  .mobile-operative .operative-panel {
+    grid-template-columns: minmax(12.5rem, 0.78fr) minmax(0, 1.22fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .mobile-operative .operative-form {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
+    max-height: 100%;
+    overflow: auto;
+    overscroll-behavior: contain;
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .mobile-operative .operative-error {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .mobile-operative .operative-result,
+  .mobile-operative .operative-placeholder {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .mobile-operative .operative-error + .operative-placeholder {
+    grid-row: 2;
+  }
+
+  .mobile-operative .operative-result {
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .mobile-operative .operative-ranking__list {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* ---- Map tab (full-bleed) ---- */
+.mobile-map {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.mobile-map .semantic-panel {
+  position: relative;
+  flex: 0 0 auto;
+  border-radius: 0;
+  border-inline: none;
+  box-shadow: none;
+}
+
+.mobile-map .semantic-panel__header {
+  position: absolute;
+  z-index: 3;
+  inset: 0 0 auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.mobile-map .semantic-panel__header > div {
+  display: none;
+}
+
+.mobile-map .semantic-panel__clue {
+  position: absolute;
+  inset-block-start: var(--space-3);
+  inset-inline-start: var(--space-3);
+  max-width: calc(100vw - 7rem);
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--color-accent-400) 48%, var(--color-divider));
+  background: color-mix(in srgb, var(--cn-sheet) 92%, transparent);
+  box-shadow: var(--shadow-md);
+  text-overflow: ellipsis;
+  pointer-events: auto;
+}
+
+.mobile-map .semantic-map__frame {
+  height: clamp(16rem, 38svh, 20rem);
+  flex: 0 0 clamp(16rem, 38svh, 20rem);
+}
+
+.mobile-map .semantic-map__legend {
+  position: absolute;
+  z-index: 4;
+  inset-inline: var(--space-3);
+  inset-block-end: 4.15rem;
+  display: none;
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+  max-height: min(15rem, 42svh);
+  overflow: auto;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--cn-sheet) 96%, transparent);
+  box-shadow: var(--shadow-lg);
+}
+
+.mobile-map .semantic-map__legend.is-open {
+  display: flex;
+}
+
+.mobile-map .semantic-map__legend-toggle {
+  position: absolute;
+  z-index: 5;
+  inset-inline-end: var(--space-3);
+  inset-block-end: var(--space-3);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--color-divider);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cn-sheet) 92%, transparent);
+  box-shadow: var(--shadow-md);
+  color: var(--cn-text-muted);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.mobile .mobile-shell__content--map {
+  display: flex;
+  min-height: calc(100svh - 84px - env(safe-area-inset-bottom));
+  max-width: none;
+  padding-block: 0;
+  overflow: hidden;
+}
+
+.mobile.is-game .mobile-shell__content--map {
+  min-height: 0;
+}

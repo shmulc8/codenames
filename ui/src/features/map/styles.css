@@ -2,7 +2,7 @@
   width: 100%;
   min-height: 0;
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
@@ -64,12 +64,10 @@
 .semantic-map__frame {
   position: relative;
   width: 100%;
+  height: clamp(18rem, 32vw, 24rem);
   min-height: 0;
-  flex: 1 1 auto;
-  padding: clamp(var(--space-4), 2.5vw, var(--space-8));
+  flex: 0 0 auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
   background:
     radial-gradient(
       circle at center,
@@ -81,11 +79,11 @@
 
 .semantic-map {
   display: block;
-  width: min(100%, 46rem);
+  width: 100%;
   min-width: 0;
-  height: auto;
-  aspect-ratio: 1;
-  flex: 0 1 46rem;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
   overflow: visible;
   direction: rtl;
 }
@@ -260,6 +258,10 @@
   color: var(--cn-text-muted);
 }
 
+.semantic-map__legend-toggle {
+  display: none;
+}
+
 .semantic-map__legend {
   min-height: 3.25rem;
   padding: var(--space-3) clamp(var(--space-4), 2vw, var(--space-6));
@@ -297,10 +299,6 @@
 }
 
 @media (max-width: 900px) {
-  .semantic-map__frame {
-    padding: var(--space-3);
-  }
-
   .semantic-panel__header,
   .semantic-map__legend {
     padding-inline: var(--space-4);

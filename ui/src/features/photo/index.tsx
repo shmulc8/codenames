@@ -326,7 +326,7 @@ export function PhotoSetup(): JSX.Element {
             onClick={() => void loadDemo()}
           >
             <SetupModeIcon name="cube" />
-            <span>{demoBusy ? 'טוען לוח…' : randomLoaded ? 'לוח אקראי' : 'אקראי'}</span>
+            <span>{demoBusy ? 'טוען לוח…' : randomLoaded ? 'הגרילו שוב' : 'אקראי'}</span>
           </button>
           {OCR_ENABLED && (
             <button

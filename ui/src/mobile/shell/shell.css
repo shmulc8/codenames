@@ -1,0 +1,565 @@
+.mobile.mobile-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100svh;
+  overflow: auto;
+  color: var(--cn-text);
+  background:
+    radial-gradient(
+      circle at 50% 12%,
+      color-mix(in srgb, var(--color-accent) 8%, transparent),
+      transparent 36%
+    ),
+    var(--cn-app-bg);
+  font-family: var(--font-hebrew);
+  padding: max(env(safe-area-inset-top), var(--space-4)) var(--space-4)
+    calc(84px + env(safe-area-inset-bottom));
+}
+
+.mobile.mobile-shell.is-game {
+  height: var(--mobile-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mobile .mobile-shell__background {
+  display: flex;
+  flex: 1 0 auto;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.mobile.is-game .mobile-shell__background {
+  flex: 1;
+  overflow: hidden;
+}
+
+.mobile .mobile-shell__orientation-gate {
+  width: 100%;
+  min-height: calc(100svh - var(--space-8));
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.mobile .mobile-shell__orientation-gate > span {
+  color: var(--color-accent-400);
+  font-size: 3rem;
+}
+
+.mobile .mobile-shell__orientation-gate h1 {
+  margin: var(--space-2) 0 0;
+  color: var(--cn-text);
+  font: 700 1.35rem/1.2 var(--font-hebrew);
+}
+
+.mobile .mobile-shell__orientation-gate p {
+  max-width: 28ch;
+  margin: 0;
+  color: var(--cn-text-muted);
+  font-size: 0.88rem;
+}
+
+@media (orientation: portrait) {
+  .mobile.mobile-shell > :not(.mobile-shell__orientation-gate) {
+    display: none !important;
+  }
+}
+
+.mobile .mobile-shell__header {
+  position: absolute;
+  inset-block-start: max(env(safe-area-inset-top), var(--space-4));
+  inset-inline: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.mobile .mobile-shell__header strong,
+.mobile .mobile-shell__header small {
+  display: block;
+}
+
+.mobile .mobile-shell__header strong {
+  font-size: 17px;
+}
+
+.mobile .mobile-shell__header small {
+  color: var(--cn-text-muted);
+  font-size: 12px;
+}
+
+.mobile .mobile-shell__mark {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  place-items: center;
+  color: var(--color-accent-400);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-lg);
+  font-size: 24px;
+}
+
+.mobile .mobile-home {
+  display: flex;
+  width: min(100%, 540px);
+  min-height: calc(100svh - 120px);
+  margin: 0 auto;
+  flex-direction: column;
+  justify-content: center;
+  padding: 84px 0 28px;
+}
+
+.mobile .mobile-home__intro {
+  margin-block-end: var(--space-8);
+}
+
+.mobile .mobile-home__eyebrow {
+  margin-block-end: var(--space-2);
+  color: var(--color-accent-400);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.mobile .mobile-home__intro h1 {
+  max-width: 12ch;
+  margin-block-end: var(--space-3);
+  font-family: var(--font-hebrew);
+  font-size: clamp(34px, 10vw, 46px);
+  line-height: 1.12;
+}
+
+.mobile .mobile-home__intro p:last-child {
+  max-width: 34ch;
+  color: var(--cn-text-muted);
+  font-size: 16px;
+}
+
+.mobile .mobile-home__actions {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.mobile .mobile-home__actions button {
+  width: 100%;
+  min-height: 52px;
+  font-family: var(--font-hebrew);
+}
+
+.mobile .mobile-home__shoot {
+  min-height: 104px !important;
+  justify-content: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  text-align: start;
+  border-width: 1.5px;
+}
+
+.mobile .mobile-home__shoot svg {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.mobile .mobile-home__shoot span,
+.mobile .mobile-home__shoot strong,
+.mobile .mobile-home__shoot small {
+  display: block;
+}
+
+.mobile .mobile-home__shoot strong {
+  color: var(--cn-text);
+  font-size: 21px;
+}
+
+.mobile .mobile-home__shoot small {
+  margin-block-start: var(--space-1);
+  color: var(--cn-text-muted);
+  font-size: 14px;
+}
+
+.mobile .mobile-home__separator {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--cn-text-dim);
+  font-size: 12px;
+}
+
+.mobile .mobile-home__separator span {
+  height: 1px;
+  background: var(--color-divider);
+}
+
+.mobile .mobile-home__resume {
+  color: var(--color-accent-400);
+}
+
+.mobile .mobile-home__privacy {
+  margin-block-start: auto;
+  padding-block-start: var(--space-8);
+  text-align: center;
+  color: var(--cn-text-dim);
+  font-size: 12px;
+}
+
+.mobile .mobile-shell__content {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 760px;
+  min-width: 0;
+  margin: 0 auto;
+  padding-block: var(--space-3);
+}
+
+.mobile .mobile-shell__gamebar {
+  flex: 0 0 auto;
+  width: min(100%, 760px);
+  min-height: 44px;
+  margin: 0 auto;
+  padding: 0 var(--space-2) var(--space-2);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+  overflow: clip;
+}
+
+.mobile .mobile-shell__gamebar-brand {
+  color: var(--cn-text);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.mobile .mobile-shell__mode {
+  min-width: 0;
+  width: min(100%, 15rem);
+  justify-self: center;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+}
+
+.mobile .mobile-shell__mode button,
+.mobile .mobile-shell__gamebar-actions button,
+.mobile .mobile-shell__gamebar-actions a {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--cn-text-muted);
+  font: 600 0.72rem/1 var(--font-hebrew);
+}
+
+.mobile .mobile-shell__mode button {
+  padding-inline: var(--space-2);
+}
+
+.mobile .mobile-shell__mode button + button {
+  border-inline-start: 1px solid var(--color-divider);
+}
+
+.mobile .mobile-shell__mode button[aria-pressed='true'] {
+  color: var(--color-accent-300);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+}
+
+.mobile .mobile-shell__gamebar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mobile .mobile-shell__gamebar-actions button,
+.mobile .mobile-shell__gamebar-actions a {
+  min-width: 44px;
+  padding-inline: var(--space-2);
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mobile .mobile-shell__mode button:focus-visible,
+.mobile .mobile-shell__gamebar-actions button:focus-visible,
+.mobile .mobile-shell__gamebar-actions a:focus-visible {
+  outline: 2px solid var(--color-accent-300);
+  outline-offset: -2px;
+}
+
+.mobile .mobile-shell__content--clue,
+.mobile .mobile-shell__content--check {
+  max-width: 560px;
+}
+
+.mobile.is-game .mobile-shell__content {
+  display: flex;
+  overflow: hidden;
+}
+
+.mobile-clue-modal__backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: max(env(safe-area-inset-top), var(--space-3))
+    max(env(safe-area-inset-right), var(--space-3)) max(env(safe-area-inset-bottom), var(--space-3))
+    max(env(safe-area-inset-left), var(--space-3));
+  background: color-mix(in srgb, var(--cn-board-void) 78%, transparent);
+  animation: mobile-clue-backdrop-in 150ms ease-out both;
+}
+
+.mobile .mobile-clue-modal {
+  width: min(100%, 42rem);
+  max-height: calc(var(--mobile-viewport-height, 100dvh) - var(--space-6));
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 36%, var(--color-divider));
+  border-radius: var(--radius-lg);
+  background: var(--cn-app-bg);
+  box-shadow: var(--shadow-lg);
+  animation: mobile-clue-dialog-in 170ms ease-out both;
+}
+
+.mobile .mobile-clue-modal__header {
+  flex: 0 0 auto;
+  min-height: 3.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--color-divider);
+  background: color-mix(in srgb, var(--cn-panel) 88%, transparent);
+}
+
+.mobile .mobile-clue-modal__header p,
+.mobile .mobile-clue-modal__header h2 {
+  margin: 0;
+}
+
+.mobile .mobile-clue-modal__header p {
+  color: var(--color-accent-400);
+  font-size: 0.66rem;
+}
+
+.mobile .mobile-clue-modal__header h2 {
+  font: 600 1rem/1.2 var(--font-hebrew);
+}
+
+.mobile .mobile-clue-modal__close {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--cn-text-muted);
+  font: 400 1.55rem/1 var(--font-hebrew);
+}
+
+.mobile .mobile-clue-modal__close:focus-visible {
+  outline: 2px solid var(--color-accent-300);
+  outline-offset: -3px;
+}
+
+.mobile .mobile-clue-modal__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-3);
+  scrollbar-gutter: stable;
+}
+
+@keyframes mobile-clue-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes mobile-clue-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+}
+
+.mobile .mobile-shell__placeholder {
+  display: grid;
+  min-height: calc(100svh - 116px);
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  color: var(--cn-text-muted);
+}
+
+.mobile .mobile-shell__placeholder > span {
+  color: var(--color-accent-400);
+  font-size: 52px;
+}
+
+.mobile .mobile-shell__placeholder h2 {
+  margin-block: var(--space-3) var(--space-2);
+  color: var(--cn-text);
+  font: 500 24px/1.2 var(--font-hebrew);
+}
+
+.mobile .mobile-shell__placeholder p {
+  margin: 0;
+}
+
+.mobile .mobile-shell__tabbar {
+  position: fixed;
+  z-index: 1;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--mobile-tab-count, 4), minmax(0, 1fr));
+  min-height: calc(68px + env(safe-area-inset-bottom));
+  padding: 4px 8px env(safe-area-inset-bottom);
+  background: color-mix(in srgb, var(--cn-panel) 96%, transparent);
+  border-block-start: 1px solid var(--color-divider);
+  box-shadow: 0 -10px 28px color-mix(in srgb, var(--cn-board-void) 70%, transparent);
+}
+
+.mobile .mobile-shell__tabbar button {
+  display: flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1px;
+  color: var(--cn-text-dim);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  font: 500 11px/1.2 var(--font-hebrew);
+  cursor: pointer;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease;
+}
+
+.mobile .mobile-shell__tabbar button.is-active {
+  color: var(--color-accent-400);
+  background: color-mix(in srgb, var(--color-accent) 9%, transparent);
+}
+
+.mobile .mobile-shell__tab-icon {
+  font: 24px/1 var(--font-heading);
+}
+
+@media (orientation: landscape) {
+  .mobile .mobile-shell__orientation-gate {
+    display: none;
+  }
+
+  .mobile.mobile-shell {
+    padding: var(--space-3) calc(84px + env(safe-area-inset-right)) var(--space-3)
+      max(env(safe-area-inset-left), var(--space-3));
+  }
+
+  .mobile.mobile-shell.is-game {
+    padding-block: var(--space-3);
+  }
+
+  .mobile .mobile-shell__header {
+    inset-block-start: var(--space-3);
+    inset-inline-start: calc(84px + var(--space-4));
+    inset-inline-end: var(--space-4);
+  }
+
+  .mobile .mobile-home {
+    min-height: calc(100svh - var(--space-6));
+    padding: 64px var(--space-4) var(--space-3);
+  }
+
+  .mobile .mobile-home__intro {
+    margin-block-end: var(--space-4);
+  }
+
+  .mobile .mobile-home__intro h1 {
+    font-size: 30px;
+  }
+
+  .mobile .mobile-home__shoot {
+    min-height: 72px !important;
+  }
+
+  .mobile .mobile-home__privacy {
+    display: none;
+  }
+
+  .mobile .mobile-shell__placeholder {
+    min-height: calc(100svh - var(--space-6));
+  }
+
+  .mobile .mobile-shell__tabbar {
+    inset: 0 0 0 auto;
+    width: 84px;
+    min-height: 100svh;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(var(--mobile-tab-count, 4), minmax(44px, 1fr));
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) 4px;
+    border-block-start: 0;
+    border-inline-start: 1px solid var(--color-divider);
+    box-shadow: -10px 0 28px color-mix(in srgb, var(--cn-board-void) 70%, transparent);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 430px) {
+  .mobile .mobile-shell__gamebar {
+    min-height: 40px;
+    padding-block-end: var(--space-1);
+  }
+
+  .mobile .mobile-shell__gamebar-brand {
+    display: none;
+  }
+
+  .mobile .mobile-shell__gamebar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .mobile .mobile-shell__mode {
+    justify-self: start;
+  }
+
+  .mobile.is-game .mobile-shell__content--map {
+    min-height: calc(100svh - 52px - var(--space-6));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile .mobile-shell__tabbar button,
+  .mobile-clue-modal__backdrop,
+  .mobile .mobile-clue-modal {
+    animation: none;
+    transition: none;
+  }
+}
