@@ -101,6 +101,10 @@ export function MobileShell(): JSX.Element {
   const [capturing, setCapturing] = useState(false);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const backgroundRef = useRef<HTMLDivElement | null>(null);
+  // Remember what had focus when the clue modal opened so we can restore it on close. Captured
+  // in the (once-only) open handler rather than a modal effect — StrictMode double-invokes effects
+  // and would otherwise capture the modal's own close button instead of the real trigger.
+  const clueOpenerRef = useRef<HTMLElement | null>(null);
 
   useLayoutEffect(() => {
     const shell = shellRef.current;
@@ -138,6 +142,8 @@ export function MobileShell(): JSX.Element {
 
   function selectTab(tab: MobileTab): void {
     if (tab === 'clue') {
+      clueOpenerRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setActiveTab('clue');
       setManualClueOpen(true);
       useAppStore.setState({ clueModalOpen: true });
@@ -157,6 +163,11 @@ export function MobileShell(): JSX.Element {
   const closeClue = useCallback((): void => {
     closeMobileClue();
     setManualClueOpen(false);
+    const opener = clueOpenerRef.current;
+    clueOpenerRef.current = null;
+    // Restore on a macrotask so it runs after the shell clears `inert` on the background
+    // (focusing an element under an inert ancestor is silently ignored).
+    if (opener?.isConnected) window.setTimeout(() => opener.focus(), 0);
   }, [closeMobileClue]);
 
   return (

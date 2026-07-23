@@ -246,7 +246,6 @@
 }
 
 .mobile .mobile-shell__mode {
-  height: 44px;
   min-width: 0;
   width: min(100%, 15rem);
   justify-self: center;
@@ -268,8 +267,6 @@
 }
 
 .mobile .mobile-shell__mode button {
-  height: 100%;
-  min-height: 0;
   padding-inline: var(--space-2);
 }
 

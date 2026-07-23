@@ -30,8 +30,16 @@ test.describe('mobile operative mode', () => {
     await openMobileShell(page, MOBILE_LANDSCAPE);
     await installBoard(page);
 
+    // Measure touch targets once the game bar has settled (avoids a mid-layout sub-pixel read).
+    await expect(page.getByTestId('mobile-gamebar')).toBeVisible();
+    await expectTouchTarget(page.getByTestId('mobile-mode-spymaster'));
+    await expectTouchTarget(page.getByTestId('mobile-mode-operative'));
+    await expectTouchTarget(page.getByTestId('mobile-edit-board'));
+    await expectTouchTarget(page.getByRole('link', { name: 'איך זה עובד' }));
+
     await expect(page.getByTestId('mobile-mode-spymaster')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByTestId('tabbar').getByRole('tab')).toHaveCount(4);
+    await expect(page.getByTestId('tab-board')).toHaveAttribute('aria-selected', 'true');
 
     await page.getByTestId('mobile-mode-operative').click();
     await expect(page.getByTestId('mobile-mode-operative')).toHaveAttribute('aria-pressed', 'true');
@@ -41,14 +49,10 @@ test.describe('mobile operative mode', () => {
     await expect(page.getByTestId('tab-clue')).toHaveCount(0);
     await expect(page.getByTestId('tab-check')).toHaveCount(0);
 
-    await expectTouchTarget(page.getByTestId('mobile-mode-spymaster'));
-    await expectTouchTarget(page.getByTestId('mobile-mode-operative'));
-    await expectTouchTarget(page.getByTestId('mobile-edit-board'));
-    await expectTouchTarget(page.getByRole('link', { name: 'איך זה עובד' }));
-
+    // Returning to spymaster lands on the board (the clue lives in a modal now, not a tab panel).
     await page.getByTestId('mobile-mode-spymaster').click();
     await expect(page.getByTestId('mobile-mode-spymaster')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByTestId('tab-clue')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByTestId('tab-board')).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByTestId('tabbar').getByRole('tab')).toHaveCount(4);
   });
 
@@ -118,9 +122,7 @@ test.describe('mobile operative mode', () => {
     expect(request?.roles[fixtureBoard.words[24]]).toBe('assassin');
   });
 
-  test('keeps every unrevealed role private across board, list, minimap, and map', async ({
-    page,
-  }) => {
+  test('keeps every unrevealed role private across board, list, and map', async ({ page }) => {
     await bootMobileOperative(page);
     await page.getByTestId('tab-board').click();
 
@@ -131,10 +133,6 @@ test.describe('mobile operative mode', () => {
     await expect(page.getByTestId('tile-0')).toHaveAccessibleName('אריה');
     await expect(page.getByTestId('tile-9')).toHaveAccessibleName('ים');
     await expect(page.getByTestId('tile-24')).toHaveAccessibleName('נחש');
-
-    const minimap = page.getByTestId('minimap');
-    await expect(minimap.locator('.role-neutral')).toHaveCount(25);
-    await expect(minimap.locator('.role-red, .role-blue, .role-assassin')).toHaveCount(0);
 
     await page.getByTestId('board-view-list').click();
     const cardList = page.getByTestId('board-card-list');
@@ -160,19 +158,15 @@ test.describe('mobile operative mode', () => {
     await bootMobileOperative(page);
     await page.getByTestId('tab-board').click();
 
+    // Tap selects (roles stay hidden in the selection), then the reveal action eliminates it.
     const firstTile = page.getByTestId('tile-0');
     await firstTile.click();
-    const revealSheet = page.getByTestId('sheet-mark-revealed');
-    await expect(revealSheet).toContainText('הצבע ייחשף לאחר הסימון');
-    await expect(revealSheet.locator('.cn-role-icon')).toHaveCount(0);
-    await expect(revealSheet.locator('fieldset')).toHaveCount(0);
-    await expect(revealSheet.getByText('הוסיפו לרמז')).toHaveCount(0);
-    await revealSheet.getByTestId('btn-mark-chosen').click();
+    await expect(firstTile).toHaveAccessibleName('אריה, נבחר');
+    await page.getByTestId('board-action-eliminate').click();
 
     await expect(firstTile).toHaveAttribute('data-lifecycle', 'chosen');
     await expect(firstTile).toHaveAttribute('data-role', 'red');
     await expect(firstTile).toHaveAccessibleName('אריה, אדום, נחשף');
-    await expect(page.getByTestId('minimap').locator('.role-red')).toHaveCount(1);
 
     await page.getByTestId('tab-map').click();
     await expect(page.getByTestId('map-dot-אריה')).toHaveCount(0);
@@ -190,16 +184,13 @@ test.describe('mobile operative mode', () => {
     expect(request?.words).not.toContain('אריה');
     expect(request?.roles).not.toHaveProperty('אריה');
 
+    // Tapping an eliminated card restores it directly (no drawer), team-agnostic.
     await page.getByTestId('tab-board').click();
     await firstTile.click();
-    await expect(page.getByTestId('sheet-mark-revealed')).toContainText('קלף אדום');
-    await expect(page.getByTestId('btn-mark-chosen')).toHaveText('החזר למשחק');
-    await page.getByTestId('btn-mark-chosen').click();
-
     await expect(firstTile).toHaveAttribute('data-lifecycle', 'inPlay');
     await expect(firstTile).toHaveAttribute('data-role', 'neutral');
     await expect(firstTile).toHaveAccessibleName('אריה');
-    await expect(page.getByTestId('minimap').locator('.role-red')).toHaveCount(0);
+    await expect(page.getByTestId('toast')).toContainText('הקלף הוחזר למשחק');
   });
 
   test('removes a stale recommendation on failure and lets the user retry', async ({ page }) => {
@@ -243,17 +234,18 @@ test.describe('mobile operative mode', () => {
     await openMobileShell(page, MOBILE_LANDSCAPE);
     await installBoard(page);
 
-    await page.getByTestId('tab-clue').click();
-    await page.getByTestId('btn-get-clue').click();
-    await expect(page.getByTestId('clue-result')).toBeVisible();
-    await page.getByTestId('tab-board').click();
+    // Spymaster builds a board working-set (two same-team cards).
+    await page.getByTestId('tile-0').click();
+    await page.getByTestId('tile-1').click();
     await expect(page.locator('[data-mobile-tile][aria-pressed="true"]')).toHaveCount(2);
 
+    // Switching to operative must scrub that selection and expose a fully blind board.
     await page.getByTestId('mobile-mode-operative').click();
     await page.getByTestId('tab-board').click();
     await expect(page.locator('[data-mobile-tile][aria-pressed="true"]')).toHaveCount(0);
     await expect(page.locator('[data-mobile-tile].is-selected')).toHaveCount(0);
     await expect(page.locator('[data-mobile-tile][data-role="neutral"]')).toHaveCount(25);
+    expect(await page.evaluate(() => window.__store?.getState().mobileSelection)).toEqual([]);
 
     await page.getByTestId('tab-map').click();
     await expect(page.getByTestId('map-hint-node')).toHaveCount(0);
@@ -284,7 +276,7 @@ test.describe('mobile operative mode', () => {
 
     await page.getByTestId('mobile-mode-spymaster').click();
     await expect(page.getByTestId('stub-operative')).toHaveCount(0);
-    await expect(page.getByTestId('stub-clue')).toBeVisible();
+    await expect(page.getByTestId('board-canvas')).toBeVisible();
 
     await page.evaluate(() => {
       const release = (window as Window & { __releaseOperativeRequest?: () => void })

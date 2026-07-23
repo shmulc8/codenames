@@ -19,8 +19,12 @@ test.describe('mobile clue modal', () => {
     await openMobileShell(page, MOBILE_LANDSCAPE);
     await installBoard(page);
 
+    // Focus restoration is a keyboard-a11y concern: drive the trigger via keyboard so a real
+    // element is focused at open (a bare touch tap never focuses the button, leaving nothing to
+    // restore to). This exercises the meaningful screen-reader / keyboard path.
     const trigger = page.getByTestId('tab-clue');
-    await trigger.click();
+    await trigger.focus();
+    await trigger.press('Enter');
 
     const modal = page.getByTestId('mobile-clue-modal');
     const close = page.getByRole('button', { name: 'סגירת חלון הרמז' });

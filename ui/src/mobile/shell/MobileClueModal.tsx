@@ -25,15 +25,10 @@ export function MobileClueModal({ autoRequest, onClose }: MobileClueModalProps):
   const previousResponseRef = useRef(clueResponse);
 
   useLayoutEffect(() => {
-    const restoreTarget =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    // Move focus into the dialog on open. Focus RESTORATION on close is owned by the shell
+    // (it captures the trigger in the open handler, which is immune to StrictMode's effect
+    // double-invocation that would otherwise capture this close button instead).
     closeRef.current?.focus();
-
-    return () => {
-      window.requestAnimationFrame(() => {
-        if (restoreTarget?.isConnected) restoreTarget.focus();
-      });
-    };
   }, []);
 
   useEffect(() => {
