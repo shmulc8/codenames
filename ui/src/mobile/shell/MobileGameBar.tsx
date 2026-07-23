@@ -1,3 +1,4 @@
+import { ThemeToggle } from '../../components';
 import { useAppStore } from '../../state/store';
 
 type GameMode = 'spymaster' | 'operative';
@@ -74,6 +75,7 @@ export function MobileGameBar({ onModeChange, boardActive }: MobileGameBarProps)
           <button type="button" data-testid="mobile-edit-board" onClick={editBoard}>
             לוח חדש
           </button>
+          <ThemeToggle />
           <a href="/methods.html" target="_blank" rel="noopener" aria-label="איך זה עובד">
             ?
           </a>

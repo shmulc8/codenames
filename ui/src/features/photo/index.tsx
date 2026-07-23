@@ -365,12 +365,20 @@ export function PhotoSetup(): JSX.Element {
           </div>
 
           <div className="photo-setup__key-tools">
-            <div className="photo-setup__counts" aria-label="ספירת תפקידי המפתח">
+            <div
+              className={`photo-setup__counts ${validKey ? 'is-valid' : ''}`}
+              aria-label="ספירת תפקידי המפתח"
+            >
               {roleOrder.map((role) => (
                 <span className={`role-${role}`} key={role}>
                   <RoleIcon role={role} /> {roleLabel[role]} {counts[role]}
                 </span>
               ))}
+              {validKey ? (
+                <span className="photo-setup__counts-valid" aria-label="המפתח תקין">
+                  ✓ תקין
+                </span>
+              ) : null}
             </div>
             <button
               className="btn btn-secondary photo-setup__rotate"
@@ -390,6 +398,11 @@ export function PhotoSetup(): JSX.Element {
                   confidences[index] < 60 ? 'is-low-confidence' : ''
                 }`}
                 key={index}
+                onClick={(event) => {
+                  // Clicking anywhere on the card focuses its input, as if the input was clicked.
+                  const inputEl = event.currentTarget.querySelector('input');
+                  if (inputEl && event.target !== inputEl) inputEl.focus();
+                }}
               >
                 <span className="sr-only">מילה {index + 1}</span>
                 <Card className="photo-setup__word-face" color={roleColor[roles[index]]} />
@@ -425,7 +438,10 @@ export function PhotoSetup(): JSX.Element {
                   tabIndex={-1}
                   aria-label={`תפקיד ${roleLabel[roles[index]]} למילה ${index + 1}; לחצו להחלפה`}
                   title={`החלפת תפקיד: ${roleLabel[roles[index]]}`}
-                  onClick={() => cycleRole(index)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    cycleRole(index);
+                  }}
                 >
                   <RoleIcon role={roles[index]} />
                 </button>
@@ -487,7 +503,7 @@ export function PhotoSetup(): JSX.Element {
 
             <button
               type="button"
-              className="btn btn-ghost photo-setup__skip"
+              className="btn btn-secondary photo-setup__skip"
               onClick={() => {
                 boardOcrAttempt.current += 1;
                 setWords([...EMPTY_WORDS]);
@@ -503,7 +519,6 @@ export function PhotoSetup(): JSX.Element {
                 <span data-testid="loading-spinner" className="photo-setup__spinner" />
               )}
               {ocrState === 'warming' && `טוען מנוע זיהוי… ${ocrProgress ? `${ocrProgress}%` : ''}`}
-              {ocrState === 'ready' && 'מנוע הזיהוי מוכן'}
               {ocrState === 'recognizing' && `מזהה את מילות הלוח… ${ocrProgress}%`}
               {ocrState === 'success' && 'הזיהוי הושלם — בדקו תאים המסומנים בצהוב'}
               {ocrState === 'error' && 'הזיהוי לא זמין כרגע — רשת ההקלדה מוכנה לשימוש'}
@@ -531,7 +546,7 @@ export function PhotoSetup(): JSX.Element {
 
             <button
               type="button"
-              className="btn btn-ghost photo-setup__skip"
+              className="btn btn-secondary photo-setup__skip"
               onClick={() => {
                 invalidateKeyClassification();
                 setRoles([...EMPTY_ROLES]);
@@ -539,13 +554,6 @@ export function PhotoSetup(): JSX.Element {
             >
               דלגו על צילום המפתח — סמנו ידנית
             </button>
-
-            <div className="photo-setup__manual-note">
-              <span aria-hidden="true">▣</span>
-              <p>
-                <strong>אין מצלמה במחשב?</strong> זו הסיבה שהזנה ידנית היא ברירת המחדל.
-              </p>
-            </div>
           </aside>
         )}
       </div>

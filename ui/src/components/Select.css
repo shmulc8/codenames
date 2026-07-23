@@ -1,0 +1,51 @@
+.cn-select {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.cn-select__native {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.6rem 0.9rem;
+  padding-inline-end: 2.6rem;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--cn-panel);
+  color: var(--cn-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cn-select__native:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-divider));
+}
+
+.cn-select__native:focus-visible {
+  outline: 2px solid var(--color-accent-300);
+  outline-offset: -1px;
+}
+
+.cn-select__native:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cn-select__chevron {
+  position: absolute;
+  inset-inline-end: 0.95rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  pointer-events: none;
+  color: var(--cn-text-muted);
+}
+
+.cn-select__native option {
+  color: #14101f;
+  background: #ffffff;
+}

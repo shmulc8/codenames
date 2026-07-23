@@ -141,6 +141,73 @@
   --cn-text-muted: #9397ab;
   --cn-text-dim: #75798c;
   --cn-text-faint: #5c6072;
+
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   LIGHT THEME — flips the app chrome + text to a light ground. Role colors and
+   the physical cream card stay as-is (they read on any ground). Applied when the
+   user opts in (data-theme="light") or the OS prefers light and they haven't
+   explicitly chosen dark.
+   ============================================================================ */
+:root[data-theme='light'],
+:root[data-theme='light'] body {
+  --color-bg: #f2f0fb;
+  --color-surface: #ffffff;
+  --color-text: #1a1730;
+  --color-divider: color-mix(in srgb, #1a1730 15%, transparent);
+
+  --cn-app-bg: #f2f0fb;
+  --cn-board-well: #e8e5f6;
+  --cn-board-void: #e2ddf3;
+  --cn-panel: #ffffff;
+  --cn-surface-2: #f6f4fc;
+  --cn-sheet: #ffffff;
+
+  --cn-map-bg: #eae7f7;
+  --cn-map-grid: #d6d0ec;
+
+  --cn-text: #1a1730;
+  --cn-text-muted: #56536a;
+  --cn-text-dim: #6d6a80;
+  --cn-text-faint: #8b889b;
+
+  --shadow-sm: 0 0 0 1px rgba(26, 23, 48, 0.1);
+  --shadow-md: 0 0 0 1px rgba(26, 23, 48, 0.1), 0 6px 18px rgba(26, 23, 48, 0.12);
+  --shadow-lg: 0 0 0 1px rgba(26, 23, 48, 0.12), 0 16px 40px rgba(26, 23, 48, 0.18);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --color-bg: #f2f0fb;
+    --color-surface: #ffffff;
+    --color-text: #1a1730;
+    --color-divider: color-mix(in srgb, #1a1730 15%, transparent);
+
+    --cn-app-bg: #f2f0fb;
+    --cn-board-well: #e8e5f6;
+    --cn-board-void: #e2ddf3;
+    --cn-panel: #ffffff;
+    --cn-surface-2: #f6f4fc;
+    --cn-sheet: #ffffff;
+
+    --cn-map-bg: #eae7f7;
+    --cn-map-grid: #d6d0ec;
+
+    --cn-text: #1a1730;
+    --cn-text-muted: #56536a;
+    --cn-text-dim: #6d6a80;
+    --cn-text-faint: #8b889b;
+
+    --shadow-sm: 0 0 0 1px rgba(26, 23, 48, 0.1);
+    --shadow-md: 0 0 0 1px rgba(26, 23, 48, 0.1), 0 6px 18px rgba(26, 23, 48, 0.12);
+    --shadow-lg: 0 0 0 1px rgba(26, 23, 48, 0.12), 0 16px 40px rgba(26, 23, 48, 0.18);
+
+    color-scheme: light;
+  }
 }
 
 /* Minimum sizes (do not go below):

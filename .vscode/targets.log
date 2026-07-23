@@ -1,0 +1,390 @@
+make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+# GNU Make 3.81
+# Copyright (C) 2006  Free Software Foundation, Inc.
+# This is free software; see the source for copying conditions.
+# There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+# This program built for i386-apple-darwin11.3.0
+ 
+make: *** No rule to make target `all'.  Stop.
+
+
+# Make data base, printed on Thu Jul 23 20:28:41 2026
+
+# Variables
+
+ 
+# automatic
+<D = $(patsubst %/,%,$(dir $<))
+# automatic
+?F = $(notdir $?)
+# environment
+VSCODE_CRASH_REPORTER_PROCESS_TYPE = extensionHost
+# environment
+NVM_INC = /Users/matanelgordon/.nvm/versions/node/v18.18.0/include/node
+# automatic
+?D = $(patsubst %/,%,$(dir $?))
+# environment
+CPPFLAGS = -I/opt/homebrew/opt/openssl@3/include
+# automatic
+@D = $(patsubst %/,%,$(dir $@))
+# automatic
+@F = $(notdir $@)
+# makefile
+CURDIR := /Users/matanelgordon/Desktop/Projects/codenames
+# makefile
+SHELL = /bin/sh
+# environment
+VSCODE_NLS_CONFIG = {"userLocale":"en-us","osLocale":"en-il","resolvedLanguage":"en","defaultMessagesFile":"/Applications/Visual Studio Code.app/Contents/Resources/app/out/nls.messages.json","locale":"en-us","availableLanguages":{}}
+# environment
+_ = /usr/bin/make
+# makefile (from `Makefile', line 1)
+MAKEFILE_LIST :=  Makefile
+# environment
+__CFBundleIdentifier = com.microsoft.VSCode
+# environment
+INFOPATH = /opt/homebrew/share/info:
+# environment
+MallocSpaceEfficient = 1
+# environment
+VSCODE_CWD = /
+# environment
+PATH = /Users/matanelgordon/Library/pnpm:/Users/matanelgordon/.console-ninja/.bin:/opt/homebrew/opt/sphinx-doc/bin:/Users/matanelgordon/.nvm/versions/node/v18.18.0/bin:/opt/homebrew/opt/openssl@3/bin:/Library/Frameworks/Python.framework/Versions/3.12/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/bin/node:/usr/local/bin/npm:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/usr/local/share/dotnet:~/.dotnet/tools:/usr/local/go/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Users/matanelgordon/.cargo/bin:/Applications/Docker.app/Contents/Resources/bin/:/Users/matanelgordon/.lmstudio/bin:/Users/matanelgordon/.lmstudio/bin
+# environment
+LSCOLORS = Gxfxcxdxbxegedabagacad
+# environment
+PNPM_HOME = /Users/matanelgordon/Library/pnpm
+# environment
+FPATH = /Users/matanelgordon/.docker/completions:/Users/matanelgordon/.oh-my-zsh/plugins/git:/Users/matanelgordon/.oh-my-zsh/functions:/Users/matanelgordon/.oh-my-zsh/completions:/Users/matanelgordon/.oh-my-zsh/cache/completions:/opt/homebrew/share/zsh/site-functions:/usr/local/share/zsh/site-functions:/usr/share/zsh/site-functions:/usr/share/zsh/5.9/functions
+# environment
+GOPATH = /Users/matanelgordon/go
+# environment
+NVM_BIN = /Users/matanelgordon/.nvm/versions/node/v18.18.0/bin
+# environment
+LaunchInstanceID = 3907CACC-2D69-4FB6-8892-8E96C58D73ED
+# environment
+ELECTRON_RUN_AS_NODE = 1
+# environment
+LDFLAGS = -L/opt/homebrew/opt/openssl@3/lib
+# default
+.FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
+# environment
+SSH_AUTH_SOCK = /var/run/com.apple.launchd.POAnKPJwIJ/Listeners
+# automatic
+%F = $(notdir $%)
+# environment
+PWD = /Users/matanelgordon/Desktop/Projects/codenames
+# environment
+HOMEBREW_CELLAR = /opt/homebrew/Cellar
+# environment
+OSLogRateLimit = 64
+# makefile (from `Makefile', line 3)
+PYTHON = .venv/bin/python
+# environment
+MANPATH = /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/share/man:/Library/Developer/CommandLineTools/usr/share/man:/Library/Developer/CommandLineTools/Toolchains/XcodeDefault.xctoolchain/usr/share/man:
+# environment
+HOME = /Users/matanelgordon
+# default
+MAKEFILEPATH = $(shell /usr/bin/xcode-select -print-path 2>/dev/null || echo /Developer)/Makefiles
+# environment
+VSCODE_CODE_CACHE_PATH = /Users/matanelgordon/Library/Application Support/Code/CachedData/8a7abeba6e03ea3af87bfbce9a1b7e48fed567b8
+# environment
+LOGNAME = matanelgordon
+# environment
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+# environment
+NVM_CD_FLAGS = -q
+# environment
+ZSH = /Users/matanelgordon/.oh-my-zsh
+# environment
+VSCODE_HANDLES_UNCAUGHT_ERRORS = true
+# automatic
+^D = $(patsubst %/,%,$(dir $^))
+# environment
+XPC_FLAGS = 0x0
+# default
+MAKE = $(MAKE_COMMAND)
+# default
+MAKECMDGOALS := all
+# environment
+SHLVL = 1
+# environment
+VSCODE_ESM_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# default
+MAKE_VERSION := 3.81
+# environment
+USER = matanelgordon
+# makefile (from `Makefile', line 1)
+.DEFAULT_GOAL := help
+# environment
+LESS = -R
+# automatic
+%D = $(patsubst %/,%,$(dir $%))
+# environment
+MACH_PORT_RENDEZVOUS_PEER_VALDATION = 1
+# default
+MAKE_COMMAND := /Library/Developer/CommandLineTools/usr/bin/make
+# default
+.VARIABLES := 
+# environment
+TMPDIR = /var/folders/0n/db8m6ckj4y90d0s4341vmlrm0000gn/T/
+# automatic
+*F = $(notdir $*)
+# environment
+VSCODE_IPC_HOOK = /Users/matanelgordon/Library/Application Support/Code/1.12-main.sock
+# environment
+MallocNanoZone = 0
+# makefile
+MAKEFLAGS = Rrqp
+# environment
+MFLAGS = -Rrqp
+# automatic
+*D = $(patsubst %/,%,$(dir $*))
+# environment
+NVM_DIR = /Users/matanelgordon/.nvm
+# environment
+XPC_SERVICE_NAME = application.com.microsoft.VSCode.141442931.141442937
+# environment
+HOMEBREW_PREFIX = /opt/homebrew
+# automatic
++D = $(patsubst %/,%,$(dir $+))
+# environment
+VSCODE_L10N_BUNDLE_LOCATION = 
+# automatic
++F = $(notdir $+)
+# environment
+HOMEBREW_REPOSITORY = /opt/homebrew
+# environment
+__CF_USER_TEXT_ENCODING = 0x1F5:0x0:0x0
+# environment
+COMMAND_MODE = unix2003
+# default
+MAKEFILES := 
+# automatic
+<F = $(notdir $<)
+# environment
+PAGER = less
+# environment
+LC_ALL = C
+# automatic
+^F = $(notdir $^)
+# default
+SUFFIXES := 
+# default
+.INCLUDE_DIRS = /usr/local/include
+# environment
+MAKELEVEL := 0
+# environment
+LANG = C
+# environment
+VSCODE_PID = 90056
+# variable set hash-table stats:
+# Load=82/1024=8%, Rehash=0, Collisions=1/107=1%
+
+# Pattern-specific Variable Values
+
+# No pattern-specific variable values.
+
+# Directories
+
+# . (device 16777234, inode 141654404): 34 files, no impossibilities.
+
+# 34 files, no impossibilities in 1 directories.
+
+# Implicit Rules
+
+# No implicit rules.
+
+# Files
+
+# Not a target:
+all:
+#  Command-line target.
+#  Implicit rule search has been done.
+#  File does not exist.
+#  File has not been updated.
+# variable set hash-table stats:
+# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+
+.PHONY: help install test lint format format-check typecheck check serve build-site research deploy deploy-dry push
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
+.SUFFIXES:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+research:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 52):
+	@sed -n '1,200p' research/README.md
+	
+
+push:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+ 
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 61):
+	@bash scripts/push.sh $(BRANCH)
+	
+
+format:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 35):
+	$(PYTHON) -m ruff format .
+	
+
+# Not a target:
+Makefile:
+#  Implicit rule search has been done.
+#  Last modified 2026-07-23 19:04:25
+#  File has been updated.
+#  Successfully updated.
+# variable set hash-table stats:
+# Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+
+typecheck:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 41):
+	$(PYTHON) -m mypy
+	
+
+test:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 29):
+	FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin $(PYTHON) tests/test_legality.py
+	
+
+format-check:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 38):
+	$(PYTHON) -m ruff format --check .
+	
+
+help:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 8):
+	@printf '%s\n' \
+	'install      Create the virtual environment and install dependencies' \
+	'test         Run the legality regression' \
+	'lint         Lint with ruff' \
+	'format       Auto-format with ruff' \
+	'format-check Check formatting without writing (CI)' \
+	'typecheck    Run mypy (advisory — known baseline, not a gate)' \
+	'check        lint + format-check + test (the CI gate, run before pushing)' \
+	'serve        Start the local co-pilot server' \
+	'build-site   Rebuild the static cross-encoder map' \
+	'research     List the available research commands' \
+	'deploy       Sync + build UI + legality gate + upload to the Space + verify' \
+	'deploy-dry   Everything deploy does except the upload (safe dry run)' \
+	'push         Push the current branch to shmulc8/codenames (handles the gh account)'
+	
+
+build-site:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 49):
+	HF_HUB_OFFLINE=1 $(PYTHON) scripts/build_site.py
+	
+
+# Not a target:
+.DEFAULT:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+lint:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 32):
+	$(PYTHON) -m ruff check .
+	
+
+deploy:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 55):
+	$(PYTHON) scripts/deploy.py
+	
+
+check: lint format-check test
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+
+serve:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 46):
+	HF_HUB_OFFLINE=1 $(PYTHON) -m codenames.app
+	
+
+deploy-dry:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 58):
+	$(PYTHON) scripts/deploy.py --dry-run
+	
+
+install:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 24):
+	python3 -m venv .venv
+	$(PYTHON) -m pip install -r requirements.txt
+	$(PYTHON) -m pip install -e .
+	
+
+# files hash-table stats:
+# Load=19/1024=2%, Rehash=0, Collisions=0/48=0%
+# VPATH Search Paths
+
+# No `vpath' search paths.
+
+# No general (`VPATH' variable) search path.
+
+# # of strings in strcache: 1
+# # of strcache buffers: 1
+# strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
+# strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
+
+# Finished Make data base on Thu Jul 23 20:28:41 2026
+
+ 

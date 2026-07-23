@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { postSpymaster } from '../../api/client';
-import { Button, RoleIcon, showToast } from '../../components';
+import { Button, RoleIcon, Select, showToast } from '../../components';
 import { boardsMatch, liveBoard, useAppStore } from '../../state/store';
 import type { ClueOption, Risk, Role, TeamColor, VocabMode } from '../../types/api';
 import { FeedbackControls } from '../feedback';
@@ -290,20 +290,15 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
             <label className="clue-vocab__label" htmlFor="clue-vocab-select">
               אוצר מילים לרמזים
             </label>
-            <select
+            <Select
               id="clue-vocab-select"
               className="clue-vocab__select"
               data-testid="vocab-select"
               value={vocabMode}
               disabled={Boolean(loading)}
               onChange={(event) => setVocabMode(event.target.value as VocabMode)}
-            >
-              {vocabOptions.map(({ label, value }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              options={vocabOptions}
+            />
             <p className="clue-vocab__help">
               מומלץ = רשימה אצורה ואיכותית · מורחב = רשימת תדירות רחבה יותר
             </p>
