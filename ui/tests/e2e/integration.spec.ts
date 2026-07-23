@@ -11,7 +11,7 @@ test('complete spymaster flow stays synchronized across every desktop slice', as
   await page.getByTestId('target-red').click();
   await page.getByTestId('tile-0').click();
   await page.getByTestId('tile-1').click();
-  await expect(page.getByText('נבחרו: 2 קלפים בצבע אדום')).toBeVisible();
+  await expect(page.getByText('הקלפים שבחרתי · 2')).toBeVisible();
 
   await page.getByTestId('btn-get-clue').click();
   await expect(page.getByTestId('clue-word')).toHaveText('טבע');

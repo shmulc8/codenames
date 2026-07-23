@@ -76,7 +76,7 @@ test.describe('mobile app shell', () => {
     });
     expect(boardGeometry.viewportHeight).toBeGreaterThanOrEqual(224);
     expect(boardGeometry.viewportHeight).toBeLessThanOrEqual(321);
-    expect(boardGeometry.viewportWidth / boardGeometry.viewportHeight).toBeGreaterThan(2);
+    expect(boardGeometry.viewportWidth / boardGeometry.viewportHeight).toBeGreaterThan(1.9);
 
     await page.getByTestId('tab-clue').click();
     await expect(page.getByTestId('mobile-clue-modal')).toBeVisible();

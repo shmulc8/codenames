@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { postSpymaster } from '../../api/client';
-import { Button, RoleIcon, showToast } from '../../components';
+import { Button, RoleIcon, Select, showToast } from '../../components';
 import { boardsMatch, liveBoard, useAppStore } from '../../state/store';
 import type { ClueOption, Risk, Role, TeamColor, VocabMode } from '../../types/api';
 import { FeedbackControls } from '../feedback';
@@ -119,7 +119,6 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
   const optionIndex = Math.min(clue.optionIndex, options.length - 1);
   const option = options[optionIndex];
   const selectedRoles = Object.fromEntries(tiles.map((tile) => [tile.word, tile.role]));
-  const selectedLabel = targetLabels[target];
   const isCurrentOptionUsed = clue.used?.option === option;
   const hasTopLevelEmptyState = Boolean(response?.error) && !option;
 
@@ -252,14 +251,9 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
         <div className="clue-selection" aria-live="polite">
           <div className="clue-selection__summary">
             <span>הקלפים שבחרתי · {selected.length}</span>
-            {selected.length > 0 ? (
-              <span className={`clue-selection__color role-${target}`}>
-                <RoleIcon role={target} />
-                נבחרו: {selected.length} קלפים בצבע {selectedLabel}
-              </span>
-            ) : (
+            {selected.length === 0 ? (
               <span>לא נבחרו קלפים — אפשר לתת למנוע לבחור צירוף.</span>
-            )}
+            ) : null}
           </div>
           {selected.length > 0 ? (
             <div className="clue-chip-list" aria-label="קלפים שנבחרו">
@@ -296,20 +290,15 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
             <label className="clue-vocab__label" htmlFor="clue-vocab-select">
               אוצר מילים לרמזים
             </label>
-            <select
+            <Select
               id="clue-vocab-select"
               className="clue-vocab__select"
               data-testid="vocab-select"
               value={vocabMode}
               disabled={Boolean(loading)}
               onChange={(event) => setVocabMode(event.target.value as VocabMode)}
-            >
-              {vocabOptions.map(({ label, value }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              options={vocabOptions}
+            />
             <p className="clue-vocab__help">
               מומלץ = רשימה אצורה ואיכותית · מורחב = רשימת תדירות רחבה יותר
             </p>
@@ -318,7 +307,7 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
 
         <div className="clue-actions">
           <Button
-            className="clue-actions__button"
+            className="clue-actions__button cn-cta"
             data-testid="btn-get-clue"
             disabled={Boolean(loading)}
             loading={loading === 'focused' || loading === 'auto'}

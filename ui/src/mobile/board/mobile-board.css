@@ -11,89 +11,6 @@
   font-family: var(--font-hebrew);
 }
 
-.mobile .mobile-board__toolbar.is-visual {
-  min-height: 3rem;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 0.25rem 0.5rem;
-}
-
-.mobile .mobile-board__toolbar {
-  min-height: 6.75rem;
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: 1.25rem 1.2rem 0.9rem;
-  background: var(--cn-app-bg);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
-}
-
-.mobile .mobile-board__toolbar h1 {
-  margin: 0;
-  font-size: 1.65rem;
-  font-weight: 700;
-}
-
-.mobile .mobile-board__toolbar p {
-  margin: 0.25rem 0 0;
-  color: var(--cn-text-dim);
-  font-size: 0.78rem;
-}
-
-.mobile .mobile-board__toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.mobile .mobile-board__view-switch {
-  display: inline-grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 3px;
-  border: 1px solid var(--color-divider);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--cn-board-void) 88%, transparent);
-}
-
-.mobile .mobile-board__view-switch button {
-  min-width: 4.15rem;
-  min-height: 38px;
-  padding: 0.35rem 0.7rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--cn-text-dim);
-  font: inherit;
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-.mobile .mobile-board__view-switch button.is-active {
-  background: var(--cn-sheet);
-  color: var(--cn-text);
-  box-shadow: 0 2px 9px rgba(0, 0, 0, 0.28);
-}
-
-.mobile .mobile-board__fit {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--color-divider);
-  border-radius: 999px;
-  background: var(--cn-sheet);
-  color: var(--cn-text-muted);
-  font: inherit;
-  font-size: 0.72rem;
-}
-
-.mobile .mobile-board__fit span {
-  color: var(--color-accent-400);
-  font-size: 1.25rem;
-}
-
 .mobile .mobile-board__game-over {
   min-height: 2.8rem;
   display: flex;
@@ -494,16 +411,6 @@
 }
 
 @media (orientation: landscape) {
-  .mobile .mobile-board__toolbar {
-    min-height: 4rem;
-    align-items: center;
-    padding: 0.55rem 0.9rem;
-  }
-
-  .mobile .mobile-board__toolbar h1 {
-    font-size: 1.35rem;
-  }
-
   .mobile .mobile-board__list ul {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

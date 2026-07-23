@@ -1,3 +1,7 @@
+import { useState } from 'react';
+
+import { getDeal } from '../api/client';
+import { ThemeToggle } from '../components';
 import { BoardGrid } from '../features/board';
 import { CheckPanel } from '../features/check';
 import { CluePanel } from '../features/clue';
@@ -7,6 +11,7 @@ import { OperativePanel } from '../features/operative';
 import { PhotoSetup } from '../features/photo';
 import { MobileShell, useLayout } from '../mobile/shell';
 import { useAppStore } from '../state/store';
+import { showToast } from '../state/toast';
 import './MainScreen.css';
 
 export function MainScreen(): JSX.Element {
@@ -20,6 +25,23 @@ function DesktopMainScreen(): JSX.Element {
   const activeTab = useAppStore((state) => state.activeTab);
   const setActiveTab = useAppStore((state) => state.setActiveTab);
   const editBoard = useAppStore((state) => state.editBoard);
+  const setBoard = useAppStore((state) => state.setBoard);
+  const [dealing, setDealing] = useState(false);
+
+  async function dealNewBoard(): Promise<void> {
+    if (dealing) return;
+    setDealing(true);
+    try {
+      const deal = await getDeal();
+      setBoard(deal.words, deal.roles);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי', {
+        tone: 'error',
+      });
+    } finally {
+      setDealing(false);
+    }
+  }
 
   if (screen === 'setup') {
     return (
@@ -62,7 +84,15 @@ function DesktopMainScreen(): JSX.Element {
               מנחש
             </button>
           </div>
-          <p className="main-screen__status">הרמזים מותאמים ללוח שנמצא מולכם</p>
+          <button
+            type="button"
+            className="main-screen__edit-board"
+            data-testid="btn-reset-game"
+            disabled={dealing}
+            onClick={() => void dealNewBoard()}
+          >
+            {dealing ? 'מגרילים…' : '🎲 לוח אקראי'}
+          </button>
           <button
             type="button"
             className="main-screen__edit-board"
@@ -71,9 +101,10 @@ function DesktopMainScreen(): JSX.Element {
           >
             ✏️ ערוך לוח
           </button>
-          <a className="main-screen__methods" href="/methods" target="_blank" rel="noopener">
+          <a className="main-screen__methods" href="/methods.html" target="_blank" rel="noopener">
             איך זה עובד
           </a>
+          <ThemeToggle />
         </div>
       </header>
 

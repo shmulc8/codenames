@@ -1,19 +1,22 @@
+import { ThemeToggle } from '../../components';
 import { useAppStore } from '../../state/store';
 
 type GameMode = 'spymaster' | 'operative';
 
 interface MobileGameBarProps {
   onModeChange(mode: GameMode): void;
+  boardActive: boolean;
 }
 
-export function MobileGameBar({ onModeChange }: MobileGameBarProps): JSX.Element {
+export function MobileGameBar({ onModeChange, boardActive }: MobileGameBarProps): JSX.Element {
   const mode = useAppStore((state) => state.mode);
   const editBoard = useAppStore((state) => state.editBoard);
+  const boardView = useAppStore((state) => state.boardView);
+  const setBoardView = useAppStore((state) => state.setBoardView);
+  const requestBoardFit = useAppStore((state) => state.requestBoardFit);
 
   return (
     <header className="mobile-shell__gamebar" data-testid="mobile-gamebar">
-      <strong className="mobile-shell__gamebar-brand">שם קוד</strong>
-
       <div className="mobile-shell__mode" role="group" aria-label="מצב משחק">
         <button
           type="button"
@@ -33,13 +36,50 @@ export function MobileGameBar({ onModeChange }: MobileGameBarProps): JSX.Element
         </button>
       </div>
 
-      <div className="mobile-shell__gamebar-actions">
-        <button type="button" data-testid="mobile-edit-board" onClick={editBoard}>
-          לוח חדש
-        </button>
-        <a href="/methods" target="_blank" rel="noopener" aria-label="איך זה עובד">
-          ?
-        </a>
+      <div className="mobile-shell__gamebar-end">
+        {boardActive ? (
+          <div className="mobile-shell__board-controls" role="group" aria-label="תצוגת הלוח">
+            <div className="mobile-shell__view-switch">
+              <button
+                type="button"
+                data-testid="board-view-visual"
+                aria-pressed={boardView === 'visual'}
+                onClick={() => setBoardView('visual')}
+              >
+                לוח
+              </button>
+              <button
+                type="button"
+                data-testid="board-view-list"
+                aria-pressed={boardView === 'list'}
+                onClick={() => setBoardView('list')}
+              >
+                רשימה
+              </button>
+            </div>
+            {boardView === 'visual' ? (
+              <button
+                type="button"
+                className="mobile-shell__fit"
+                data-testid="btn-fit-board"
+                aria-label="התאימו למסך"
+                onClick={requestBoardFit}
+              >
+                ⌗
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="mobile-shell__gamebar-actions">
+          <button type="button" data-testid="mobile-edit-board" onClick={editBoard}>
+            לוח חדש
+          </button>
+          <ThemeToggle />
+          <a href="/methods.html" target="_blank" rel="noopener" aria-label="איך זה עובד">
+            ?
+          </a>
+        </div>
       </div>
     </header>
   );

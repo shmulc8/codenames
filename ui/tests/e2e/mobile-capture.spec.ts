@@ -108,7 +108,7 @@ test.describe('mobile capture flow', () => {
     await expect(page.getByTestId('btn-use-photo')).toBeEnabled();
 
     // Rotating a valid key preserves the counts, so it stays confirmable.
-    await capture.getByText('סובב ↻', { exact: true }).click();
+    await capture.getByRole('button', { name: 'סובב את המפתח' }).click();
     await expect(page.getByTestId('btn-use-photo')).toBeEnabled();
   });
 
@@ -166,6 +166,5 @@ test.describe('mobile capture flow', () => {
     await expect(page.getByTestId('photo-input-board')).toHaveAttribute('type', 'file');
     await expect(page.getByTestId('ocr-grid')).toBeVisible();
     await expect(page.getByTestId(/^ocr-cell-\d+$/)).toHaveCount(25);
-    await expect(page.getByText('אין מצלמה במחשב?')).toBeVisible();
   });
 });

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card } from '../../components/Card';
 import { RoleIcon } from '../../components/RoleIcon';
-import { getDeal } from '../../api/client';
 import { useAppStore } from '../../state/store';
 import { showToast } from '../../state/toast';
 import type { Role } from '../../types/api';
@@ -36,10 +35,8 @@ export function BoardGrid(): JSX.Element {
   const toggleSelected = useAppStore((state) => state.toggleSelected);
   const toggleLifecycle = useAppStore((state) => state.toggleLifecycle);
   const setHoverWord = useAppStore((state) => state.setHoverWord);
-  const setBoard = useAppStore((state) => state.setBoard);
   const [legendOpen, setLegendOpen] = useState(false);
   const [markingRevealed, setMarkingRevealed] = useState(false);
-  const [dealing, setDealing] = useState(false);
   const legendRef = useRef<HTMLDivElement | null>(null);
 
   const remaining = tiles.reduce(
@@ -84,25 +81,6 @@ export function BoardGrid(): JSX.Element {
     toggleSelected(tile.word);
     if (tile.role === 'neutral' || tile.role === 'assassin') {
       showToast('אפשר לבחור רק קלפים של קבוצה');
-    }
-  }
-
-  async function dealNewBoard(): Promise<void> {
-    if (dealing) return;
-
-    setDealing(true);
-    try {
-      const deal = await getDeal();
-      // setBoard intentionally keeps the player on the game screen while replacing
-      // all board-scoped state (selections, clues, reveals, and log).
-      setBoard(deal.words, deal.roles);
-      setMarkingRevealed(false);
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : 'לא הצלחנו לטעון לוח אקראי', {
-        tone: 'error',
-      });
-    } finally {
-      setDealing(false);
     }
   }
 
@@ -166,19 +144,21 @@ export function BoardGrid(): JSX.Element {
             className={`btn btn-secondary ${markingRevealed ? 'is-active' : ''}`}
             data-testid="btn-mark-revealed"
             aria-pressed={markingRevealed}
-            onClick={() => setMarkingRevealed((marking) => !marking)}
+            onClick={() => {
+              // When cards are already selected, reveal the whole selection in one click
+              // instead of forcing the user to enter marking mode and tap each card.
+              if (selected.length > 0) {
+                [...selected].forEach((word) => toggleLifecycle(word));
+                return;
+              }
+              setMarkingRevealed((marking) => !marking);
+            }}
           >
-            {markingRevealed ? 'סיום סימון' : 'סימון כנחשף'}
-          </button>
-
-          <button
-            type="button"
-            className="btn btn-secondary"
-            data-testid="btn-reset-game"
-            disabled={dealing}
-            onClick={() => void dealNewBoard()}
-          >
-            {dealing ? 'מגרילים לוח…' : 'לוח אקראי חדש'}
+            {selected.length > 0
+              ? `סמנו ${selected.length} כנחשפו`
+              : markingRevealed
+                ? 'סיום סימון'
+                : 'סימון כנחשף'}
           </button>
         </div>
       </header>
@@ -230,11 +210,13 @@ export function BoardGrid(): JSX.Element {
                 data-word={tile.word}
                 data-role={displayRole}
                 data-lifecycle={tile.lifecycle}
-                disabled={chosen && !markingRevealed}
+                disabled={chosen && !markingRevealed && mode !== 'operative'}
                 aria-pressed={selectedForClue}
                 aria-label={`${tile.word}${hideRole ? '' : `, ${roleLabel[tile.role]}`}${chosen ? ', נחשף' : ''}`}
                 onClick={() => {
-                  if (markingRevealed) {
+                  // In guesser (operative) mode the only interaction is revealing a card:
+                  // any tap toggles its revealed state.
+                  if (mode === 'operative' || markingRevealed) {
                     toggleLifecycle(tile.word);
                     return;
                   }
