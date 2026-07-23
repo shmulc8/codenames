@@ -119,7 +119,6 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
   const optionIndex = Math.min(clue.optionIndex, options.length - 1);
   const option = options[optionIndex];
   const selectedRoles = Object.fromEntries(tiles.map((tile) => [tile.word, tile.role]));
-  const selectedLabel = targetLabels[target];
   const isCurrentOptionUsed = clue.used?.option === option;
   const hasTopLevelEmptyState = Boolean(response?.error) && !option;
 
@@ -252,14 +251,9 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
         <div className="clue-selection" aria-live="polite">
           <div className="clue-selection__summary">
             <span>הקלפים שבחרתי · {selected.length}</span>
-            {selected.length > 0 ? (
-              <span className={`clue-selection__color role-${target}`}>
-                <RoleIcon role={target} />
-                נבחרו: {selected.length} קלפים בצבע {selectedLabel}
-              </span>
-            ) : (
+            {selected.length === 0 ? (
               <span>לא נבחרו קלפים — אפשר לתת למנוע לבחור צירוף.</span>
-            )}
+            ) : null}
           </div>
           {selected.length > 0 ? (
             <div className="clue-chip-list" aria-label="קלפים שנבחרו">
@@ -318,7 +312,7 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
 
         <div className="clue-actions">
           <Button
-            className="clue-actions__button"
+            className="clue-actions__button cn-cta"
             data-testid="btn-get-clue"
             disabled={Boolean(loading)}
             loading={loading === 'focused' || loading === 'auto'}

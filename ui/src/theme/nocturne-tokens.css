@@ -238,6 +238,26 @@ figcaption {
 .btn-primary:active {
   background: color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
+/* Filled call-to-action: the loud, solid primary for the one main action on a screen. */
+.btn.cn-cta {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #14101f;
+  font-weight: 700;
+}
+.btn.cn-cta:hover:not(:disabled) {
+  background: var(--color-accent-400);
+  border-color: var(--color-accent-400);
+}
+.btn.cn-cta:active:not(:disabled) {
+  background: var(--color-accent-600);
+  border-color: var(--color-accent-600);
+}
+.btn.cn-cta:disabled {
+  background: color-mix(in srgb, var(--color-accent) 34%, transparent);
+  border-color: transparent;
+  color: var(--cn-text-muted);
+}
 .btn-secondary {
   border-color: var(--color-divider);
 }

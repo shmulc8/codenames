@@ -41,11 +41,17 @@ export function KeyReview({
 
       <div className="cn-capture__review-body">
         <div className="cn-capture__key-status">
-          <span className={`cn-capture__key-flag ${valid ? 'is-valid' : ''}`}>
-            {valid ? '9·8·7·1 מפתח תקין' : 'חלוקת המפתח עדיין לא 9·8·7·1'}
-          </span>
-          <button type="button" className="btn btn-secondary cn-capture__rotate" onClick={onRotate}>
-            סובב ↻
+          {!valid ? (
+            <span className="cn-capture__key-flag">חלוקת המפתח עדיין לא 9·8·7·1</span>
+          ) : null}
+          <button
+            type="button"
+            className="btn btn-secondary cn-capture__rotate"
+            aria-label="סובב את המפתח"
+            title="סובב את המפתח"
+            onClick={onRotate}
+          >
+            ↻
           </button>
         </div>
 

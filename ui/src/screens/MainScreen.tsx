@@ -62,7 +62,6 @@ function DesktopMainScreen(): JSX.Element {
               מנחש
             </button>
           </div>
-          <p className="main-screen__status">הרמזים מותאמים ללוח שנמצא מולכם</p>
           <button
             type="button"
             className="main-screen__edit-board"
@@ -71,7 +70,7 @@ function DesktopMainScreen(): JSX.Element {
           >
             ✏️ ערוך לוח
           </button>
-          <a className="main-screen__methods" href="/methods" target="_blank" rel="noopener">
+          <a className="main-screen__methods" href="/methods.html" target="_blank" rel="noopener">
             איך זה עובד
           </a>
         </div>

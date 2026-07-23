@@ -166,9 +166,21 @@ export function BoardGrid(): JSX.Element {
             className={`btn btn-secondary ${markingRevealed ? 'is-active' : ''}`}
             data-testid="btn-mark-revealed"
             aria-pressed={markingRevealed}
-            onClick={() => setMarkingRevealed((marking) => !marking)}
+            onClick={() => {
+              // When cards are already selected, reveal the whole selection in one click
+              // instead of forcing the user to enter marking mode and tap each card.
+              if (selected.length > 0) {
+                [...selected].forEach((word) => toggleLifecycle(word));
+                return;
+              }
+              setMarkingRevealed((marking) => !marking);
+            }}
           >
-            {markingRevealed ? 'סיום סימון' : 'סימון כנחשף'}
+            {selected.length > 0
+              ? `סמנו ${selected.length} כנחשפו`
+              : markingRevealed
+                ? 'סיום סימון'
+                : 'סימון כנחשף'}
           </button>
 
           <button

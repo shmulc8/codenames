@@ -280,9 +280,14 @@
 }
 
 .photo-setup__confirm {
-  margin-top: var(--space-6);
-  margin-inline-start: auto;
-  min-height: 2.75rem;
+  position: sticky;
+  bottom: var(--space-3);
+  z-index: 3;
+  width: 100%;
+  margin-top: var(--space-5);
+  min-height: 3.25rem;
+  font-size: 1.05rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 .photo-setup__uploads {

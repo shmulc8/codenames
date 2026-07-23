@@ -108,7 +108,7 @@ test.describe('mobile capture flow', () => {
     await expect(page.getByTestId('btn-use-photo')).toBeEnabled();
 
     // Rotating a valid key preserves the counts, so it stays confirmable.
-    await capture.getByText('סובב ↻', { exact: true }).click();
+    await capture.getByRole('button', { name: 'סובב את המפתח' }).click();
     await expect(page.getByTestId('btn-use-photo')).toBeEnabled();
   });
 
