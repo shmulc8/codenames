@@ -16,5 +16,3 @@ export const roleLabel: Record<Role, string> = {
   neutral: 'ניטרלי',
   assassin: 'מתנקש',
 };
-
-export const roles: Role[] = ['red', 'blue', 'neutral', 'assassin'];

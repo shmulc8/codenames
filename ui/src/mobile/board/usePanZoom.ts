@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { MutableRefObject, PointerEvent as ReactPointerEvent, RefObject } from 'react';
+import type {
+  MouseEvent as ReactMouseEvent,
+  MutableRefObject,
+  PointerEvent as ReactPointerEvent,
+  RefObject,
+} from 'react';
 
 import { BOARD_HEIGHT, BOARD_WIDTH, CARD_WIDTH } from './board-model';
 
@@ -7,39 +12,34 @@ interface Point {
   x: number;
   y: number;
 }
+
 interface TransformState {
   fitScale: number;
   scale: number;
   x: number;
   y: number;
 }
+
 interface PrimaryGesture extends Point {
   moved: boolean;
-  word: string | null;
 }
+
 interface PinchGesture {
   anchor: Point;
   distance: number;
   scale: number;
 }
-interface LastTap {
-  at: number;
-  point: Point;
-  word: string;
-}
 
 interface GestureContext {
   applyTransform(next: TransformState): void;
-  lastTap: MutableRefObject<LastTap | null>;
-  onTap(word: string): void;
   panOrigin: MutableRefObject<Point>;
   pinch: MutableRefObject<PinchGesture | null>;
   pointers: MutableRefObject<Map<number, Point>>;
   primary: MutableRefObject<PrimaryGesture | null>;
-  resetToFit(): void;
   setGesturing(value: boolean): void;
   settleTimer: MutableRefObject<number | undefined>;
-  tapTimer: MutableRefObject<number | undefined>;
+  suppressClick: MutableRefObject<boolean>;
+  suppressClickTimer: MutableRefObject<number | undefined>;
   transform: MutableRefObject<TransformState>;
   viewport: RefObject<HTMLDivElement>;
 }
@@ -58,13 +58,13 @@ function midpoint(left: Point, right: Point): Point {
 function fitFor(viewport: HTMLDivElement): TransformState {
   const widthScale = Math.max(0.1, (viewport.clientWidth - 16) / BOARD_WIDTH);
   const heightScale = Math.max(0.1, (viewport.clientHeight - 16) / BOARD_HEIGHT);
-  const landscape = viewport.clientWidth > viewport.clientHeight;
-  const fitScale = landscape ? Math.min(widthScale, 1) : Math.min(widthScale, heightScale, 1);
+  const fitScale = Math.min(widthScale, heightScale, 1);
+
   return {
     fitScale,
     scale: fitScale,
     x: (viewport.clientWidth - BOARD_WIDTH * fitScale) / 2,
-    y: landscape ? 0 : (viewport.clientHeight - BOARD_HEIGHT * fitScale) / 2,
+    y: (viewport.clientHeight - BOARD_HEIGHT * fitScale) / 2,
   };
 }
 
@@ -92,25 +92,28 @@ function constrain(viewport: HTMLDivElement, next: TransformState, soft: boolean
   };
 }
 
+function markClickSuppressed(context: GestureContext): void {
+  window.clearTimeout(context.suppressClickTimer.current);
+  context.suppressClick.current = true;
+  context.suppressClickTimer.current = window.setTimeout(() => {
+    context.suppressClick.current = false;
+  }, 0);
+}
+
 function handlePointerDown(
   context: GestureContext,
   event: ReactPointerEvent<HTMLDivElement>,
 ): void {
   const viewport = context.viewport.current;
   if (!viewport) return;
+
   window.clearTimeout(context.settleTimer.current);
   const point = { x: event.clientX, y: event.clientY };
   context.pointers.current.set(event.pointerId, point);
   context.setGesturing(true);
-  try {
-    event.currentTarget.setPointerCapture(event.pointerId);
-  } catch {
-    /* synthetic pointer */
-  }
 
   if (context.pointers.current.size === 1) {
-    const tile = (event.target as HTMLElement).closest<HTMLElement>('[data-mobile-tile="true"]');
-    context.primary.current = { ...point, moved: false, word: tile?.dataset.word ?? null };
+    context.primary.current = { ...point, moved: false };
     context.panOrigin.current = { x: context.transform.current.x, y: context.transform.current.y };
     return;
   }
@@ -127,10 +130,18 @@ function handlePointerDown(
     scale: context.transform.current.scale,
   };
   if (context.primary.current) context.primary.current.moved = true;
+  for (const pointerId of context.pointers.current.keys()) {
+    try {
+      event.currentTarget.setPointerCapture(pointerId);
+    } catch {
+      /* Synthetic pointer events do not always support capture. */
+    }
+  }
 }
 
 function handlePinch(context: GestureContext, viewport: HTMLDivElement): boolean {
   if (context.pointers.current.size < 2 || !context.pinch.current) return false;
+
   const [first, second] = [...context.pointers.current.values()];
   const center = midpoint(first, second);
   const rect = viewport.getBoundingClientRect();
@@ -143,6 +154,7 @@ function handlePinch(context: GestureContext, viewport: HTMLDivElement): boolean
       (context.pinch.current.scale * distance(first, second)) / context.pinch.current.distance,
     ),
   );
+
   context.applyTransform(
     constrain(
       viewport,
@@ -164,13 +176,21 @@ function handlePointerMove(
 ): void {
   const viewport = context.viewport.current;
   if (!viewport || !context.pointers.current.has(event.pointerId)) return;
+
   const point = { x: event.clientX, y: event.clientY };
   context.pointers.current.set(event.pointerId, point);
   if (handlePinch(context, viewport) || !context.primary.current) return;
 
   const dx = point.x - context.primary.current.x;
   const dy = point.y - context.primary.current.y;
-  if (Math.hypot(dx, dy) >= TAP_DISTANCE) context.primary.current.moved = true;
+  if (Math.hypot(dx, dy) >= TAP_DISTANCE && !context.primary.current.moved) {
+    context.primary.current.moved = true;
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* Synthetic pointer events do not always support capture. */
+    }
+  }
   context.applyTransform(
     constrain(
       viewport,
@@ -184,35 +204,6 @@ function handlePointerMove(
   );
 }
 
-function zoomToPoint(context: GestureContext, point: Point): void {
-  const viewport = context.viewport.current;
-  const current = context.transform.current;
-  if (!viewport) return;
-  if (current.scale > current.fitScale + 0.02) {
-    context.resetToFit();
-    return;
-  }
-  const rect = viewport.getBoundingClientRect();
-  const local = { x: point.x - rect.left, y: point.y - rect.top };
-  const nextScale = Math.min(viewport.clientWidth / CARD_WIDTH, current.fitScale * 2.25);
-  const boardPoint = {
-    x: (local.x - current.x) / current.scale,
-    y: (local.y - current.y) / current.scale,
-  };
-  context.applyTransform(
-    constrain(
-      viewport,
-      {
-        ...current,
-        scale: nextScale,
-        x: local.x - boardPoint.x * nextScale,
-        y: local.y - boardPoint.y * nextScale,
-      },
-      false,
-    ),
-  );
-}
-
 function settlePan(context: GestureContext, viewport: HTMLDivElement): void {
   const settle = (): void =>
     context.applyTransform(constrain(viewport, context.transform.current, false));
@@ -220,39 +211,20 @@ function settlePan(context: GestureContext, viewport: HTMLDivElement): void {
   else context.settleTimer.current = window.setTimeout(settle, 180);
 }
 
-function handleTap(context: GestureContext, point: Point, word: string): void {
-  const previous = context.lastTap.current;
-  const isDoubleTap =
-    previous &&
-    previous.word === word &&
-    Date.now() - previous.at < 320 &&
-    distance(previous.point, point) < 24;
-  if (isDoubleTap) {
-    window.clearTimeout(context.tapTimer.current);
-    zoomToPoint(context, point);
-    context.lastTap.current = null;
-    return;
-  }
-  window.clearTimeout(context.tapTimer.current);
-  context.lastTap.current = { at: Date.now(), point, word };
-  context.tapTimer.current = window.setTimeout(() => {
-    context.onTap(word);
-    context.lastTap.current = null;
-  }, 280);
-}
-
-function handlePointerEnd(context: GestureContext, event: ReactPointerEvent<HTMLDivElement>): void {
+function handlePointerEnd(
+  context: GestureContext,
+  event: ReactPointerEvent<HTMLDivElement>,
+  cancelled: boolean,
+): void {
   if (!context.pointers.current.has(event.pointerId)) return;
+
   const wasPinching = context.pointers.current.size > 1 || context.pinch.current !== null;
+  const moved = context.primary.current?.moved ?? false;
   context.pointers.current.delete(event.pointerId);
   if (context.pointers.current.size < 2) context.pinch.current = null;
 
-  const primary = context.primary.current;
-  if (!wasPinching && primary) {
-    const point = { x: event.clientX, y: event.clientY };
-    if (!primary.moved && primary.word) handleTap(context, point, primary.word);
-    else if (context.viewport.current) settlePan(context, context.viewport.current);
-  }
+  if (cancelled || wasPinching || moved) markClickSuppressed(context);
+  if (!wasPinching && context.viewport.current) settlePan(context, context.viewport.current);
 
   if (context.pointers.current.size === 0) {
     context.primary.current = null;
@@ -260,10 +232,20 @@ function handlePointerEnd(context: GestureContext, event: ReactPointerEvent<HTML
   }
 }
 
+function handleClickCapture(context: GestureContext, event: ReactMouseEvent<HTMLDivElement>): void {
+  if (!context.suppressClick.current || event.detail === 0) return;
+
+  window.clearTimeout(context.suppressClickTimer.current);
+  context.suppressClick.current = false;
+  event.preventDefault();
+  event.stopPropagation();
+}
+
 function useFitObserver(viewport: RefObject<HTMLDivElement>, resetToFit: () => void): void {
   useEffect(() => {
     const element = viewport.current;
     if (!element) return undefined;
+
     resetToFit();
     const observer = new ResizeObserver(resetToFit);
     observer.observe(element);
@@ -271,17 +253,22 @@ function useFitObserver(viewport: RefObject<HTMLDivElement>, resetToFit: () => v
   }, [resetToFit, viewport]);
 }
 
-export function usePanZoom(viewport: RefObject<HTMLDivElement>, onTap: (word: string) => void) {
-  const [transform, setTransform] = useState<TransformState>({ fitScale: 1, scale: 1, x: 0, y: 0 });
+export function usePanZoom(viewport: RefObject<HTMLDivElement>) {
+  const [transform, setTransform] = useState<TransformState>({
+    fitScale: 1,
+    scale: 1,
+    x: 0,
+    y: 0,
+  });
   const [gesturing, setGesturing] = useState(false);
   const transformRef = useRef(transform);
   const pointers = useRef(new Map<number, Point>());
   const primary = useRef<PrimaryGesture | null>(null);
   const panOrigin = useRef<Point>({ x: 0, y: 0 });
   const pinch = useRef<PinchGesture | null>(null);
-  const lastTap = useRef<LastTap | null>(null);
   const settleTimer = useRef<number>();
-  const tapTimer = useRef<number>();
+  const suppressClick = useRef(false);
+  const suppressClickTimer = useRef<number>();
   const applyTransform = useCallback((next: TransformState): void => {
     transformRef.current = next;
     setTransform(next);
@@ -290,26 +277,25 @@ export function usePanZoom(viewport: RefObject<HTMLDivElement>, onTap: (word: st
     if (viewport.current) applyTransform(fitFor(viewport.current));
   }, [applyTransform, viewport]);
   useFitObserver(viewport, resetToFit);
+
   useEffect(
     () => () => {
       window.clearTimeout(settleTimer.current);
-      window.clearTimeout(tapTimer.current);
+      window.clearTimeout(suppressClickTimer.current);
     },
     [],
   );
 
   const context: GestureContext = {
     applyTransform,
-    lastTap,
-    onTap,
     panOrigin,
     pinch,
     pointers,
     primary,
-    resetToFit,
     setGesturing,
     settleTimer,
-    tapTimer,
+    suppressClick,
+    suppressClickTimer,
     transform: transformRef,
     viewport,
   };
@@ -321,11 +307,14 @@ export function usePanZoom(viewport: RefObject<HTMLDivElement>, onTap: (word: st
 
   return {
     atFit,
+    clickCapture: (event: ReactMouseEvent<HTMLDivElement>) => handleClickCapture(context, event),
     gesturing,
     pointerDown: (event: ReactPointerEvent<HTMLDivElement>) => handlePointerDown(context, event),
     pointerMove: (event: ReactPointerEvent<HTMLDivElement>) => handlePointerMove(context, event),
-    pointerUp: (event: ReactPointerEvent<HTMLDivElement>) => handlePointerEnd(context, event),
-    pointerCancel: (event: ReactPointerEvent<HTMLDivElement>) => handlePointerEnd(context, event),
+    pointerUp: (event: ReactPointerEvent<HTMLDivElement>) =>
+      handlePointerEnd(context, event, false),
+    pointerCancel: (event: ReactPointerEvent<HTMLDivElement>) =>
+      handlePointerEnd(context, event, true),
     resetToFit,
     transform,
   };
