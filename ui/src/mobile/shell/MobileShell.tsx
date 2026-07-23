@@ -1,9 +1,17 @@
-import { useState, type CSSProperties } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 
 import { PanZoomCanvas } from '../board';
 import { CaptureFlow } from '../capture';
 import { MobileCheckPanel, MobileCluePanel, MobileMapPanel, MobileOperativePanel } from '../panels';
-import { useAppStore } from '../../state/store';
+import { mobileClueFocusTeam, useAppStore } from '../../state/store';
+import { MobileClueModal } from './MobileClueModal';
 import { MobileGameBar } from './MobileGameBar';
 import { MobileHome } from './MobileHome';
 import './shell.css';
@@ -83,43 +91,112 @@ function MobileTabBar({
 export function MobileShell(): JSX.Element {
   const screen = useAppStore((state) => state.screen);
   const mode = useAppStore((state) => state.mode);
+  const clueModalOpen = useAppStore((state) => state.clueModalOpen);
+  const clueFocusTeam = useAppStore(mobileClueFocusTeam);
   const setMode = useAppStore((state) => state.setMode);
   const setActiveTab = useAppStore((state) => state.setActiveTab);
+  const closeMobileClue = useAppStore((state) => state.closeMobileClue);
   const [mobileTab, setMobileTab] = useState<MobileTab>('board');
+  const [manualClueOpen, setManualClueOpen] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const backgroundRef = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    const shell = shellRef.current;
+    const viewport = window.visualViewport;
+    if (!shell) return;
+
+    function syncViewportHeight(): void {
+      shell?.style.setProperty(
+        '--mobile-viewport-height',
+        `${Math.round(viewport?.height ?? window.innerHeight)}px`,
+      );
+    }
+
+    syncViewportHeight();
+    viewport?.addEventListener('resize', syncViewportHeight);
+    window.addEventListener('resize', syncViewportHeight);
+    return () => {
+      viewport?.removeEventListener('resize', syncViewportHeight);
+      window.removeEventListener('resize', syncViewportHeight);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const background = backgroundRef.current;
+    if (!background) return;
+    background.inert = clueModalOpen;
+    return () => {
+      background.inert = false;
+    };
+  }, [clueModalOpen]);
+
+  useEffect(() => {
+    if (!clueModalOpen && manualClueOpen) setManualClueOpen(false);
+  }, [clueModalOpen, manualClueOpen]);
 
   function selectTab(tab: MobileTab): void {
+    if (tab === 'clue') {
+      setActiveTab('clue');
+      setManualClueOpen(true);
+      useAppStore.setState({ clueModalOpen: true });
+      return;
+    }
     setMobileTab(tab);
-    if (tab === 'clue' || tab === 'check') setActiveTab(tab);
+    if (tab === 'check') setActiveTab(tab);
   }
 
   function changeMode(nextMode: GameMode): void {
     setMode(nextMode);
-    setMobileTab(nextMode === 'operative' ? 'operative' : 'clue');
+    setManualClueOpen(false);
+    setMobileTab(nextMode === 'operative' ? 'operative' : 'board');
     if (nextMode === 'spymaster') setActiveTab('clue');
   }
+
+  const closeClue = useCallback((): void => {
+    closeMobileClue();
+    setManualClueOpen(false);
+  }, [closeMobileClue]);
 
   return (
     <div
       className={`mobile mobile-shell${screen === 'game' ? ' is-game' : ''}`}
       data-testid="mobile-shell"
       dir="rtl"
+      ref={shellRef}
     >
       <MobileLandscapePrompt />
-      {screen === 'setup' && capturing ? (
-        <CaptureFlow onClose={() => setCapturing(false)} />
-      ) : (
-        <>
-          {screen === 'setup' ? <MobileHeader /> : null}
-          {screen === 'game' ? <MobileGameBar onModeChange={changeMode} /> : null}
-          {screen === 'setup' ? (
-            <MobileHome onShoot={() => setCapturing(true)} />
-          ) : (
-            <MobilePanel tab={mobileTab} />
-          )}
-          <MobileTabBar activeTab={mobileTab} mode={mode} onSelect={selectTab} />
-        </>
-      )}
+      <div
+        className="mobile-shell__background"
+        ref={backgroundRef}
+        aria-hidden={clueModalOpen ? 'true' : undefined}
+      >
+        {screen === 'setup' && capturing ? (
+          <CaptureFlow onClose={() => setCapturing(false)} />
+        ) : (
+          <>
+            {screen === 'setup' ? <MobileHeader /> : null}
+            {screen === 'game' ? <MobileGameBar onModeChange={changeMode} /> : null}
+            {screen === 'setup' ? (
+              <MobileHome onShoot={() => setCapturing(true)} />
+            ) : (
+              <MobilePanel tab={mobileTab} />
+            )}
+            <MobileTabBar
+              activeTab={clueModalOpen ? 'clue' : mobileTab}
+              mode={mode}
+              onSelect={selectTab}
+            />
+          </>
+        )}
+      </div>
+      {clueModalOpen ? (
+        <MobileClueModal
+          autoRequest={!manualClueOpen && clueFocusTeam !== null}
+          onClose={closeClue}
+        />
+      ) : null}
     </div>
   );
 }

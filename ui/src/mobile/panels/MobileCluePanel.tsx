@@ -10,10 +10,10 @@ import { SessionLog } from '../../features/log';
  * than a permanent side panel (DESIGN.md §5 mobile-3d), reusing `SessionLog`
  * with its own `log-toggle`.
  */
-export function MobileCluePanel(): JSX.Element {
+export function MobileCluePanel({ autoRequest = false }: { autoRequest?: boolean }): JSX.Element {
   return (
     <div className="mobile-panel mobile-clue">
-      <CluePanel />
+      <CluePanel autoRequest={autoRequest} />
       <section className="mobile-clue__log" aria-label="יומן רמזים">
         <SessionLog />
       </section>

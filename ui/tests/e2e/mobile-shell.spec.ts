@@ -79,10 +79,12 @@ test.describe('mobile app shell', () => {
     expect(boardGeometry.viewportWidth / boardGeometry.viewportHeight).toBeGreaterThan(2);
 
     await page.getByTestId('tab-clue').click();
+    await expect(page.getByTestId('mobile-clue-modal')).toBeVisible();
     await expect(page.getByTestId('stub-clue')).toBeVisible();
     await expect(page.getByTestId('tab-clue')).toHaveAttribute('aria-selected', 'true');
     await expect.poll(() => page.evaluate(() => window.__store?.getState().activeTab)).toBe('clue');
 
+    await page.getByRole('button', { name: 'סגירת חלון הרמז' }).click();
     await page.getByTestId('tab-check').click();
     await expect(page.getByTestId('stub-check')).toBeVisible();
     await expect
