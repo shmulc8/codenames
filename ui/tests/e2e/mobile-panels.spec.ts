@@ -19,7 +19,8 @@ test.describe('mobile clue/check/map tabs', () => {
   test('clue tab mounts CluePanel, exposes loading, and produces option 0', async ({ page }) => {
     await bootMobileGame(page);
 
-    // Single-column re-layout of the reused desktop CluePanel.
+    // The complete reused desktop CluePanel lives inside the bounded mobile dialog.
+    await expect(page.getByTestId('mobile-clue-modal')).toBeVisible();
     await expect(page.getByTestId('tabbar')).toBeVisible();
     await expect(page.getByTestId('target-color')).toBeVisible();
     await expect(page.getByTestId('btn-get-clue')).toBeVisible();
@@ -75,9 +76,9 @@ test.describe('mobile clue/check/map tabs', () => {
     await expect(clueCard.getByTestId('btn-dislike')).toBeVisible();
 
     await clueCard.getByTestId('btn-dislike').click();
-    // Expands within the same card — no dialog role, no modal.
+    // Expands within the same card and does not open a second dialog.
     await expect(clueCard.getByTestId('feedback-why')).toBeVisible();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(1);
 
     await clueCard.getByTestId('feedback-why').getByText('מעורפל').click();
     await expect(clueCard.getByTestId('feedback-sent')).toBeVisible();

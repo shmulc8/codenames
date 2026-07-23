@@ -91,7 +91,7 @@ function RankedRead({ option }: { option: ClueOption }): JSX.Element {
   );
 }
 
-export function CluePanel(): JSX.Element {
+export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): JSX.Element {
   const tiles = useAppStore((state) => state.tiles);
   const selected = useAppStore((state) => state.selected);
   const risk = useAppStore((state) => state.risk);
@@ -108,6 +108,7 @@ export function CluePanel(): JSX.Element {
   const [loading, setLoading] = useState<RequestKind | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hasMounted = useRef(false);
+  const autoRequestStarted = useRef(false);
 
   const response = clue.current;
   // Show every option the engine returns (best-first, already MMR-diversified), minus any that
@@ -187,6 +188,24 @@ export function CluePanel(): JSX.Element {
   function handleRegenerate(): void {
     void requestClue('regenerate', buildSnapshot());
   }
+
+  const autoRequestRef = useRef(() => undefined);
+  autoRequestRef.current = () => {
+    const state = useAppStore.getState();
+    if (state.selected.length === 0) return;
+    void requestClue('focused', {
+      focus: [...state.selected],
+      risk: state.risk,
+      vocabMode: state.vocabMode,
+      target: state.target,
+    });
+  };
+
+  useEffect(() => {
+    if (!autoRequest || autoRequestStarted.current) return;
+    autoRequestStarted.current = true;
+    autoRequestRef.current();
+  }, [autoRequest]);
 
   // Risk/vocab dials should feel live: if a result is already on screen, changing
   // either setting re-runs the last request with the new settings automatically.

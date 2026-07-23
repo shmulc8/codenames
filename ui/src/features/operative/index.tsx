@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 import { postOperative } from '../../api/client';
 import { Button, showToast } from '../../components';
@@ -41,7 +41,11 @@ function RankedGuess({ ranking }: { ranking: OperativeRankEntry[] }): JSX.Elemen
   );
 }
 
-export function OperativePanel(): JSX.Element {
+export function OperativePanel({
+  focusResultOnLoad = false,
+}: {
+  focusResultOnLoad?: boolean;
+}): JSX.Element {
   const tiles = useAppStore((state) => state.tiles);
   const vocabMode = useAppStore((state) => state.vocabMode);
   const [clueInput, setClueInput] = useState('');
@@ -49,6 +53,11 @@ export function OperativePanel(): JSX.Element {
   const [result, setResult] = useState<OperativeResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultHeadingRef = useRef<HTMLHeadingElement | null>(null);
+
+  useEffect(() => {
+    if (focusResultOnLoad && result) resultHeadingRef.current?.focus();
+  }, [focusResultOnLoad, result]);
 
   function adjustCount(delta: number): void {
     setCount((current) => Math.min(MAX_COUNT, Math.max(MIN_COUNT, current + delta)));
@@ -147,7 +156,7 @@ export function OperativePanel(): JSX.Element {
         <section className="operative-result" data-testid="operative-result" aria-live="polite">
           <header className="operative-result__header">
             <p className="operative-panel__eyebrow">ההצעה שהתקבלה</p>
-            <h3>
+            <h3 ref={resultHeadingRef} tabIndex={focusResultOnLoad ? -1 : undefined}>
               רמז: <span data-testid="operative-result-clue">{result.clue}</span>
             </h3>
           </header>
