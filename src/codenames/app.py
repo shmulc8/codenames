@@ -58,10 +58,11 @@ SECOND_OPINION = os.environ.get("SECOND_OPINION", "1").lower() not in ("0", "fal
 # clues (and refuses more); bold reaches for more words and tolerates a tighter enemy.
 RISK_PROFILES = {
     # Scoring weights (m, lam_*, safe_margin) validated on the real serve_clue path — bench_clue.py
-    # plus a neutral LLM-guesser eval. balanced and cautious share conservative coverage (m=2,
-    # safe_margin=0.05); together with the listener-danger term below this keeps the claimed words to
-    # what a strong human-proxy guesser recovers and best avoids the assassin. They differ only in
-    # enemy avoidance (cautious uses higher lam_*); bold reaches furthest (m=4). The count-trim `keep`
+    # plus a neutral LLM-guesser eval. cautious claims at most 2 (m=2); balanced searches up to 3
+    # (m=3) but claims only the words that clear safe_margin=0.05, so a tight trio is called 3 and
+    # anything looser stays 2; bold reaches furthest (m=4, claim cap 4). Together with the
+    # listener-danger term below this keeps the claimed words to what a strong human-proxy guesser
+    # recovers and best avoids the assassin. cautious also avoids enemies harder (higher lam_*). The count-trim `keep`
     # (keep_rel) claims a team word only when its similarity is >= keep · the top target's; keep
     # ordering stays cautious >= balanced >= bold.
     "cautious": dict(m=2, lam_a=3.0, lam_opp=1.3, lam_neu=0.7, keep=0.68, safe_margin=0.05),
@@ -71,7 +72,7 @@ RISK_PROFILES = {
 _CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu", "safe_margin")
 LAM_F = 0.14  # weight on the mid-frequency (DETECT-FREQ) prior in candidate scoring
 # Listener-competition (RSA-style) danger term: penalise clues by the softmax share a literal
-# guesser would put on the assassin/opponent words (see probe._listener_danger). One global pair
+# guesser would put on the assassin/opponent/neutral words (see probe._listener_danger). One global pair
 # across risk profiles; SOFT_TAU is the softmax temperature. LAM_SOFT=0 restores hinge-only scoring.
 LAM_SOFT = 1.0
 SOFT_TAU = 0.10

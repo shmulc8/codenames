@@ -417,18 +417,25 @@ def _board_softmax(sim: np.ndarray, tau: float) -> np.ndarray:
     return e / e.sum(1, keepdims=True)
 
 
+# A neutral card ends the turn without losing anything else, so it costs half an opponent card.
+# Leaving it out let a clue lower its danger term by pushing listener mass onto neutrals.
+_SOFT_NEUTRAL_WEIGHT = 0.5
+
+
 def _listener_danger(
-    adj: np.ndarray, is_as: np.ndarray, is_opp: np.ndarray, tau: float
+    adj: np.ndarray, is_as: np.ndarray, is_opp: np.ndarray, tau: float, is_neu=None
 ) -> np.ndarray:
     """Probability mass a literal listener puts on danger words, per candidate clue: the
-    softmax share landing on the assassin (weighted) plus the share on opponent words. Unlike
+    softmax share landing on the assassin (weighted), on opponent words, and on neutrals (half
+    weight). Unlike
     the hinge penalties (which read absolute centred similarity), this is scale-invariant and
     accounts for board competition — a clue near the assassin is safe if team/neutral words
     draw more of the listener's mass, and risky if they don't."""
     L0 = _board_softmax(adj, tau)
     as_mass = L0[:, is_as].sum(1) if is_as.any() else 0.0
     opp_mass = L0[:, is_opp].sum(1) if is_opp.any() else 0.0
-    return _SOFT_ASSASSIN_WEIGHT * as_mass + opp_mass
+    neu_mass = L0[:, is_neu].sum(1) if is_neu is not None and is_neu.any() else 0.0
+    return _SOFT_ASSASSIN_WEIGHT * as_mass + opp_mass + _SOFT_NEUTRAL_WEIGHT * neu_mass
 
 
 # --------------------------------------------------------------------------- #
@@ -759,7 +766,7 @@ def encoder_clue_candidates(
     if vocab_freq is not None and lam_f:
         g = g + lam_f * np.asarray(vocab_freq, dtype=np.float32)[keep]
     if lam_soft:
-        g = g - lam_soft * _listener_danger(adj, is_as, is_opp, soft_tau)
+        g = g - lam_soft * _listener_danger(adj, is_as, is_opp, soft_tau, is_neu)
 
     def intended_of(bi) -> list[str]:
         if fixed:  # the targets this clue reaches safely, strongest first
