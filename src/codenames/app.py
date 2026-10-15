@@ -297,8 +297,9 @@ def _load_geo_assets(mode: str, enc):
             else:
                 freq = probe.freq_scores(counts, lo=1000, hi=80000)
 
-        morph.lemmas(vocab)  # one batched pass fills the lemma memo the root lookup falls back on
-        _clue_lemmas[mode] = list(vocab)
+        # one batched DictaBERT pass; legality compares each clue's lemma with the board's, so a
+        # surface form in the vocab (curated/custom lists) can't slip past a board lemma
+        _clue_lemmas[mode] = morph.lemmas(vocab)
         _clue_roots[mode] = probe.vocab_root_sets(vocab, _clue_lemmas[mode])
         _clue_freq[mode] = freq
         _clue_vocab[mode] = vocab
