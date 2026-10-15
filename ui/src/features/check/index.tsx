@@ -146,6 +146,11 @@ export function CheckPanel(): JSX.Element {
       return;
     }
 
+    if (/\s/.test(clue)) {
+      setValidationMessage('אפשר לבדוק רק מילה אחת — בלי רווחים');
+      return;
+    }
+
     setValidationMessage('');
     setError(null);
     setResult(null);

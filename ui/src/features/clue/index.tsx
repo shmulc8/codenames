@@ -35,7 +35,7 @@ const vocabOptions: Array<{
   label: string;
 }> = [
   { value: 'curated', label: 'מומלץ' },
-  { value: 'conservative', label: 'מורחב' },
+  { value: 'conservative', label: 'שמרני' },
 ];
 
 function HoverWordChip({ role, word }: { role?: Role; word: string }): JSX.Element {
@@ -120,7 +120,7 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
   const option = options[optionIndex];
   const selectedRoles = Object.fromEntries(tiles.map((tile) => [tile.word, tile.role]));
   const isCurrentOptionUsed = clue.used?.option === option;
-  const hasTopLevelEmptyState = Boolean(response?.error) && !option;
+  const hasTopLevelEmptyState = Boolean(response?.error || response?.no_clue) && !option;
 
   async function requestClue(kind: RequestKind, snapshot: RequestSnapshot): Promise<void> {
     if (loading) return;
@@ -300,7 +300,7 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
               options={vocabOptions}
             />
             <p className="clue-vocab__help">
-              מומלץ = רשימה אצורה ואיכותית · מורחב = רשימת תדירות רחבה יותר
+              מומלץ = רשימה אצורה ואיכותית · שמרני = רשימה מצומצמת יותר
             </p>
           </div>
         </div>
@@ -355,7 +355,7 @@ export function CluePanel({ autoRequest = false }: { autoRequest?: boolean }): J
           {hasTopLevelEmptyState ? (
             <div className="clue-empty" data-testid="no-clue-state" role="status">
               <strong>לא נמצא רמז מתאים</strong>
-              <p>{response?.error}</p>
+              <p>{response?.error || response?.note || response?.reason}</p>
               <p>נסה רמת 'שובב' או בחר מילים אחרות</p>
             </div>
           ) : option?.no_clue ? (

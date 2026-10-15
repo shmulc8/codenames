@@ -39,7 +39,7 @@ interface WireClueOption extends Omit<ClueOption, 'read' | 'leak'> {
 }
 
 interface WireSpymasterResponse extends Omit<SpymasterResponse, 'options' | 'read' | 'leak'> {
-  options: WireClueOption[];
+  options?: WireClueOption[];
   read?: WireReadEntry[];
   leak?: WireReadEntry[];
 }
@@ -125,8 +125,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       throw new ApiError('השרת החזיר תשובה לא תקינה', response.status);
     }
 
-    const serverError = (payload as ErrorResponse | null)?.error;
-    if (!response.ok || typeof serverError === 'string') {
+    // HTTP 4xx/5xx carry a JSON {error}; HTTP 200 may carry business states (e.g. no_clue)
+    // that the UI renders itself, so a 200 body is never treated as a failure.
+    if (!response.ok) {
+      const serverError = (payload as ErrorResponse | null)?.error;
       const message =
         typeof serverError === 'string' && serverError.length > 0
           ? serverError
@@ -176,7 +178,7 @@ export async function postSpymaster(
     }),
   });
 
-  const { options, read, leak, ...summary } = response;
+  const { options = [], read, leak, ...summary } = response;
 
   return {
     ...summary,
