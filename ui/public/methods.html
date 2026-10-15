@@ -187,16 +187,17 @@ footer a{color:var(--mut)}
        <span class="bad">−</span> λₒ · max(0, max s′(c, opp))   <span class="dim">// rival team — avoid strongly</span>
        <span class="bad">−</span> λₙ · max(0, max s′(c, neutral))<span class="dim">// bystanders — avoid mildly</span>
        <span class="hl">+</span> λ_f · FREQ(c)            <span class="dim">// prefer mid-frequency words</span>
-       <span class="bad">−</span> λ_soft · P(danger | c)   <span class="dim">// listener mass on assassin + opponent</span>
+       <span class="bad">−</span> λ_soft · P(danger | c)   <span class="dim">// listener mass on assassin, opponent, ½·neutral</span>
 
    where  s′(c, w) = cos(c, w) − mean_b cos(c, b)</code></div>
   <p><code>team_safe</code> סופר רק מילות קבוצה שמדורגות מעל כל מילה זרה. הקנסות מדורגים, <code>λₐ ≫ λₒ &gt; λₙ</code>,
     כך שהמנוע "מפחד" מהמתנקש הרבה יותר מקלף ניטרלי.</p>
   <p>האיבר האחרון בא מ־<strong>RSA</strong> (Rational Speech Acts): המנוע ממדל את המנחש כ־<code>softmax</code> על
-    הדמיון של הרמז לכל 25 הקלפים, ומעניש לפי מסת ההסתברות שנוחתת על המתנקש ועל קלפי היריב. כך רמז שקרוב
+    הדמיון של הרמז לכל 25 הקלפים, ומעניש לפי מסת ההסתברות שנוחתת על המתנקש, על קלפי היריב, ובחצי משקל על הניטרליים (גם הם מסיימים את התור). כך רמז שקרוב
     למתנקש עדיין בטוח, אם מילות הקבוצה מושכות חזק יותר.</p>
-  <div class="note"><b>בטיחות לפני קרבה.</b> המנוע מדרג קודם לפי כמה קלפים אפשר לנחש בבטחה (ה"ריצה הבטוחה"),
-    ורק אז לפי ציון. לפעמים הוא פשוט פוסק "אין רמז בטוח".</div>
+  <div class="note"><b>הציון מכריע.</b> הקנסות כבר מגלמים את הסכנה, ולכן הרמז הראשי הוא בעל הציון הגבוה ביותר.
+    במצבים זהיר ומאוזן, רמז שמסומן מסוכן יורד לסוף הרשימה. הריצה הבטוחה (כמה קלפים אפשר לנחש בבטחה) רק שוברת שוויון.
+    לפעמים המנוע פשוט פוסק "אין רמז בטוח".</div>
 </section>
 
 <section id="why">
@@ -205,7 +206,9 @@ footer a{color:var(--mut)}
   <p>"שם קוד" דורש <strong>אסוציאטיביות</strong> (מלך→כתר→טירה), לא <em>נרדפוּת</em>, ווקטורים סטטיים מבוססי
     הופעה־משותפת לוכדים בדיוק את זה. מודלי סנטנס־אמבדינג דוחסים מילה בודדת לטווח קוסינוסים צר
     (Qwen3-Embedding בקושי הבדיל בין "מלך·מלכה" ל"מלך·ים"), ועל הלוח אין הקשר שמודל קונטקסטואלי יוכל לנצל.
-    על 100 לוחות, ה־blend ו־fastText לבדו יצאו שקולים (1.43 לעומת 1.42 קלפים לרמז במצב מאוזן).</p>
+    על 100 לוחות, ה־blend ו־fastText לבדו יצאו שקולים, בתוך טווח הרעש.</p>
+  <p>ה־blend משרשר את וקטורי fastText ו־Numberbatch המנורמלים, מוכפלים ב־0.7 וב־0.3. המשקלים חלים על הווקטורים
+    ולא על הקוסינוסים, ולכן הקוסינוס המשותף הוא בערך 84.5% fastText ו־15.5% Numberbatch (0.49 מול 0.09).</p>
   <p>בזמן המשחק אין LLM גנרטיבי: הווקטורים מחושבים מראש, ההסקה רצה על CPU, וכל רמז עובר בדיקות חוקיות
     דטרמיניסטיות. מודלי שפה שימשו רק במחקר, בבניית אוצר המילים ובהערכה.</p>
   <h3>מול LLM כנותן רמזים</h3>
@@ -216,8 +219,8 @@ footer a{color:var(--mut)}
     <caption>המנוע: 100 לוחות · DictaLM: 50 לוחות · "עם סינון" = DictaLM מציע 5 רמזים ונבחר הראשון החוקי.</caption>
     <thead><tr><th>נותן רמזים</th><th class="num">רמזים חוקיים</th><th class="num">קלפים לרמז</th><th class="num">ניחוש הקלף השחור</th><th>זמן לרמז</th></tr></thead>
     <tbody>
-      <tr class="win"><td>המנוע, מאוזן</td><td class="num">100%</td><td class="num">1.43 ± 0.08</td><td class="num">4%</td><td>כשנייה על CPU</td></tr>
-      <tr class="win"><td>המנוע, שובב</td><td class="num">100%</td><td class="num">1.62 ± 0.09</td><td class="num">1%</td><td>כשנייה על CPU</td></tr>
+      <tr class="win"><td>המנוע, מאוזן</td><td class="num">100%</td><td class="num">1.63 ± 0.07</td><td class="num">1%</td><td>כשנייה על CPU</td></tr>
+      <tr class="win"><td>המנוע, שובב</td><td class="num">100%</td><td class="num">1.63 ± 0.08</td><td class="num">3%</td><td>כשנייה על CPU</td></tr>
       <tr><td>DictaLM 12B</td><td class="num">76%</td><td class="num">0.90 ± 0.14</td><td class="num">10%</td><td>כ־11 שניות על GPU</td></tr>
       <tr><td>DictaLM 12B עם סינון</td><td class="num">78%</td><td class="num">0.84 ± 0.13</td><td class="num">2%</td><td>כ־24 שניות על GPU</td></tr>
     </tbody>
@@ -236,8 +239,11 @@ footer a{color:var(--mut)}
     חולקים שורש אבל נראים שונים, ו"בבית" הוא בכלל "בית". הבדיקה בנויה בשכבות:</p>
   <ul>
     <li><strong>נרמול ולמטיזציה</strong> מאחדים תחיליות ונטיות עם צורת הבסיס.</li>
-    <li><strong>לקסיקון שורשים מ־Wiktionary</strong>, כ־97 אלף צורות, הוא המקור הראשי. כשמילה חסרה בו, המנוע נשען על חתימה עיצורית.</li>
-    <li><strong>שער שקיפות סמנטית</strong> פוסל שורש משותף רק כשהמילים גם קרובות במשמעות. כך "מדע/מדען" נפסל, אבל "מלחמה/לחם" נשאר חוקי.</li>
+    <li><strong>לקסיקון שורשים</strong>: Wiktionary (כ־97 אלף צורות), בתוספת שורשים מרשימת המילים של Dicta, ושורשים שמודל שפה שייך
+      למילות לוח ורמזים ששני המקורות לא מכסים (98% התאמה על 300 מילות בדיקה). השורשים מנורמלים: אותיות סופיות, ו/י/ה
+      חלשה בסוף שורש (ראה/ראי), ושורש כפול. כשמילה חסרה בלקסיקון, החתימה העיצורית שלה מושווית לשורשי המילה השנייה.</li>
+    <li><strong>שער שקיפות סמנטית</strong> פוסל שורש משותף רק כשהמילים גם קרובות במשמעות. כך "מדע/מדען" נפסל, אבל "מלחמה/לחם" נשאר חוקי. הסף (קוסינוס 0.255 במקודד של המשחק) כויל על 128 זוגות
+      מתויגים ידנית, ומסווג נכון 79% מהם.</li>
   </ul>
   <h3>אוצר המילים</h3>
   <p>אוצר הרמזים הוא כ‑<strong>4,286</strong> מילים אמיתיות ממאגר עברי גדול, שמודל שפה סינן לשמות עצם,
@@ -283,7 +289,7 @@ footer a{color:var(--mut)}
     <thead><tr><th>מצב</th><th class="num">מכסה</th><th class="num">קנס מתנקש/יריב/ניטרלי</th><th>התנהגות</th></tr></thead>
     <tbody>
       <tr><td>זהיר</td><td class="num">2</td><td class="num">3.0 · 1.3 · 0.7</td><td>רק רמזים בטוחים, מסרב יותר</td></tr>
-      <tr><td>מאוזן</td><td class="num">2</td><td class="num">2.5 · 0.9 · 0.6</td><td>ברירת המחדל</td></tr>
+      <tr><td>מאוזן</td><td class="num">3</td><td class="num">2.5 · 0.9 · 0.6</td><td>ברירת המחדל</td></tr>
       <tr><td>שובב</td><td class="num">4</td><td class="num">1.8 · 0.7 · 0.4</td><td>מכסה יותר, סובל קרבה ליריב</td></tr>
     </tbody>
   </table>
@@ -316,6 +322,7 @@ footer a{color:var(--mut)}
     <li>Speer, Chin &amp; Havasi (2017), <em>ConceptNet 5.5</em> — מקור וקטורי Numberbatch.</li>
     <li>Dicta (DictaBERT) — למטיזציה ומורפולוגיה לעברית · <a href="https://dicta.org.il">dicta.org.il</a>.</li>
     <li>Wiktionary contributors, via <a href="https://kaikki.org/dictionary/Hebrew/">kaikki.org</a> — לקסיקון השורשים.</li>
+    <li>Dicta, <a href="https://huggingface.co/datasets/dicta-il/wordlist">dicta-il/wordlist</a> v1.1.4 (CC BY-NC 4.0) — שורשים נוספים.</li>
     <li>compress‑fasttext (avidale) — דחיסת מודלים.</li>
   </ul>
   <p>נבנה על‑ידי שמוליק · מנוע גאומטרי, ללא LLM גנרטיבי בזמן ריצה. <a class="backtop" href="/">‹ חזרה לקופיילוט</a></p>
