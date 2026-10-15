@@ -89,6 +89,7 @@ export interface AppState {
   setOptionIndex(index: number): void;
   useCurrentClue(): void;
   editBoard(): void;
+  resumeGame(): void;
   resetGame(): void;
 }
 
@@ -119,6 +120,7 @@ type StateValues = Omit<
   | 'setOptionIndex'
   | 'useCurrentClue'
   | 'editBoard'
+  | 'resumeGame'
   | 'resetGame'
 >;
 
@@ -494,6 +496,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       clueModalOpen: false,
       lastElimination: null,
     }),
+
+  // Continue the existing board and its progress (lifecycle, clue, log) as-is.
+  resumeGame: () => set({ screen: 'game' }),
 
   resetGame: () => set(initialValues()),
 }));

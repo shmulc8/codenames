@@ -56,15 +56,12 @@ function RandomBoardButton({
 
 function ResumeButton(): JSX.Element | null {
   const tiles = useAppStore((state) => state.tiles);
-  const setBoard = useAppStore((state) => state.setBoard);
+  const resumeGame = useAppStore((state) => state.resumeGame);
   const canResume = tiles.length === 25;
 
   function handleResume(): void {
     if (!canResume) return;
-    setBoard(
-      tiles.map((tile) => tile.word),
-      Object.fromEntries(tiles.map((tile) => [tile.word, tile.role])),
-    );
+    resumeGame();
   }
 
   if (!canResume) return null;
