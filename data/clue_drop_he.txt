@@ -1,0 +1,89 @@
+# Clue drop list — words that are not usable as a spoken Codenames clue, removed from every clue
+# vocabulary (curated, conservative, broad, experimental). Each was proposed for removal by one
+# rater and confirmed by an independent second rater: fragments/typos (ארצ, מיצ), function words
+# (אבל, קצת), sentence-fragment verb forms (הוגבל, דיווחת), and foreign names/places an average
+# Israeli wouldn't know (ויסקונסין, אראס). One word per line; '#' starts a comment. Loaded with
+# blocklist_he.txt by probe.load_blocklist().
+
+# --- not a usable clue word (42) ---
+אבה
+אבל
+אחר
+אמור
+אמק
+ארצ
+ברוח
+דיווחת
+דיוויזיית
+הדהים
+הוגבל
+הסטוריה
+ודאי
+זיכה
+חויב
+חייך
+חפיסת
+מהתנ
+מוטב
+מטעם
+מיצ
+מסיח
+מספיק
+מרבית
+מתוקונת
+מתראה
+ניהל
+נישק
+ניתח
+סופ
+סמך
+סעי
+עוד
+פוסל
+צויר
+קודם
+קוצ
+קצת
+שאר
+שולב
+שולם
+שיכול
+
+# --- obscure foreign name/place (37) ---
+אוהיו
+אוקלהומה
+אורגון
+איווה
+אייב
+אילינוי
+אמט
+אראס
+ברנדט
+גייל
+גראהם
+היידן
+וובסטר
+ווגל
+ויסטה
+ויסקונסין
+טרבור
+ייקובס
+יעקוב
+לואיזיאנה
+לוראל
+לטו
+לידס
+מארקס
+מוזס
+מיזורי
+מינסוטה
+מישיגן
+מרילנד
+פורטלנד
+פנסילבניה
+קונטיקט
+קונסטנטין
+קליבלנד
+קרוליינה
+שילר
+שפרד
