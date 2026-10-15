@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 import { postOperative } from '../../api/client';
 import { Button, showToast } from '../../components';
-import { liveBoard, useAppStore } from '../../state/store';
+import { boardsMatch, liveBoard, useAppStore } from '../../state/store';
 import type { OperativeRankEntry, OperativeResponse } from '../../types/api';
 import './operative.css';
 
@@ -74,6 +74,10 @@ export function OperativePanel({
     try {
       const board = liveBoard(useAppStore.getState());
       const response = await postOperative(board, clue, count, vocabMode);
+      if (!boardsMatch(board, liveBoard(useAppStore.getState()))) {
+        showToast('הלוח השתנה בזמן החישוב — נסו שוב', { tone: 'error' });
+        return;
+      }
       setResult(response);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'לא הצלחנו לקבל הצעת ניחוש';
