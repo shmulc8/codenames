@@ -386,6 +386,7 @@ def classic():
 
 
 @app.get("/methods")
+@app.get("/methods.html")
 def methods():
     return send_file(_METHODS_HTML)
 
