@@ -7,6 +7,7 @@ Reconstructs each 👍/👎 spymaster board from the feedback log and measures t
               flagged illegal (i.e. would have been prevented)?
   - retention: for 👍 rows, is the liked clue still in the served shortlist?
 
+Serves each board through app.serve_clue (production encoder, vocab mode and risk profiles).
 Reads the feedback from the HF dataset (falls back to the local log). Run: python -m research.bench_feedback
 """
 
@@ -16,16 +17,11 @@ import os
 os.environ.setdefault("FASTTEXT_COMPRESSED", "data/cc.he.300.fp16.bin")
 import numpy as np
 
-from codenames import probe
+from codenames import app, probe
 from codenames.probe import Board
 
-# risk profiles mirror app.RISK_PROFILES (generation knobs only)
-RISK = {
-    "cautious": dict(m=2, lam_a=3.0, lam_opp=1.5, lam_neu=0.5, safe_margin=0.05),
-    "balanced": dict(m=3, lam_a=2.0, lam_opp=1.0, lam_neu=0.3, safe_margin=0.02),
-    "bold": dict(m=4, lam_a=1.5, lam_opp=0.7, lam_neu=0.2, safe_margin=0.0),
-}
 _ROLE_FIX = {"team": "my"}  # legacy feedback rows used "team" for the team role
+_SPY_MODES = {"spymaster", "suggest"}  # classic page logged "spymaster", the React UI "suggest"
 
 
 def load_feedback():
@@ -38,13 +34,18 @@ def load_feedback():
     return [json.loads(l) for l in open(p, encoding="utf-8") if l.strip()]
 
 
-def board_of(row) -> Board:
-    """Reconstruct the board the engine actually saw: revealed cards are excluded (the app
-    drops them from analysis) and the legacy "team" role is normalised to "my"."""
-    b = row["board"]
-    revealed = set(row.get("revealed") or [])
+def board_of(row) -> Board | None:
+    """Reconstruct the board the engine actually saw: revealed cards (plain words or the UI's
+    {word, chosenBy}) are excluded and the legacy "team" role is normalised to "my". None when
+    the row carries no usable board (legacy rows can have board: null)."""
+    b = row.get("board")
+    if not isinstance(b, dict) or not b.get("words") or not isinstance(b.get("roles"), dict):
+        return None
+    revealed = {r.get("word") if isinstance(r, dict) else r for r in (row.get("revealed") or [])}
     words = [w for w in b["words"] if w not in revealed]
     role = {w: _ROLE_FIX.get(b["roles"].get(w), b["roles"].get(w)) for w in words}
+    if any(r not in ("my", "opp", "neutral", "assassin") for r in role.values()):
+        return None
     return Board(words=words, role=role)
 
 
@@ -61,56 +62,33 @@ def safe_run(enc, board, clue) -> int:
 
 def main() -> int:
     rows = [
-        r
+        (r, b)
         for r in load_feedback()
-        if r.get("mode") == "spymaster"
-        and r.get("board", {}).get("words")
+        if r.get("mode") in _SPY_MODES
         and not any(t in (r.get("comment") or "").lower() for t in ("ignore", "test"))
+        and (b := board_of(r)) is not None
+        and b.my
     ]
-    up = [r for r in rows if r.get("verdict") == "up"]
-    down = [r for r in rows if r.get("verdict") == "down"]
+    up = [r for r, _ in rows if r.get("verdict") == "up"]
+    down = [r for r, _ in rows if r.get("verdict") == "down"]
     print(
         f"feedback spymaster rows (test rows excluded): {len(rows)}  ({len(up)} 👍 / {len(down)} 👎)\n"
     )
 
-    enc = probe.make_encoder("fasttext")
-    vocab, counts = probe.clue_vocab_band(20000, lo=300, hi=80000)
-    emb = enc.embed(vocab)
-    lems = list(vocab)  # content-band entries are already lemmas
-    freq = probe.freq_scores(counts, lo=1500, hi=40000)
-
-    def serve(board, risk, focus=None):
-        prof = RISK.get(risk, RISK["balanced"])
-        tgt = [
-            w for w in (focus or []) if w in board.my
-        ] or None  # honour the user's pinned targets
-        return probe.encoder_clue_candidates(
-            enc,
-            board,
-            vocab,
-            emb,
-            vocab_lemmas=lems,
-            vocab_freq=freq,
-            lam_f=0.05,
-            n=5,
-            targets=tgt,
-            **prof,
-        )
+    enc = app.get_enc(app.GEO_ENC)  # the production geometry + the real serving path
 
     our_illegal = 0
     safe_runs, safe_ge_count = [], 0
     down_reproduced = down_prevented = down_in_top5 = 0
     up_retained = 0
 
-    for r in rows:
-        board = board_of(r)
-        if not board.my:
+    for r, board in rows:
+        risk = r.get("risk") if r.get("risk") in app.RISK_PROFILES else "balanced"
+        options, _ = app.serve_clue(board, risk, focus=r.get("focus"))
+        if not options:
             continue
-        cands = serve(board, r.get("risk") or "balanced", r.get("focus"))
-        if not cands:
-            continue
-        words = [c["word"] for c in cands]
-        top = cands[0]
+        words = [o["word"] for o in options[:5]]
+        top = options[0]
         sr = safe_run(enc, board, top["word"])
         safe_runs.append(sr)
         safe_ge_count += int(sr >= max(1, top["count"]))
@@ -122,7 +100,7 @@ def main() -> int:
                 down_reproduced += 1
             if hc in words:
                 down_in_top5 += 1
-            if probe.shares_lemma(hc, board, enc=enc):
+            if hc and probe.shares_lemma(hc, board, enc=enc):
                 down_prevented += 1
         elif r.get("verdict") == "up":
             if hc in words:

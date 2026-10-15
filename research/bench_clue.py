@@ -45,8 +45,10 @@ def _leading_team_run(order: list[str], board: probe.Board) -> int:
     return run
 
 
-def score_board(board: probe.Board, risk: str, guesser, profile=None) -> dict:
-    options, _ = app.serve_clue(board, risk, profile=profile)
+def score_board(
+    board: probe.Board, risk: str, guesser, profile=None, vocab_mode: str = app.DEFAULT_VOCAB_MODE
+) -> dict:
+    options, _ = app.serve_clue(board, risk, profile=profile, vocab_mode=vocab_mode)
     top = options[0] if options else None
     if top is None or top["no_clue"]:
         return {"served": 0.0}
@@ -92,11 +94,18 @@ def aggregate(rows: list[dict], n_boards: int) -> dict:
     return agg
 
 
-def run(risk: str, n_boards: int, seed: int, guesser, verbose: bool) -> dict:
+def run(
+    risk: str,
+    n_boards: int,
+    seed: int,
+    guesser,
+    verbose: bool,
+    vocab_mode: str = app.DEFAULT_VOCAB_MODE,
+) -> dict:
     rows = []
     for i in range(n_boards):
         board = probe.sample_board(random.Random(seed + i))
-        r = score_board(board, risk, guesser)
+        r = score_board(board, risk, guesser, vocab_mode=vocab_mode)
         rows.append(r)
         if verbose and r.get("served"):
             print(
@@ -116,17 +125,21 @@ def main():
     ap.add_argument("--seed", type=int, default=142)
     ap.add_argument("--risk", default="all", help="cautious|balanced|bold|all")
     ap.add_argument("--guesser", default="ensemble")
+    ap.add_argument("--vocab-mode", default=app.DEFAULT_VOCAB_MODE, choices=app.VOCAB_MODES)
     ap.add_argument("--out", default=None)
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args()
 
     guesser = make_guesser(args.guesser)
     risks = ["cautious", "balanced", "bold"] if args.risk == "all" else [args.risk]
-    print(f"guesser: {guesser.model_id}   boards: {args.boards}   seed: {args.seed}\n")
+    print(
+        f"guesser: {guesser.model_id}   boards: {args.boards}   seed: {args.seed}   "
+        f"vocab: {args.vocab_mode}\n"
+    )
 
     results = {}
     for risk in risks:
-        results[risk] = run(risk, args.boards, args.seed, guesser, args.verbose)
+        results[risk] = run(risk, args.boards, args.seed, guesser, args.verbose, args.vocab_mode)
 
     cols = [
         "served_rate",
@@ -155,6 +168,7 @@ def main():
             "guesser": guesser.model_id,
             "boards": args.boards,
             "seed": args.seed,
+            "vocab_mode": args.vocab_mode,
             "results": {r: results[r]["summary"] for r in risks},
             "rows": {r: results[r]["rows"] for r in risks},
         }
