@@ -243,6 +243,15 @@ def _load_ambiguity_lexicon():
     return _ambiguity_lexicon
 
 
+def _malformed_curated(word: str) -> bool:
+    """probe.is_malformed for the curated list (drops truncated tokens such as ארצ, מיצ, מהתנ),
+    except that a loanword of 4+ letters may end in a non-final פ, as Hebrew spells them
+    (סירופ, קטשופ, טלסקופ, טראמפ). Short ones (סופ, קופ) are usually truncations and stay out."""
+    if len(word) >= 4 and word.endswith("פ"):
+        return probe.is_malformed(word[:-1] + "ף")
+    return probe.is_malformed(word)
+
+
 def geo_assets(mode: str = DEFAULT_VOCAB_MODE):
     """(vocab, embedding, lemmas, freq_scores) for the geometry spymaster — a mid-frequency
     noun/adjective/etc. band of the clue vocabulary, embedded and FREQ-scored once. The vocab is
@@ -262,8 +271,11 @@ def _load_geo_assets(mode: str, enc):
             if os.path.exists(curated_vocab):
                 with open(curated_vocab, encoding="utf-8") as f:
                     saved = json.load(f)
+                block = probe.load_blocklist()
                 rows = [
-                    [word, meta["count"], meta["pos"]] for word, meta in saved["entries"].items()
+                    [word, meta["count"], meta["pos"]]
+                    for word, meta in saved["entries"].items()
+                    if word not in block and not _malformed_curated(word)
                 ]
                 vocab = [row[0] for row in rows]
                 counts = np.asarray([row[1] for row in rows], dtype=np.float32)
@@ -1127,7 +1139,7 @@ def warmup():
     t = time.time()
     for mode in ADVERTISED_VOCAB_MODES:
         geo_assets(mode)
-    morph.lemmas(probe.DECK)
+    probe.deck_conflicts()  # deck lemmas + the root-conflict table /api/deal deals from
     app.logger.warning("warmup done in %.1fs", time.time() - t)
 
 

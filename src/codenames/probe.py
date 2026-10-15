@@ -298,16 +298,19 @@ _BLOCKLIST: set[str] | None = None
 
 
 def load_blocklist() -> set[str]:
+    """Words never served as clues: offensive terms (blocklist_he.txt) plus words rated unusable
+    as a spoken clue (clue_drop_he.txt)."""
     global _BLOCKLIST
     if _BLOCKLIST is None:
         block = set()
-        path = os.path.join(DATA, "blocklist_he.txt")
-        if os.path.exists(path):
-            with open(path, encoding="utf-8") as f:
-                for line in f:
-                    w = line.strip()
-                    if w and not w.startswith("#"):
-                        block.add(w)
+        for name in ("blocklist_he.txt", "clue_drop_he.txt"):
+            path = os.path.join(DATA, name)
+            if os.path.exists(path):
+                with open(path, encoding="utf-8") as f:
+                    for line in f:
+                        w = line.strip()
+                        if w and not w.startswith("#"):
+                            block.add(w)
         _BLOCKLIST = block
     return _BLOCKLIST
 
@@ -455,8 +458,49 @@ class Board:
         return [w for w in self.words if self.role[w] != "my"]
 
 
+_DECK_CONFLICTS: dict[str, set[str]] | None = None
+
+
+def deck_conflicts() -> dict[str, set[str]]:
+    """Deck card -> the other deck cards it shares a root with (מלך/מלכה, ספר/סיפור,
+    כדור/כדורגל), by the same root test legality uses, without the cosine gate: two cards from
+    one root on a board make each other's derivatives unplayable and read as near-duplicates.
+    Computed once (the deck's lemmas are a single batched DictaBERT pass)."""
+    global _DECK_CONFLICTS
+    if _DECK_CONFLICTS is None:
+        lems = morph.lemmas(DECK)
+        sig = [
+            ({_normalize_root(r) for r in morph.roots(w) | morph.roots(lem)}, morph.root_sig(lem))
+            for w, lem in zip(DECK, lems, strict=True)
+        ]
+        out: dict[str, set[str]] = {w: set() for w in DECK}
+        for i, (ri, si) in enumerate(sig):
+            for j in range(i + 1, len(DECK)):
+                rj, sj = sig[j]
+                hit = (
+                    bool(ri & rj)
+                    if ri and rj
+                    else _root_conflict(si, {sj} if len(sj) >= 2 else set())
+                )
+                if hit:
+                    out[DECK[i]].add(DECK[j])
+                    out[DECK[j]].add(DECK[i])
+        _DECK_CONFLICTS = out
+    return _DECK_CONFLICTS
+
+
 def sample_board(rng: random.Random) -> Board:
-    words = rng.sample(DECK, N_BOARD)
+    """A random 25-card board with no two cards sharing a root (see `deck_conflicts`)."""
+    conflicts = deck_conflicts()
+    words: list[str] = []
+    blocked: set[str] = set()
+    for w in rng.sample(DECK, len(DECK)):
+        if w in blocked:
+            continue
+        words.append(w)
+        blocked |= conflicts[w]
+        if len(words) == N_BOARD:
+            break
     roles = ["my"] * N_MY + ["opp"] * N_OPP + ["neutral"] * N_NEUTRAL + ["assassin"] * N_ASSASSIN
     rng.shuffle(roles)
     return Board(words=words, role=dict(zip(words, roles, strict=False)))
