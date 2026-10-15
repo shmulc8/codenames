@@ -140,7 +140,7 @@ footer a{color:var(--mut)}
     <span class="chip">ללא <b>LLM גנרטיבי בריצה</b></span>
     <span class="chip">מקומי · <b>CPU</b></span>
     <span class="chip">קבצי fastText · <b>כ־369MB</b> (היו 7.2GB)</span>
-    <span class="chip">מעודכן · <b>31.08.2026</b></span>
+    <span class="chip">מעודכן · <b>15.10.2026</b></span>
   </div>
   <div class="cta-row">
     <a class="btn primary" href="/">‹ נסו את הקופיילוט</a>
@@ -224,9 +224,9 @@ footer a{color:var(--mut)}
     </tbody>
   </table>
   </div>
-  <div class="note"><b>גבול הטענה.</b> זו השוואה בין <em>אנקודרים</em>, לא הוכחה ש־fastText "חכם יותר" מ־LLM.
-    במדגם הזה ה־blend שיפר recovery בכ־18% יחסית ל־fastText לבדו (0.444 לעומת 0.375). המדד מבוסס על
-    מנחש־proxy ועל 12 לוחות, לא על מחקר משתמשים גדול.</div>
+  <div class="note"><b>גבול הטענה.</b> זו השוואה בין <em>אנקודרים</em> על 12 לוחות בלבד. בבדיקה רחבה יותר על
+    100 לוחות, על מסלול ההגשה האמיתי ועם המנחש המאומת, ה־blend ו־fastText לבדו יצאו שקולים בתוך טווח הרעש
+    (1.43 לעומת 1.42 קלפים לרמז במצב מאוזן). כלומר, הפער של 0.444 מול 0.375 בטבלה הוא תוצאה של מדגם קטן.</div>
   <p>למה דווקא הסטטי? כי "שם קוד" דורש <strong>אסוציאטיביות</strong> (מלך→כתר→טירה), לא <em>נרדפוּת</em>.
     וקטורים סטטיים מבוססי הופעה־משותפת לוכדים בדיוק את זה — וזו הסיבה שספרות ה‑AI של המשחק משתמשת בהם.
     מודלי סנטנס־אמבדינג מאומנים על דמיון משפטים, ולמילה בודדת הם דוחסים את כל הקוסינוסים לטווח צר וגבוה
@@ -235,6 +235,24 @@ footer a{color:var(--mut)}
   <p>בנוסף, המסלול הציבורי אינו מפעיל LLM גנרטיבי: הווקטורים מחושבים מראש, ההסקה רצה על CPU ובאופן אופליין,
     וכל רמז עובר בדיקות חוקיות דטרמיניסטיות. מודלי שפה שימשו במחקר, באוצר המילים ובהערכה, אבל אינם נדרשים
     כדי לייצר רמז בזמן ריצה. DictaBERT משמש ללמטיזציה — לא ליצירת הטקסט.</p>
+  <h3>מול LLM כנותן רמזים</h3>
+  <p>הרצנו את DictaLM 2.0 (12B) כנותן רמזים על אותם לוחות, מול המנוע. השופט הוא מנחש עצמאי
+    (fastText + Qwen3-Embedding) שתוקף מול הצבעות 👍/👎 אמיתיות (AUC 0.74). רמז לא חוקי מקבל 0.</p>
+  <div class="tablewrap">
+  <table>
+    <caption>המנוע: 100 לוחות · DictaLM: 50 לוחות · "עם סינון" = DictaLM מציע 5 רמזים ונבחר הראשון החוקי.</caption>
+    <thead><tr><th>נותן רמזים</th><th class="num">רמזים חוקיים</th><th class="num">קלפים לרמז</th><th class="num">ניחוש הקלף השחור</th><th class="num">זמן לרמז</th></tr></thead>
+    <tbody>
+      <tr class="win"><td>המנוע, מאוזן</td><td class="num">100%</td><td class="num">1.43 ± 0.08</td><td class="num">4%</td><td class="num">כשנייה על CPU</td></tr>
+      <tr class="win"><td>המנוע, שובב</td><td class="num">100%</td><td class="num">1.62 ± 0.09</td><td class="num">1%</td><td class="num">כשנייה על CPU</td></tr>
+      <tr><td>DictaLM 12B</td><td class="num">76%</td><td class="num">0.90 ± 0.14</td><td class="num">10%</td><td class="num">כ־11 שניות על GPU</td></tr>
+      <tr><td>DictaLM 12B עם סינון</td><td class="num">78%</td><td class="num">0.84 ± 0.13</td><td class="num">2%</td><td class="num">כ־24 שניות על GPU</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note"><b>גבול הטענה.</b> כשהרמז של DictaLM חוקי, הוא סביר (כ־1.2 קלפים לרמז). הבעיה היא חוקיות ועלות:
+    כרבע מהרמזים שלו לא חוקיים (לרוב מילה שמופיעה על הלוח), וגם כשהוא מציע חמישה רמזים, בכ־22% מהלוחות אף אחד מהם לא חוקי.
+    שופט שמבוסס על EmbeddingGemma בלבד דירג את DictaLM מעט מעל המנוע, בתוך טווח הרעש.</div>
 </section>
 
 <section id="hebrew">
