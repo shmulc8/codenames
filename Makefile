@@ -7,7 +7,7 @@ PYTHON ?= .venv/bin/python
 help:
 	@printf '%s\n' \
 		'install      Create the virtual environment and install dependencies' \
-		'test         Run the legality regression' \
+		'test         Run the legality + API validation regressions' \
 		'lint         Lint with ruff' \
 		'format       Auto-format with ruff' \
 		'format-check Check formatting without writing (CI)' \
@@ -26,7 +26,8 @@ install:
 	$(PYTHON) -m pip install -e .
 
 test:
-	FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin $(PYTHON) tests/test_legality.py
+	FASTTEXT_COMPRESSED=data/cc.he.300.fp16.bin PYTHONPATH=src $(PYTHON) tests/test_legality.py
+	PYTHONPATH=src $(PYTHON) tests/test_api.py
 
 lint:
 	$(PYTHON) -m ruff check .

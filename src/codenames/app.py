@@ -24,12 +24,15 @@ import os
 os.environ["HF_HUB_OFFLINE"] = "0"
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
+import collections
 import hashlib
 import json
 import random
+import re
 import shutil
 import threading
 import time
+import unicodedata
 
 import numpy as np
 from flask import Flask, abort, jsonify, request, send_file, send_from_directory
@@ -37,6 +40,9 @@ from flask import Flask, abort, jsonify, request, send_file, send_from_directory
 from . import PROJECT_ROOT, morph, probe
 
 app = Flask(__name__)
+# Every API body is a board (<= 25 short words) plus a few scalars; feedback adds one clue option.
+# Anything bigger is rejected (413) before it is parsed.
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024
 
 # Public deploy: embedding-only. No generative LLM is offered (the geometry engine
 # is fastText + DictaBERT legality + a NeoDictaBERT second opinion). When set, the
@@ -138,15 +144,17 @@ def _init_feedback():
 
 @app.errorhandler(Exception)
 def on_error(e):
-    """Answer the client with JSON so the UI can recover instead of hanging. Routing/HTTP
-    errors (e.g. a 404 for /favicon.ico) pass through with their own status — no 500, no
-    traceback noise in the logs."""
+    """Every error is JSON `{error}` so the UI can show it instead of parsing an HTML page.
+    HTTP errors (400 validation, 404, 405, 413, 429) keep their status and message; anything
+    else is logged with its traceback and answered as a generic 500."""
     from werkzeug.exceptions import HTTPException
 
     if isinstance(e, HTTPException):
-        return e
+        if e.code == 413:
+            return jsonify(error="הבקשה גדולה מדי"), 413
+        return jsonify(error=e.description or e.name), e.code
     app.logger.exception("request failed")
-    return jsonify(error=f"שגיאת שרת: {e}"), 500
+    return jsonify(error="שגיאת שרת"), 500
 
 
 @app.get("/favicon.ico")
@@ -169,6 +177,13 @@ _clue_freq: dict[str, np.ndarray] = {}
 _clue_lemmas: dict[str, list[str]] = {}
 _clue_roots: dict[str, list[set[str]]] = {}  # mode -> per-word lexicon roots (word ∪ lemma)
 _clue_emb: dict[str, dict[str, np.ndarray]] = {}  # mode -> encoder -> embedding
+_assets_lock = threading.Lock()  # one loader at a time: concurrent first requests share the result
+
+# Clue-vocabulary modes. The UI offers curated (default) and conservative; both are warmed at
+# startup. broad/experimental stay reachable for research and load lazily on first use.
+VOCAB_MODES = ("curated", "conservative", "broad", "experimental")
+ADVERTISED_VOCAB_MODES = ("curated", "conservative")
+DEFAULT_VOCAB_MODE = "curated"
 
 _ambiguity_lexicon = None
 
@@ -193,8 +208,10 @@ def get_llm(mid):
 
 def get_enc(key):
     if key not in _encs:
-        app.logger.info("loading encoder %s ...", key)
-        _encs[key] = probe.make_encoder(key)
+        with _assets_lock:
+            if key not in _encs:
+                app.logger.info("loading encoder %s ...", key)
+                _encs[key] = probe.make_encoder(key)
     return _encs[key]
 
 
@@ -226,11 +243,18 @@ def _load_ambiguity_lexicon():
     return _ambiguity_lexicon
 
 
-def geo_assets(mode: str = "curated"):
+def geo_assets(mode: str = DEFAULT_VOCAB_MODE):
     """(vocab, embedding, lemmas, freq_scores) for the geometry spymaster — a mid-frequency
     noun/adjective/etc. band of the clue vocabulary, embedded and FREQ-scored once. The vocab is
     lemmatised so legality catches prefixed forms (e.g. בסיר → סיר) that share a board lemma."""
-    global _clue_vocab, _clue_freq, _clue_lemmas, _clue_emb
+    if mode in _clue_emb and GEO_ENC in _clue_emb[mode]:
+        return _clue_vocab[mode], _clue_emb[mode][GEO_ENC], _clue_lemmas[mode], _clue_freq[mode]
+    enc = get_enc(GEO_ENC)
+    with _assets_lock:
+        return _load_geo_assets(mode, enc)
+
+
+def _load_geo_assets(mode: str, enc):
     if mode not in _clue_vocab:
         # Load filtered vocab according to the mode
         if mode == "curated":
@@ -261,19 +285,16 @@ def geo_assets(mode: str = "curated"):
             else:
                 freq = probe.freq_scores(counts, lo=1000, hi=80000)
 
-        _clue_vocab[mode] = vocab
         morph.lemmas(vocab)  # one batched pass fills the lemma memo the root lookup falls back on
         _clue_lemmas[mode] = list(vocab)
         _clue_roots[mode] = probe.vocab_root_sets(vocab, _clue_lemmas[mode])
         _clue_freq[mode] = freq
+        _clue_vocab[mode] = vocab
 
         app.logger.info("clue vocab mode %s: %d words", mode, len(vocab))
 
-    if mode not in _clue_emb:
-        _clue_emb[mode] = {}
-
-    if GEO_ENC not in _clue_emb[mode]:
-        _clue_emb[mode][GEO_ENC] = get_enc(GEO_ENC).embed(_clue_vocab[mode])
+    if GEO_ENC not in _clue_emb.get(mode, {}):
+        _clue_emb.setdefault(mode, {})[GEO_ENC] = enc.embed(_clue_vocab[mode])
 
     return _clue_vocab[mode], _clue_emb[mode][GEO_ENC], _clue_lemmas[mode], _clue_freq[mode]
 
@@ -293,19 +314,131 @@ def _geo_reason(intended, board: probe.Board, read) -> str:
 
 _VALID_ROLES = {"my", "opp", "neutral", "assassin"}
 
+# --------------------------------------------------------------------------- #
+# Request validation — every malformed body is a 400 with a JSON {error}, never a 500.
+# --------------------------------------------------------------------------- #
+
+MAX_BOARD = probe.N_BOARD  # 25 cards
+MAX_WORD_LEN = 32  # a card is a word or a short phrase
+MAX_CLUE_LEN = 24
+MAX_COUNT = 9
+
+# A clue is exactly one Hebrew word: letters (final forms included), optionally with a geresh
+# (׳ or ASCII ') or gershayim (״ or ASCII ") inside or at the end — ג'ירפה, צה"ל, צ'יפס. Niqqud
+# is stripped first. Spaces, maqaf/hyphen (two joined words), digits and Latin letters are
+# rejected.
+_NIQQUD = re.compile(r"[\u0591-\u05BD\u05BF-\u05C2\u05C4-\u05C7]")  # niqqud/te'amim, not maqaf
+_CLUE_RE = re.compile(r"[א-ת](?:[א-ת]|['\u05F3\"\u05F4](?=[א-ת]|$))*")
+
+
+def _body() -> dict:
+    j = request.get_json(silent=True)
+    if not isinstance(j, dict):
+        abort(400, "גוף הבקשה חייב להיות אובייקט JSON")
+    return j
+
+
+def _clean_word(w) -> str:
+    if not isinstance(w, str):
+        abort(400, "כל מילה בלוח חייבת להיות מחרוזת")
+    w = " ".join(unicodedata.normalize("NFC", w).split())
+    if not w:
+        abort(400, "מילה ריקה בלוח")
+    if len(w) > MAX_WORD_LEN:
+        abort(400, f"מילה ארוכה מדי בלוח (עד {MAX_WORD_LEN} תווים)")
+    return w
+
+
+def _str_list(v, name: str, limit: int = MAX_BOARD) -> list[str]:
+    if v is None:
+        return []
+    if not isinstance(v, list) or len(v) > limit:
+        abort(400, f"'{name}' חייב להיות רשימה של עד {limit} מילים")
+    out = []
+    for x in v:
+        if isinstance(x, dict):  # the UI's revealed entries are {word, chosenBy}
+            x = x.get("word")
+        out.append(_clean_word(x))
+    return out
+
 
 def board_from(j) -> probe.Board:
-    words = list(j.get("words") or [])
+    """Validate and normalise the board of a coach request: `words` is a list of 1–25 unique,
+    non-empty strings; `roles` maps every word to my/opp/neutral/assassin (extra keys are
+    ignored); at most one assassin. Cards listed in `revealed` are removed server-side, so a
+    caller may send the full board and its revealed cards instead of only the live ones."""
+    raw = j.get("words")
+    if not isinstance(raw, list) or not raw:
+        abort(400, "הלוח ריק — 'words' חייב להיות רשימה לא ריקה")
+    if len(raw) > MAX_BOARD:
+        abort(400, f"יותר מדי מילים בלוח (עד {MAX_BOARD})")
+    roles = j.get("roles")
+    if not isinstance(roles, dict):
+        abort(400, "'roles' חייב להיות מיפוי מילה → תפקיד")
+    norm_roles = {}
+    for k, v in roles.items():
+        if isinstance(k, str):
+            norm_roles[" ".join(unicodedata.normalize("NFC", k).split())] = v
+    words = [_clean_word(w) for w in raw]
+    if len(set(words)) != len(words):
+        dup = next(w for w in words if words.count(w) > 1)
+        abort(400, f"המילה '{dup}' מופיעה בלוח יותר מפעם אחת")
+    revealed = set(_str_list(j.get("revealed"), "revealed"))
+    unknown = revealed - set(words)
+    if unknown:
+        abort(400, f"מילה שנחשפה אינה על הלוח: {sorted(unknown)[0]}")
+    words = [w for w in words if w not in revealed]
     if not words:
-        abort(400, "board has no words")
-    roles = j.get("roles") or {w: "neutral" for w in words}
+        abort(400, "לא נשארו מילים חיות בלוח")
     role = {}
     for w in words:
-        r = roles.get(w, "neutral")
-        if r not in _VALID_ROLES:  # reject unknown roles: a typo must not silently
-            abort(400, f"invalid role {r!r} for word {w!r}")  # hide a word from the safety terms
+        r = norm_roles.get(w)
+        if r not in _VALID_ROLES:  # a missing/typo'd role must not silently hide a word
+            abort(400, f"תפקיד חסר או לא חוקי למילה '{w}'")
         role[w] = r
+    if sum(r == "assassin" for r in role.values()) > 1:
+        abort(400, "בלוח יכול להיות מתנקש אחד לכל היותר")
     return probe.Board(words=words, role=role)
+
+
+def clue_from(j) -> str:
+    """The single-word clue of a check/operative request (see _CLUE_RE for the policy)."""
+    c = j.get("clue")
+    if not isinstance(c, str):
+        abort(400, "חסר רמז ('clue')")
+    c = _NIQQUD.sub("", unicodedata.normalize("NFC", c)).strip()
+    if not c:
+        abort(400, "הרמז ריק")
+    if len(c) > MAX_CLUE_LEN:
+        abort(400, f"הרמז ארוך מדי (עד {MAX_CLUE_LEN} תווים)")
+    if not _CLUE_RE.fullmatch(c):
+        abort(400, "הרמז חייב להיות מילה אחת בעברית (בלי רווחים, מקפים, ספרות או אותיות לועזיות)")
+    return c
+
+
+def count_from(j) -> int:
+    c = j.get("count", 1)
+    if c is None:
+        return 1
+    if isinstance(c, bool) or not isinstance(c, int) or not 1 <= c <= MAX_COUNT:
+        abort(400, f"'count' חייב להיות מספר שלם בין 1 ל-{MAX_COUNT}")
+    return c
+
+
+def vocab_mode_from(j) -> str:
+    m = j.get("vocab_mode")
+    if m is None:  # legacy alias; ignored unless it names a vocab mode
+        m = j.get("mode") if j.get("mode") in VOCAB_MODES else DEFAULT_VOCAB_MODE
+    if m not in VOCAB_MODES:
+        abort(400, f"vocab_mode לא מוכר: {m!r}")
+    return m
+
+
+def risk_from(j) -> str:
+    r = j.get("risk") or "balanced"
+    if r not in RISK_PROFILES:
+        abort(400, f"risk לא מוכר: {r!r}")
+    return r
 
 
 def _conf(sims: dict) -> dict:
@@ -422,17 +555,22 @@ def space():
     Embeds words and clue together with the geometry encoder (fastText), optionally strips the
     dominant frequency/length cone with all-but-top-k whitening, then projects the cosine-distance
     matrix to 2D with classical MDS (numpy only). Read-only; no engine state touched."""
-    j = request.get_json(force=True)
+    j = _body()
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
-    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
-        vocab_mode = "curated"
-    clue = (j.get("clue") or "").strip() or None
+    clue = clue_from(j) if j.get("clue") not in (None, "") else None
     whiten = j.get("whiten", True)
+    if not isinstance(whiten, bool):
+        abort(400, "'whiten' חייב להיות true/false")
 
-    points = list(board.words) + ([clue] if clue else [])
+    points = list(board.words) + ([clue] if clue else [])  # <= 26 points (board_from caps at 25)
+    if len(points) == 1:  # a single live card: nothing to project, put it at the centre
+        return jsonify(
+            coords={board.words[0]: [0.0, 0.0]}, roles=board.role, clue=None, clue_xy=None
+        )
     X = get_enc(GEO_ENC).embed(points)
-    if whiten:
+    # ABTT removes k=min(3, n-1) principal directions; on <= 4 points that is every centred
+    # direction and the map collapses, so small late-game boards are projected unwhitened.
+    if whiten and len(points) > 4:
         X = _whiten_abtt(X, k=3)
     sims = np.clip(X @ X.T, -1.0, 1.0)
     D = 1.0 - sims  # cosine distance
@@ -646,19 +784,17 @@ def coach_spymaster():
 
     `options` is the list the UI cycles through (a "next option" button); `picked` is the
     one to show first. The top-level fields mirror `options[picked]` for convenience."""
-    j = request.get_json(force=True)
+    j = _body()
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
-    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
-        vocab_mode = "curated"
+    vocab_mode = vocab_mode_from(j)
     if not board.my:
-        abort(400, "board has no team (my) words")
+        abort(400, "אין בלוח מילים של הצוות שלך")
     engine = "geometry" if EMBED_ONLY else (j.get("engine") or "geometry")
     mid = j.get("model")
     focus = [
-        w for w in (j.get("focus") or []) if w in board.my
+        w for w in _str_list(j.get("focus"), "focus") if w in board.my
     ] or None  # optional target subset (team only)
-    risk = j.get("risk") if j.get("risk") in RISK_PROFILES else "balanced"
+    risk = risk_from(j)
     prof = RISK_PROFILES[risk]
     cand_kw = {k: prof[k] for k in _CAND_KEYS}
     keep_rel = prof["keep"]
@@ -747,12 +883,9 @@ def coach_spymaster():
 def coach_check():
     """Evaluate a clue the human is considering: which words it lights up, how long
     the safe run is, the danger words, and assassin proximity. 'Test before you play.'"""
-    j = request.get_json(force=True)
+    j = _body()
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
-    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
-        vocab_mode = "curated"
-    clue = j["clue"].strip()
+    clue = clue_from(j)
     # Legality (offline, no LLM): a clue is illegal if it is a board word / an inflection of one
     # (DictaBERT lemma), or shares a root (Wiktionary lexicon) with a board word it is transparent
     # to (fastText cosine). The optional DictaLM root-judge adds extra coverage on opt-in.
@@ -784,13 +917,10 @@ def coach_check():
 @app.post("/api/coach/operative")
 def coach_operative():
     """Best guesses for a clue + count, with confidence and a geometry second opinion."""
-    j = request.get_json(force=True)
+    j = _body()
     board = board_from(j)
-    vocab_mode = j.get("vocab_mode") or j.get("mode") or "curated"
-    if vocab_mode not in ("conservative", "broad", "experimental", "curated"):
-        vocab_mode = "curated"
-    clue = j["clue"].strip()
-    count = max(1, min(9, int(j.get("count") or 1)))
+    clue = clue_from(j)
+    count = count_from(j)
     engine = "geometry" if EMBED_ONLY else (j.get("engine") or "geometry")
     mid = j.get("model")
 
@@ -831,35 +961,117 @@ def coach_operative():
     )
 
 
+# Feedback limits: field caps keep one row small, and a per-client sliding window stops a single
+# client from flooding the log (and the dataset mirror behind it).
+FB_RATE, FB_WINDOW = 20, 60.0  # at most 20 rows per client per minute
+FB_OPTION_MAX = 24 * 1024  # serialized size cap for the attached clue option
+_FB_VERDICTS = {"up", "down", "outcome"}
+_fb_hits: dict[str, collections.deque] = {}
+
+
+def _fb_rate_ok(key: str) -> bool:
+    now = time.time()
+    with _fb_lock:
+        if len(_fb_hits) > 10_000:  # drop idle clients so the table stays bounded
+            for k in [k for k, d in _fb_hits.items() if not d or now - d[-1] > FB_WINDOW]:
+                del _fb_hits[k]
+        q = _fb_hits.setdefault(key, collections.deque())
+        while q and now - q[0] > FB_WINDOW:
+            q.popleft()
+        if len(q) >= FB_RATE:
+            return False
+        q.append(now)
+        return True
+
+
+def _opt_str(j, key: str, limit: int):
+    v = j.get(key)
+    if v is None:
+        return None
+    if not isinstance(v, str):
+        abort(400, f"'{key}' חייב להיות מחרוזת")
+    return v[:limit]
+
+
+def _fb_board(v):
+    if v is None:
+        return None
+    if not isinstance(v, dict):
+        abort(400, "'board' חייב להיות אובייקט {words, roles}")
+    words = _str_list(v.get("words"), "board.words")
+    roles = v.get("roles") or {}
+    if not isinstance(roles, dict) or len(roles) > MAX_BOARD:
+        abort(400, "'board.roles' חייב להיות מיפוי של עד 25 מילים")
+    clean_roles = {}
+    for k, r in roles.items():
+        if not isinstance(r, str) or r not in _VALID_ROLES | {"red", "blue", "team"}:
+            abort(400, "'board.roles' מכיל תפקיד לא חוקי")
+        clean_roles[_clean_word(k)] = r
+    return {"words": words, "roles": clean_roles}
+
+
+def _fb_revealed(v):
+    if v is None:
+        return None
+    if not isinstance(v, list) or len(v) > MAX_BOARD:
+        abort(400, "'revealed' חייב להיות רשימה של עד 25 קלפים")
+    out = []
+    for x in v:
+        if isinstance(x, str):
+            out.append(_clean_word(x))
+        elif isinstance(x, dict):
+            by = x.get("chosenBy")
+            if by is not None and (not isinstance(by, str) or len(by) > 16):
+                abort(400, "'revealed.chosenBy' לא חוקי")
+            out.append({"word": _clean_word(x.get("word")), "chosenBy": by})
+        else:
+            abort(400, "'revealed' מכיל ערך לא חוקי")
+    return out
+
+
 @app.post("/api/feedback")
 def feedback():
     """Record a 👍/👎 (and optional comment) on a clue. Stores the full board + clue option so
     every row is reproducible/debuggable, plus an anonymous client id and a salted IP hash for
-    spam cleanup. Append-only; never fails the caller."""
-    j = request.get_json(force=True, silent=True) or {}
+    spam cleanup. Append-only; a valid row is never refused for storage reasons (a failed write
+    is logged), but malformed rows get a 400 and a flooding client a 429."""
+    j = _body()
     xff = request.headers.get("X-Forwarded-For", "") or (request.remote_addr or "")
     ip = xff.split(",")[0].strip()
     ipsig = hashlib.sha256((_FB_SALT + ip).encode()).hexdigest()[:12] if ip else ""
+    verdict = j.get("verdict")
+    if verdict not in _FB_VERDICTS:
+        abort(400, "'verdict' חייב להיות up/down/outcome")
+    count = j.get("count")
+    if count is not None and (isinstance(count, bool) or not isinstance(count, int)):
+        abort(400, "'count' חייב להיות מספר שלם")
+    option = j.get("option")
+    if option is not None:
+        if not isinstance(option, dict):
+            abort(400, "'option' חייב להיות אובייקט")
+        if len(json.dumps(option, ensure_ascii=False)) > FB_OPTION_MAX:
+            abort(400, "'option' גדול מדי")
     row = {
         "ts": round(time.time(), 1),
-        "uid": (j.get("uid") or "")[:64],
+        "uid": _opt_str(j, "uid", 64) or "",
         "ipsig": ipsig,
-        "verdict": j.get("verdict"),
-        "comment": (j.get("comment") or "")[:500],
-        "mode": j.get("mode"),
-        "risk": j.get("risk"),
-        "side": j.get("side"),
-        "clue": j.get("clue"),
-        "count": j.get("count"),
-        "intended": j.get("intended"),
-        "focus": j.get("focus"),  # targets the user pinned — needed to reproduce the clue
-        "why": (j.get("why") or "")[
-            :40
-        ],  # structured 👎 reason tag (opposite/vague/wrong/risky/overreach)
-        "board": j.get("board"),  # {words, roles} — the full board + colors
-        "revealed": j.get("revealed"),  # cards already flipped (excluded from the engine board)
-        "option": j.get("option"),
-    }  # full clue option: reason, leak, assassin, score, read…
+        "verdict": verdict,
+        "comment": _opt_str(j, "comment", 500) or "",
+        "mode": _opt_str(j, "mode", 20),
+        "target": _opt_str(j, "target", 10),  # which team the clue was for (UI wire mapping)
+        "risk": _opt_str(j, "risk", 20),
+        "side": _opt_str(j, "side", 20),
+        "clue": _opt_str(j, "clue", MAX_CLUE_LEN * 2),
+        "count": count,
+        "intended": _str_list(j.get("intended"), "intended"),
+        "focus": _str_list(j.get("focus"), "focus"),  # pinned targets — needed to reproduce
+        "why": _opt_str(j, "why", 40) or "",  # structured 👎 tag (opposite/vague/wrong/risky/…)
+        "board": _fb_board(j.get("board")),  # {words, roles} — the full board + colors
+        "revealed": _fb_revealed(j.get("revealed")),  # cards already flipped
+        "option": option,  # full clue option: reason, leak, assassin, score, read…
+    }
+    if not _fb_rate_ok(ipsig or row["uid"] or "anon"):
+        abort(429, "יותר מדי משובים בזמן קצר — נסו שוב בעוד דקה")
     try:
         with (
             _fb_lock,
@@ -871,12 +1083,43 @@ def feedback():
     return jsonify(ok=True)
 
 
-if __name__ == "__main__":
+# --------------------------------------------------------------------------- #
+# Startup
+# --------------------------------------------------------------------------- #
+
+
+def warmup():
+    """Load everything a request can need before serving: the geometry encoder, every advertised
+    clue vocabulary (embedded + lemmatised), DictaBERT-lex, and the deck's lemmas. Requests then
+    never pay a cold load, and concurrent first requests can't race to build the same assets."""
+    t = time.time()
+    for mode in ADVERTISED_VOCAB_MODES:
+        geo_assets(mode)
+    morph.lemmas(probe.DECK)
+    app.logger.warning("warmup done in %.1fs", time.time() - t)
+
+
+_started = False
+
+
+def startup():
+    global _started
+    if _started:
+        return
+    _started = True
     _init_feedback()
     if os.environ.get("WARMUP", "").lower() in ("1", "true", "yes"):
-        app.logger.info("warming up geometry assets ...")
-        geo_assets("curated")  # load fastText + embed the clue vocab before serving
-        morph.lemmas(probe.DECK)  # preload DictaBERT-lex + memoise the deck's lemmas
+        warmup()
+
+
+def create_app():
+    """WSGI factory for gunicorn (`codenames.app:create_app()`): runs startup in the worker."""
+    startup()
+    return app
+
+
+if __name__ == "__main__":  # local dev server; production runs gunicorn (hf_space/Dockerfile)
+    startup()
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "7860"))
     app.run(host=host, port=port, debug=False, threaded=True)
