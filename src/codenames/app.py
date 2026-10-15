@@ -167,6 +167,7 @@ _encs: dict = {}
 _clue_vocab: dict[str, list[str]] = {}
 _clue_freq: dict[str, np.ndarray] = {}
 _clue_lemmas: dict[str, list[str]] = {}
+_clue_roots: dict[str, list[set[str]]] = {}  # mode -> per-word lexicon roots (word ∪ lemma)
 _clue_emb: dict[str, dict[str, np.ndarray]] = {}  # mode -> encoder -> embedding
 
 _ambiguity_lexicon = None
@@ -261,7 +262,9 @@ def geo_assets(mode: str = "curated"):
                 freq = probe.freq_scores(counts, lo=1000, hi=80000)
 
         _clue_vocab[mode] = vocab
+        morph.lemmas(vocab)  # one batched pass fills the lemma memo the root lookup falls back on
         _clue_lemmas[mode] = list(vocab)
+        _clue_roots[mode] = probe.vocab_root_sets(vocab, _clue_lemmas[mode])
         _clue_freq[mode] = freq
 
         app.logger.info("clue vocab mode %s: %d words", mode, len(vocab))
@@ -610,6 +613,7 @@ def serve_clue(
         vocab,
         emb,
         vocab_lemmas=lems,
+        vocab_roots=_clue_roots[vocab_mode],
         vocab_freq=freq,
         lam_f=LAM_F,
         lam_soft=LAM_SOFT,
@@ -685,6 +689,7 @@ def coach_spymaster():
             vocab,
             emb,
             vocab_lemmas=lems,
+            vocab_roots=_clue_roots[vocab_mode],
             vocab_freq=freq,
             lam_f=LAM_F,
             lam_soft=LAM_SOFT,
@@ -871,7 +876,7 @@ if __name__ == "__main__":
     if os.environ.get("WARMUP", "").lower() in ("1", "true", "yes"):
         app.logger.info("warming up geometry assets ...")
         geo_assets("curated")  # load fastText + embed the clue vocab before serving
-        morph.lemmas(["מילה"])  # preload DictaBERT-lex (legality) so the first clue isn't slow
+        morph.lemmas(probe.DECK)  # preload DictaBERT-lex + memoise the deck's lemmas
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "7860"))
     app.run(host=host, port=port, debug=False, threaded=True)

@@ -648,6 +648,7 @@ def encoder_clue_candidates(
     lam_soft: float = 0.0,
     soft_tau: float = 0.1,
     lam_div: float = 0.0,
+    vocab_roots=None,
 ):
     """Top-n legal clue candidates, each with the team words it *safely* connects.
 
@@ -668,7 +669,9 @@ def encoder_clue_candidates(
     request, candidates are picked greedily by `score - lam_div * max_jaccard(intended, already
     picked)`, so near-duplicate clues for the same target pair don't crowd out other legal
     combinations. lam_div=0 restores the plain top-n-by-score behaviour."""
-    bw, B, cand, keep, C = _legal_candidates(enc, board, clue_vocab, clue_emb, vocab_lemmas)
+    bw, B, cand, keep, C = _legal_candidates(
+        enc, board, clue_vocab, clue_emb, vocab_lemmas, vocab_roots
+    )
     adj = C @ B.T
     adj = adj - adj.mean(1, keepdims=True)
     roles = np.array([board.role[w] for w in bw])
@@ -954,8 +957,21 @@ def _shares_root(cand_roots, cand_sig, board_roots, board_sig) -> bool:
     return _root_conflict(cand_sig, {board_sig} if len(board_sig) >= 2 else set())
 
 
+def vocab_root_sets(clue_vocab, vocab_lemmas) -> list[set[str]]:
+    """Per clue word, the lexicon roots of the word and of its lemma — precomputed once per
+    vocabulary so the per-board legality pass is lookups only."""
+    return [
+        morph.roots(c) | morph.roots(lem) for c, lem in zip(clue_vocab, vocab_lemmas, strict=True)
+    ]
+
+
 def legal_vocab_mask(
-    clue_vocab, vocab_lemmas, board, cos, theta: float = ROOT_TRANSPARENCY_THETA
+    clue_vocab,
+    vocab_lemmas,
+    board,
+    cos,
+    theta: float = ROOT_TRANSPARENCY_THETA,
+    vocab_roots=None,
 ) -> list[bool]:
     """Per-candidate legality over a whole clue vocabulary. `cos` is the (V, n_board) clue↔board
     cosine matrix (= C @ B.T for L2-normalised encoders). A candidate is illegal if it (or its
@@ -974,17 +990,26 @@ def legal_vocab_mask(
         if hot.size == 0:
             out.append(True)
             continue
-        crs = morph.roots(c) | morph.roots(clem)
+        crs = vocab_roots[i] if vocab_roots is not None else morph.roots(c) | morph.roots(clem)
         csig = morph.root_sig(clem)
         out.append(not any(_shares_root(crs, csig, *signals[j]) for j in hot))
     return out
 
 
-_LEGAL_KEEP_CACHE: dict = {}  # (encoder, vocab size, board words) -> legal keep indices
+_LEGAL_KEEP_CACHE: dict = {}  # (encoder asset, vocab digest, board words) -> legal keep indices
 _LEGAL_KEEP_CACHE_MAX = 64
 
 
-def _legal_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas=None):
+def _vocab_digest(clue_vocab) -> str:
+    """Content digest of a clue vocabulary (two same-length vocabularies must not share legality)."""
+    import hashlib
+
+    return hashlib.blake2b("\n".join(clue_vocab).encode(), digest_size=12).hexdigest()
+
+
+def _legal_candidates(
+    enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas=None, vocab_roots=None
+):
     """Embed the vocab + board, drop illegal clues (composite root + cosine gate), and return
     (board_words, B, kept_candidates, keep_indices, C_kept). Encoders return L2-normalised
     vectors, so C @ B.T is the cosine used by both the legality gate and the scorer.
@@ -994,12 +1019,19 @@ def _legal_candidates(enc, board: Board, clue_vocab, clue_emb=None, vocab_lemmas
     bw = board.words
     Cfull = enc.embed(clue_vocab) if clue_emb is None else clue_emb
     B = enc.embed(bw)
-    key = (getattr(enc, "model_id", ""), len(clue_vocab), tuple(bw))
+    key = (
+        getattr(enc, "model_id", ""),
+        os.environ.get("FASTTEXT_COMPRESSED", ""),  # the fastText asset behind every encoder here
+        _vocab_digest(clue_vocab),
+        tuple(bw),
+    )
     keep = _LEGAL_KEEP_CACHE.get(key)
     if keep is None:
         if vocab_lemmas is None:
             vocab_lemmas = morph.lemmas(clue_vocab)
-        mask = legal_vocab_mask(clue_vocab, vocab_lemmas, board, Cfull @ B.T)
+        mask = legal_vocab_mask(
+            clue_vocab, vocab_lemmas, board, Cfull @ B.T, vocab_roots=vocab_roots
+        )
         keep = [i for i, k in enumerate(mask) if k]
         if len(_LEGAL_KEEP_CACHE) >= _LEGAL_KEEP_CACHE_MAX:
             _LEGAL_KEEP_CACHE.clear()

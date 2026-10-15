@@ -39,6 +39,38 @@ def _predict(model, tok, words):
     return out
 
 
+def _lex_predict(model, tok, words):
+    """DictaBERT-lex `predict` (use_lexicon=False) without its two hot-path costs: it argsorts
+    every token's logits over the full output vocabulary to keep the top 3, and runs the forward
+    pass with autograd on. topk(3) gives the same three candidates in the same order, under
+    inference mode; the letter-overlap pick is the model's own `pick_lex_by_letters`."""
+    import importlib
+
+    import torch
+
+    pick = importlib.import_module(type(model).__module__).pick_lex_by_letters
+    special = set(tok.all_special_tokens) - {tok.unk_token, tok.mask_token}
+    out = []
+    for i in range(0, len(words), _BATCH):
+        batch = words[i : i + _BATCH]
+        inputs = tok(batch, padding="longest", truncation=True, return_tensors="pt")
+        with torch.inference_mode():
+            logits = model(**inputs, return_dict=True).logits
+            top = torch.topk(logits, 3, dim=-1).indices.tolist()
+        for b, ids in enumerate(inputs["input_ids"].tolist()):
+            toks = tok.convert_ids_to_tokens(ids)
+            sent = []
+            for t, token in enumerate(toks):
+                if token in special:
+                    continue
+                if token.startswith("##"):  # wordpiece: extend the previous word
+                    sent[-1] = (sent[-1][0] + token[2:], sent[-1][1])
+                    continue
+                sent.append((token, tok.convert_ids_to_tokens(top[b][t])))
+            out.append([(token, pick(token, lexes)) for token, lexes in sent])
+    return out
+
+
 def _load():
     global _tok, _model
     if _model is None:
@@ -84,23 +116,36 @@ def pos(words) -> list[str]:
     return res
 
 
+# Lemma memo: the model treats each word as its own sentence, so a word's lemma never changes.
+# Warmup fills it for the clue vocabularies + deck, after which legality (which lemmatises
+# board words and, via `roots`, out-of-lexicon clue words) runs without touching the model.
+# Bounded so user-typed words can't grow it without limit.
+_LEMMA_CACHE: dict[str, str] = {}
+_LEMMA_CACHE_MAX = 200_000
+
+
 def lemmas(words) -> list[str]:
     """Lemma of each (isolated) Hebrew word, aligned with `words`. Falls back to the
-    surface form when the model returns nothing."""
+    surface form when the model returns nothing. Only uncached words reach the model."""
     words = list(words)
     if not words:
         return []
-    tok, model = _load()
-    preds = _predict(model, tok, words)  # each word treated as its own sentence
-    out = []
-    for w, pred in zip(words, preds, strict=False):
-        lem = None
-        if pred:
-            # pred is a list of (token, lemma) for the word's piece(s)
-            first = pred[0]
-            lem = first[1] if isinstance(first, (list, tuple)) and len(first) > 1 else None
-        out.append(lem if lem and lem != "[BLANK]" else w)
-    return out
+    todo = list(dict.fromkeys(w for w in words if w not in _LEMMA_CACHE))
+    if todo:
+        tok, model = _load()
+        preds = _lex_predict(model, tok, todo)  # each word treated as its own sentence
+        fresh = {}
+        for w, pred in zip(todo, preds, strict=False):
+            lem = None
+            if pred:
+                # pred is a list of (token, lemma) for the word's piece(s)
+                first = pred[0]
+                lem = first[1] if isinstance(first, (list, tuple)) and len(first) > 1 else None
+            fresh[w] = lem if lem and lem != "[BLANK]" else w
+        if len(_LEMMA_CACHE) + len(fresh) <= _LEMMA_CACHE_MAX:
+            _LEMMA_CACHE.update(fresh)
+        return [_LEMMA_CACHE.get(w) or fresh[w] for w in words]
+    return [_LEMMA_CACHE[w] for w in words]
 
 
 @functools.lru_cache(maxsize=1024)
