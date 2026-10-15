@@ -144,8 +144,8 @@ def lemmas(words) -> list[str]:
             fresh[w] = lem if lem and lem != "[BLANK]" else w
         if len(_LEMMA_CACHE) + len(fresh) <= _LEMMA_CACHE_MAX:
             _LEMMA_CACHE.update(fresh)
-        return [_LEMMA_CACHE.get(w) or fresh[w] for w in words]
-    return [_LEMMA_CACHE[w] for w in words]
+        return [_CUSTOM_LEMMAS.get(w) or _LEMMA_CACHE.get(w) or fresh[w] for w in words]
+    return [_CUSTOM_LEMMAS.get(w) or _LEMMA_CACHE[w] for w in words]
 
 
 @functools.lru_cache(maxsize=1024)
@@ -155,6 +155,9 @@ def lemma(word: str) -> str:
 
 _FINALS = str.maketrans("ךםןףץ", "כמנפצ")
 
+
+# DictaBERT-lex lemma errors that legality depends on: פרחח (punk) is not a form of פרח.
+_CUSTOM_LEMMAS = {"פרחח": "פרחח", "פרחחים": "פרחח"}
 
 _CUSTOM_ROOTS = {
     "פרחח": {"פרחח"},

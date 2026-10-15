@@ -470,7 +470,7 @@ def deck_conflicts() -> dict[str, set[str]]:
     if _DECK_CONFLICTS is None:
         lems = morph.lemmas(DECK)
         sig = [
-            ({_normalize_root(r) for r in morph.roots(w) | morph.roots(lem)}, morph.root_sig(lem))
+            (_root_keys(morph.roots(w) | morph.roots(lem)), morph.root_sig(lem))
             for w, lem in zip(DECK, lems, strict=True)
         ]
         out: dict[str, set[str]] = {w: set() for w in DECK}
@@ -942,13 +942,19 @@ def llm_guess_ranking(llm: HebrewLLM, board: Board, clue: str) -> list[str]:
 # --------------------------------------------------------------------------- #
 # A clue is illegal iff it is a board word / an inflection of one (same lemma), OR it shares a
 # root with a board word AND is semantically transparent to it (clue↔word cosine >= THETA).
-# Root sharing is decided by the Wiktionary lexicon (morph.roots); words the lexicon does not
-# cover fall back to the coarse root_sig heuristic. The cosine gate keeps opaque etymological
-# cognates legal (מלחמה next to לחם) and neutralises both root_sig's false positives (אש/ראש)
-# and lexicon homograph noise. Encoders return L2-normalised vectors, so a clue↔board dot
-# product is exactly the cosine the gate needs; THETA was calibrated on fastText.
+# The rule being approximated: a clue may not be any form of a visible word, judged by meaning.
+# Root sharing is decided by the root lexicon (morph.roots: Wiktionary ∪ Dicta wordlist ∪
+# LLM-assigned roots); words it does not cover fall back to the coarse root_sig heuristic. The
+# cosine gate keeps opaque etymological cognates legal (מלחמה next to לחם) and neutralises both
+# root_sig's false positives (אש/ראש) and lexicon homograph noise. Encoders return L2-normalised
+# vectors, so a clue↔board dot product is exactly the cosine the gate needs.
+#
+# THETA is calibrated on the production encoder (app.GEO_ENC, blend_0.7_0.3) against 128
+# hand-labelled shared-root pairs (tests/fixtures/legality_pairs.json): 0.255 maximises accuracy
+# (79%; 6 of 67 illegal pairs pass, 21 of 61 legal pairs are blocked; the previous lexicon at
+# θ=0.30 scored 74%, letting 24 illegal pairs through).
 
-ROOT_TRANSPARENCY_THETA = 0.30
+ROOT_TRANSPARENCY_THETA = 0.255
 
 
 def forbidden_lemmas(board: Board, lemmas=None) -> set[str]:
@@ -1000,14 +1006,24 @@ def _normalize_root(r: str) -> str:
     return r
 
 
+def _root_keys(roots) -> set[str]:
+    """Normalised comparison keys of a root set; single letters (lexicon noise, e.g. ר for ראה)
+    are dropped so they can't match unrelated words."""
+    return {k for k in (_normalize_root(r) for r in roots) if len(k) >= 2}
+
+
 def _shares_root(cand_roots, cand_sig, board_roots, board_sig) -> bool:
     """Shared-root test for one (clue, board word) pair: authoritative lexicon-set intersection
     when both sides are covered, else the coarse root_sig conflict.
     Weak/geminate roots are normalized to prevent false negatives from lexicographical mismatches."""
     if cand_roots and board_roots:
-        cand_norm = {_normalize_root(r) for r in cand_roots}
-        board_norm = {_normalize_root(r) for r in board_roots}
-        return bool(cand_norm & board_norm)
+        return bool(_root_keys(cand_roots) & _root_keys(board_roots))
+    # one side is outside the lexicon: compare its consonant signature with the other side's
+    # roots (גננת → גננ vs גנן's root גננ), then the coarse signature-vs-signature rule
+    if cand_roots and len(board_sig) >= 3 and _normalize_root(board_sig) in _root_keys(cand_roots):
+        return True
+    if board_roots and len(cand_sig) >= 3 and _normalize_root(cand_sig) in _root_keys(board_roots):
+        return True
     return _root_conflict(cand_sig, {board_sig} if len(board_sig) >= 2 else set())
 
 

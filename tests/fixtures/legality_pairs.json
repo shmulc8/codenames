@@ -1,0 +1,773 @@
+{
+ "about": "Shared-root (clue, board word) pairs with hand labels: illegal = a player would see the clue as a form/derivative of the visible word (the official 'no form of a visible word' rule, judged by meaning). Pairs are deck words x clue-vocab words sharing a lexicon root with production-encoder (blend_0.7_0.3) cosine 0.15-0.45, stratified by cosine, plus known cases. cos_blend is informational; tests recompute it. Used to calibrate probe.ROOT_TRANSPARENCY_THETA.",
+ "pairs": [
+  {
+   "clue": "עצוב",
+   "word": "עיצוב",
+   "illegal": false,
+   "cos_blend": 0.1539
+  },
+  {
+   "clue": "שאביך",
+   "word": "אבן",
+   "illegal": false,
+   "cos_blend": 0.1594
+  },
+  {
+   "clue": "קוטל",
+   "word": "רוח",
+   "illegal": false,
+   "cos_blend": 0.1673
+  },
+  {
+   "clue": "רדום",
+   "word": "ורוד",
+   "illegal": false,
+   "cos_blend": 0.1699
+  },
+  {
+   "clue": "מהלך",
+   "word": "יהלום",
+   "illegal": false,
+   "cos_blend": 0.1687
+  },
+  {
+   "clue": "עיצוב",
+   "word": "עצב",
+   "illegal": false,
+   "cos_blend": 0.1508
+  },
+  {
+   "clue": "כוון",
+   "word": "מכונאי",
+   "illegal": false,
+   "cos_blend": 0.159
+  },
+  {
+   "clue": "נסיכה",
+   "word": "סיכה",
+   "illegal": false,
+   "cos_blend": 0.1818
+  },
+  {
+   "clue": "פוריות",
+   "word": "פורים",
+   "illegal": false,
+   "cos_blend": 0.1623
+  },
+  {
+   "clue": "תחזית",
+   "word": "חזה",
+   "illegal": false,
+   "cos_blend": 0.1862
+  },
+  {
+   "clue": "חלוד",
+   "word": "חולדה",
+   "illegal": false,
+   "cos_blend": 0.1573
+  },
+  {
+   "clue": "אחיה",
+   "word": "חיים",
+   "illegal": false,
+   "cos_blend": 0.1925
+  },
+  {
+   "clue": "כלי",
+   "word": "מכנסיים",
+   "illegal": false,
+   "cos_blend": 0.1511
+  },
+  {
+   "clue": "מוכן",
+   "word": "מכונאי",
+   "illegal": false,
+   "cos_blend": 0.1509
+  },
+  {
+   "clue": "חול",
+   "word": "חלום",
+   "illegal": false,
+   "cos_blend": 0.1789
+  },
+  {
+   "clue": "תכנות",
+   "word": "מכונאי",
+   "illegal": false,
+   "cos_blend": 0.1629
+  },
+  {
+   "clue": "כיס",
+   "word": "כוס",
+   "illegal": false,
+   "cos_blend": 0.1596
+  },
+  {
+   "clue": "קנה",
+   "word": "קניון",
+   "illegal": true,
+   "cos_blend": 0.1741
+  },
+  {
+   "clue": "תזוזה",
+   "word": "מזוזה",
+   "illegal": false,
+   "cos_blend": 0.1523
+  },
+  {
+   "clue": "איתור",
+   "word": "תורה",
+   "illegal": false,
+   "cos_blend": 0.1614
+  },
+  {
+   "clue": "תשובה",
+   "word": "שבת",
+   "illegal": false,
+   "cos_blend": 0.2391
+  },
+  {
+   "clue": "אופי",
+   "word": "אופנה",
+   "illegal": false,
+   "cos_blend": 0.2082
+  },
+  {
+   "clue": "מוצדק",
+   "word": "צדק",
+   "illegal": true,
+   "cos_blend": 0.2175
+  },
+  {
+   "clue": "אימא",
+   "word": "תמר",
+   "illegal": false,
+   "cos_blend": 0.2328
+  },
+  {
+   "clue": "הרץ",
+   "word": "ריצה",
+   "illegal": true,
+   "cos_blend": 0.2244
+  },
+  {
+   "clue": "תעופה",
+   "word": "עוף",
+   "illegal": true,
+   "cos_blend": 0.2463
+  },
+  {
+   "clue": "ידיעה",
+   "word": "מדע",
+   "illegal": false,
+   "cos_blend": 0.2038
+  },
+  {
+   "clue": "לחם",
+   "word": "מלחמה",
+   "illegal": false,
+   "cos_blend": 0.2316
+  },
+  {
+   "clue": "משימה",
+   "word": "שום",
+   "illegal": false,
+   "cos_blend": 0.2156
+  },
+  {
+   "clue": "חילוץ",
+   "word": "חולצה",
+   "illegal": false,
+   "cos_blend": 0.2125
+  },
+  {
+   "clue": "קרון",
+   "word": "קיר",
+   "illegal": false,
+   "cos_blend": 0.2212
+  },
+  {
+   "clue": "משל",
+   "word": "ממשלה",
+   "illegal": false,
+   "cos_blend": 0.2324
+  },
+  {
+   "clue": "מכני",
+   "word": "מכונית",
+   "illegal": false,
+   "cos_blend": 0.2015
+  },
+  {
+   "clue": "פרסום",
+   "word": "פרס",
+   "illegal": false,
+   "cos_blend": 0.2039
+  },
+  {
+   "clue": "אישי",
+   "word": "שום",
+   "illegal": false,
+   "cos_blend": 0.2357
+  },
+  {
+   "clue": "כתובה",
+   "word": "מכתב",
+   "illegal": true,
+   "cos_blend": 0.2456
+  },
+  {
+   "clue": "קוטל",
+   "word": "שיר",
+   "illegal": false,
+   "cos_blend": 0.2048
+  },
+  {
+   "clue": "הורות",
+   "word": "מורה",
+   "illegal": false,
+   "cos_blend": 0.2323
+  },
+  {
+   "clue": "דמוי",
+   "word": "דמיון",
+   "illegal": false,
+   "cos_blend": 0.2228
+  },
+  {
+   "clue": "אמון",
+   "word": "אמת",
+   "illegal": false,
+   "cos_blend": 0.2155
+  },
+  {
+   "clue": "מוצץ",
+   "word": "מיץ",
+   "illegal": false,
+   "cos_blend": 0.2891
+  },
+  {
+   "clue": "ראות",
+   "word": "מראה",
+   "illegal": true,
+   "cos_blend": 0.2643
+  },
+  {
+   "clue": "מאובן",
+   "word": "אבן",
+   "illegal": true,
+   "cos_blend": 0.256
+  },
+  {
+   "clue": "גינה",
+   "word": "גן",
+   "illegal": true,
+   "cos_blend": 0.2827
+  },
+  {
+   "clue": "מפולת",
+   "word": "מפל",
+   "illegal": true,
+   "cos_blend": 0.29
+  },
+  {
+   "clue": "ביקור",
+   "word": "בוקר",
+   "illegal": false,
+   "cos_blend": 0.2656
+  },
+  {
+   "clue": "מתת",
+   "word": "מתנה",
+   "illegal": true,
+   "cos_blend": 0.2871
+  },
+  {
+   "clue": "עיגול",
+   "word": "עגיל",
+   "illegal": false,
+   "cos_blend": 0.2685
+  },
+  {
+   "clue": "כספת",
+   "word": "כסף",
+   "illegal": true,
+   "cos_blend": 0.2641
+  },
+  {
+   "clue": "יצירה",
+   "word": "צייר",
+   "illegal": false,
+   "cos_blend": 0.2813
+  },
+  {
+   "clue": "שליח",
+   "word": "שולחן",
+   "illegal": false,
+   "cos_blend": 0.2876
+  },
+  {
+   "clue": "מימן",
+   "word": "מים",
+   "illegal": true,
+   "cos_blend": 0.258
+  },
+  {
+   "clue": "תוכנה",
+   "word": "מכונית",
+   "illegal": false,
+   "cos_blend": 0.2549
+  },
+  {
+   "clue": "שליט",
+   "word": "שלט",
+   "illegal": false,
+   "cos_blend": 0.2835
+  },
+  {
+   "clue": "פצצה",
+   "word": "פיצה",
+   "illegal": false,
+   "cos_blend": 0.2548
+  },
+  {
+   "clue": "קוטל",
+   "word": "תמנון",
+   "illegal": false,
+   "cos_blend": 0.2531
+  },
+  {
+   "clue": "סודה",
+   "word": "סוד",
+   "illegal": false,
+   "cos_blend": 0.2592
+  },
+  {
+   "clue": "מחשבה",
+   "word": "מחשב",
+   "illegal": true,
+   "cos_blend": 0.2638
+  },
+  {
+   "clue": "פרו",
+   "word": "פרה",
+   "illegal": false,
+   "cos_blend": 0.2664
+  },
+  {
+   "clue": "ספריי",
+   "word": "סופר",
+   "illegal": false,
+   "cos_blend": 0.2567
+  },
+  {
+   "clue": "מונע",
+   "word": "מנוע",
+   "illegal": false,
+   "cos_blend": 0.332
+  },
+  {
+   "clue": "שרוף",
+   "word": "שריפה",
+   "illegal": true,
+   "cos_blend": 0.3174
+  },
+  {
+   "clue": "פנאי",
+   "word": "אופנה",
+   "illegal": false,
+   "cos_blend": 0.3227
+  },
+  {
+   "clue": "מודע",
+   "word": "ידע",
+   "illegal": true,
+   "cos_blend": 0.3037
+  },
+  {
+   "clue": "מעורב",
+   "word": "עורב",
+   "illegal": false,
+   "cos_blend": 0.3454
+  },
+  {
+   "clue": "תזמורת",
+   "word": "זמר",
+   "illegal": false,
+   "cos_blend": 0.3425
+  },
+  {
+   "clue": "מאדים",
+   "word": "אדמה",
+   "illegal": false,
+   "cos_blend": 0.3303
+  },
+  {
+   "clue": "סופר",
+   "word": "ספר",
+   "illegal": true,
+   "cos_blend": 0.3385
+  },
+  {
+   "clue": "כיבוש",
+   "word": "כבש",
+   "illegal": false,
+   "cos_blend": 0.3196
+  },
+  {
+   "clue": "ספרייה",
+   "word": "ספר",
+   "illegal": true,
+   "cos_blend": 0.3221
+  },
+  {
+   "clue": "סיפור",
+   "word": "סופר",
+   "illegal": true,
+   "cos_blend": 0.3291
+  },
+  {
+   "clue": "מוגן",
+   "word": "מגן",
+   "illegal": true,
+   "cos_blend": 0.313
+  },
+  {
+   "clue": "גינה",
+   "word": "גנן",
+   "illegal": true,
+   "cos_blend": 0.349
+  },
+  {
+   "clue": "ריכוז",
+   "word": "מרכז",
+   "illegal": true,
+   "cos_blend": 0.3164
+  },
+  {
+   "clue": "מקושר",
+   "word": "קשר",
+   "illegal": true,
+   "cos_blend": 0.3121
+  },
+  {
+   "clue": "רשות",
+   "word": "ראש",
+   "illegal": false,
+   "cos_blend": 0.3023
+  },
+  {
+   "clue": "מרפא",
+   "word": "מרפאה",
+   "illegal": true,
+   "cos_blend": 0.3393
+  },
+  {
+   "clue": "מידע",
+   "word": "מדע",
+   "illegal": true,
+   "cos_blend": 0.3181
+  },
+  {
+   "clue": "מחיה",
+   "word": "חיים",
+   "illegal": true,
+   "cos_blend": 0.3341
+  },
+  {
+   "clue": "אורן",
+   "word": "אריה",
+   "illegal": false,
+   "cos_blend": 0.3319
+  },
+  {
+   "clue": "מצלמה",
+   "word": "צלם",
+   "illegal": true,
+   "cos_blend": 0.3777
+  },
+  {
+   "clue": "משטח",
+   "word": "שטיח",
+   "illegal": false,
+   "cos_blend": 0.3897
+  },
+  {
+   "clue": "כתוב",
+   "word": "מכתב",
+   "illegal": true,
+   "cos_blend": 0.3545
+  },
+  {
+   "clue": "מצויר",
+   "word": "צייר",
+   "illegal": true,
+   "cos_blend": 0.3607
+  },
+  {
+   "clue": "כבדות",
+   "word": "כבד",
+   "illegal": true,
+   "cos_blend": 0.3925
+  },
+  {
+   "clue": "שביתה",
+   "word": "שבת",
+   "illegal": false,
+   "cos_blend": 0.3642
+  },
+  {
+   "clue": "אהובה",
+   "word": "אהבה",
+   "illegal": true,
+   "cos_blend": 0.377
+  },
+  {
+   "clue": "מנעול",
+   "word": "נעל",
+   "illegal": true,
+   "cos_blend": 0.3557
+  },
+  {
+   "clue": "צווארון",
+   "word": "צוואר",
+   "illegal": true,
+   "cos_blend": 0.3854
+  },
+  {
+   "clue": "מכוון",
+   "word": "כיוון",
+   "illegal": true,
+   "cos_blend": 0.3654
+  },
+  {
+   "clue": "נפלא",
+   "word": "פלא",
+   "illegal": true,
+   "cos_blend": 0.3814
+  },
+  {
+   "clue": "מזכרת",
+   "word": "זיכרון",
+   "illegal": true,
+   "cos_blend": 0.3889
+  },
+  {
+   "clue": "הגנתי",
+   "word": "מגן",
+   "illegal": true,
+   "cos_blend": 0.3837
+  },
+  {
+   "clue": "דייר",
+   "word": "דירה",
+   "illegal": true,
+   "cos_blend": 0.3681
+  },
+  {
+   "clue": "שיפוט",
+   "word": "שופט",
+   "illegal": true,
+   "cos_blend": 0.3983
+  },
+  {
+   "clue": "שיווק",
+   "word": "שוק",
+   "illegal": true,
+   "cos_blend": 0.3719
+  },
+  {
+   "clue": "דימוי",
+   "word": "דמיון",
+   "illegal": true,
+   "cos_blend": 0.3656
+  },
+  {
+   "clue": "תחנה",
+   "word": "חנות",
+   "illegal": false,
+   "cos_blend": 0.3507
+  },
+  {
+   "clue": "דומה",
+   "word": "דמיון",
+   "illegal": true,
+   "cos_blend": 0.3509
+  },
+  {
+   "clue": "כתבה",
+   "word": "מכתב",
+   "illegal": true,
+   "cos_blend": 0.3747
+  },
+  {
+   "clue": "עין",
+   "word": "מעיין",
+   "illegal": true,
+   "cos_blend": 0.4008
+  },
+  {
+   "clue": "כליאה",
+   "word": "כלא",
+   "illegal": true,
+   "cos_blend": 0.4496
+  },
+  {
+   "clue": "סיפור",
+   "word": "ספר",
+   "illegal": true,
+   "cos_blend": 0.4145
+  },
+  {
+   "clue": "שקרנית",
+   "word": "שקר",
+   "illegal": true,
+   "cos_blend": 0.4126
+  },
+  {
+   "clue": "דיור",
+   "word": "דירה",
+   "illegal": true,
+   "cos_blend": 0.4279
+  },
+  {
+   "clue": "כושל",
+   "word": "כישלון",
+   "illegal": true,
+   "cos_blend": 0.4465
+  },
+  {
+   "clue": "זכר",
+   "word": "זיכרון",
+   "illegal": true,
+   "cos_blend": 0.4074
+  },
+  {
+   "clue": "חימום",
+   "word": "חום",
+   "illegal": true,
+   "cos_blend": 0.4199
+  },
+  {
+   "clue": "הורה",
+   "word": "מורה",
+   "illegal": false,
+   "cos_blend": 0.4283
+  },
+  {
+   "clue": "מוצלח",
+   "word": "הצלחה",
+   "illegal": true,
+   "cos_blend": 0.446
+  },
+  {
+   "clue": "כדור",
+   "word": "כדורעף",
+   "illegal": true,
+   "cos_blend": 0.4433
+  },
+  {
+   "clue": "מכובד",
+   "word": "כבוד",
+   "illegal": true,
+   "cos_blend": 0.408
+  },
+  {
+   "clue": "קישר",
+   "word": "קשר",
+   "illegal": true,
+   "cos_blend": 0.4258
+  },
+  {
+   "clue": "מלכות",
+   "word": "מלכה",
+   "illegal": true,
+   "cos_blend": 0.4005
+  },
+  {
+   "clue": "מעלה",
+   "word": "עלה",
+   "illegal": true,
+   "cos_blend": 0.4333
+  },
+  {
+   "clue": "טייס",
+   "word": "טיסה",
+   "illegal": true,
+   "cos_blend": 0.436
+  },
+  {
+   "clue": "יפהפה",
+   "word": "יופי",
+   "illegal": true,
+   "cos_blend": 0.4006
+  },
+  {
+   "clue": "סוכרת",
+   "word": "סוכר",
+   "illegal": true,
+   "cos_blend": 0.4302
+  },
+  {
+   "clue": "נסיעה",
+   "word": "מסע",
+   "illegal": true,
+   "cos_blend": 0.4305
+  },
+  {
+   "clue": "מחשבון",
+   "word": "מחשב",
+   "illegal": true,
+   "cos_blend": 0.4327
+  },
+  {
+   "clue": "רוחני",
+   "word": "רוח",
+   "illegal": true,
+   "cos_blend": 0.2819
+  },
+  {
+   "clue": "ריפוי",
+   "word": "רופא",
+   "illegal": true,
+   "cos_blend": 0.2595
+  },
+  {
+   "clue": "קשירה",
+   "word": "קשר",
+   "illegal": true,
+   "cos_blend": 0.2909
+  },
+  {
+   "clue": "גננת",
+   "word": "גנן",
+   "illegal": true,
+   "cos_blend": 0.5453
+  },
+  {
+   "clue": "מלחמה",
+   "word": "לחם",
+   "illegal": false,
+   "cos_blend": 0.2316
+  },
+  {
+   "clue": "פרחח",
+   "word": "פרח",
+   "illegal": false,
+   "cos_blend": 0.2056
+  },
+  {
+   "clue": "גינון",
+   "word": "גנן",
+   "illegal": true,
+   "cos_blend": 0.4581
+  },
+  {
+   "clue": "מעלית",
+   "word": "עלה",
+   "illegal": true,
+   "cos_blend": 0.1308
+  }
+ ]
+}
