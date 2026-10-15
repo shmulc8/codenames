@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to Cheat at Hebrew Codenames (Without an LLM) · Reversim 2026 Ignite</title>
+<style>
+  :root {
+    --bg: #0f1115; --fg: #f2efe8; --dim: #8b8f98; --blue: #3b82f6; --red: #ef4444;
+    --tan: #d9c9a3; --ink: #111; --accent: #facc15;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #000; color: var(--fg);
+    font-family: "Assistant", "Heebo", system-ui, -apple-system, sans-serif; }
+  .slide { width: 1600px; height: 900px; padding: 70px 110px; background: var(--bg);
+    display: flex; flex-direction: column; justify-content: center; gap: 28px;
+    position: relative; overflow: hidden; }
+  h1 { font-size: 92px; line-height: 1.02; margin: 0; letter-spacing: -1.5px; }
+  h2 { font-size: 68px; line-height: 1.08; margin: 0; letter-spacing: -1px; }
+  p, li { font-size: 40px; line-height: 1.3; margin: 0; }
+  .dim { color: var(--dim); } .acc { color: var(--accent); }
+  .blue { color: var(--blue); } .red { color: var(--red); }
+  .he { direction: rtl; unicode-bidi: isolate; font-weight: 700; }
+  .center { align-items: center; text-align: center; }
+  .row { display: flex; gap: 60px; align-items: center; }
+  .grow { flex: 1; }
+  .kicker { font-size: 28px; letter-spacing: 4px; text-transform: uppercase; color: var(--dim); }
+  .qr { background: #fff; padding: 18px; border-radius: 18px; width: 360px; height: 360px; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .qr.small { width: 250px; height: 250px; padding: 12px; }
+  .qr.slot { display: flex; align-items: center; justify-content: center; color: #888;
+    font-size: 22px; text-align: center; }
+  ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 18px; }
+  .todo { position: absolute; bottom: 22px; left: 110px; font-size: 20px; color: #f97316;
+    font-family: ui-monospace, monospace; }
+  .num { position: absolute; right: 34px; bottom: 22px; font-size: 20px; color: #3a3f4a; }
+
+  .board { direction: rtl; display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+    width: 1150px; margin: 0 auto; }
+  .board div { background: var(--tan); color: var(--ink); border-radius: 12px; height: 92px;
+    display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; }
+  .board .m { background: var(--blue); color: #fff; }
+  .board .o { background: var(--red); color: #fff; }
+  .board .a { background: #050505; color: #fff; outline: 3px solid #666; }
+  .board.reveal div:not(.hit):not(.a) { opacity: .22; }
+  .board.reveal .hit { outline: 6px solid var(--accent); }
+  .clue-chip { display: inline-flex; gap: 22px; align-items: baseline; background: var(--fg);
+    color: var(--ink); border-radius: 18px; padding: 10px 40px; font-size: 72px; font-weight: 900;
+    align-self: center; }
+  .clue-chip small { font-size: 54px; }
+
+  table { border-collapse: collapse; font-size: 38px; width: 100%; }
+  td, th { padding: 16px 24px; border-bottom: 1px solid #2a2e37; text-align: left; }
+  th { color: var(--dim); font-weight: 600; font-size: 26px; letter-spacing: 2px; text-transform: uppercase; }
+
+  aside.notes { display: none; }
+
+  @page { size: 1600px 900px; margin: 0; }
+  @media screen {
+    body { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 24px 0; }
+    .slide { zoom: var(--z, 1); }
+  }
+  @media print {
+    body { background: var(--bg); }
+    .slide { break-after: page; page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="slide">
+  <div class="kicker">Reversim Summit 2026 · Ignite</div>
+  <h1>How to Cheat at<br>Hebrew Codenames<br><span class="acc">(Without an LLM)</span></h1>
+  <p class="dim">Shmulik Cohen · AI Engineer @ Apiiro</p>
+  <aside class="notes">Hi, I'm Shmulik. I build with LLMs all day. So for a side project I did something odd: I built an AI that plays Hebrew Codenames better than I do, and there isn't a single LLM inside it.</aside>
+</section>
+
+<!-- 2 -->
+<section class="slide center">
+  <h2>Scan now. Play along.</h2>
+  <div class="qr"><!--QR--></div>
+  <p class="dim">huggingface.co/spaces/shmulc/hebrew-codenames-copilot</p>
+  <aside class="notes">Take out your phone and scan this. It's live and it's free, and it runs on a plain CPU. Keep it open. By the end of the five minutes I want you trying to beat it.</aside>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="kicker">The game in 15 seconds</div>
+  <div class="board" style="width:900px" data-board="רכבת:m כלב:o שבת:n ספינה:m חום:o תה:o ריח:a מסוק:m חידה:n עץ:m"></div>
+  <p>One word. One number. <span class="blue">Your cards</span>, not <span class="red">theirs</span>, and <b>never</b> the black one.</p>
+  <aside class="notes">Quick reminder of the rules. The spymaster knows which cards belong to which team. They say one word and a number, and their team guesses. If you touch the other team's card, you've helped them. If you touch the black card, you lose on the spot.</aside>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <h2>2026: we bolt an LLM<br>onto <span class="acc">everything</span>.</h2>
+  <p class="dim">So how far do you get with classic NLP and some geometry?</p>
+  <aside class="notes">It's 2026, and every problem gets an LLM bolted on. I wanted to try the opposite. How far can classic NLP get me, with some honest geometry and no billions of parameters?</aside>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="kicker">The one idea</div>
+  <h1>Words are <span class="acc">points</span>.</h1>
+  <svg viewBox="0 0 1380 420" width="1380" height="420">
+    <g font-size="38" font-weight="800" fill="#f2efe8" text-anchor="middle">
+      <circle cx="220" cy="120" r="10" fill="#3b82f6"/><text x="220" y="95">רכבת</text>
+      <circle cx="330" cy="260" r="10" fill="#3b82f6"/><text x="330" y="235">ספינה</text>
+      <circle cx="140" cy="300" r="10" fill="#3b82f6"/><text x="140" y="275">מסוק</text>
+      <circle cx="900" cy="120" r="10" fill="#ef4444"/><text x="900" y="95">כלב</text>
+      <circle cx="1020" cy="210" r="10" fill="#ef4444"/><text x="1020" y="185">חתול</text>
+      <circle cx="680" cy="340" r="10" fill="#d9c9a3"/><text x="680" y="315">עץ</text>
+      <circle cx="780" cy="390" r="10" fill="#d9c9a3"/><text x="780" y="365">פרח</text>
+      <circle cx="1250" cy="350" r="12" fill="#000" stroke="#aaa" stroke-width="3"/><text x="1250" y="322">ריח</text>
+    </g>
+  </svg>
+  <aside class="notes">This is the whole trick. A model like fastText turns every word into a point in space. Words that appear in similar contexts end up close together. Train, ship and helicopter sit in one corner. Dog and cat sit over there.</aside>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="kicker">So a clue is…</div>
+  <h2>the point <span class="blue">closest to my cards</span>,<br><span class="red">farthest from theirs</span>,<br>and <u>very</u> far from the assassin.</h2>
+  <p class="dim">Score every word in a clean vocabulary. Keep the best.</p>
+  <aside class="notes">So a clue is just a point. I want it close to my cards, far from the other team's cards, and very, very far from the assassin. That gives me a scoring function. I score every word in the vocabulary and keep the best one.</aside>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="kicker">Your turn · 15 seconds</div>
+  <div class="board" data-board="שבת:n אדריכל:o כיתה:n סוללה:n ירושלים:m אויב:m כנסייה:m קולנוע:o קשת:o כובע:n גלישה:n עגבנייה:m לימון:n חייל:o אוטובוס:o קצב:n מסגד:m שחייה:m חולדה:o זהות:m כותל:m טיסה:m תבוסה:o שלום:a תשוקה:o"></div>
+  <p style="text-align:center">You're <span class="blue">blue</span>. The black card is <span class="he">שלום</span>. Clue?</p>
+  <aside class="notes">Your turn. You're blue. Look at the board, and watch out, the black card is "peace". You have fifteen seconds. Shout out your clue if you've got one.</aside>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="clue-chip"><span class="he">מקדש</span><small>4</small></div>
+  <div class="board reveal" data-board="שבת:n אדריכל:o כיתה:n סוללה:n ירושלים:m אויב:m כנסייה:m קולנוע:o קשת:o כובע:n גלישה:n עגבנייה:m לימון:n חייל:o אוטובוס:o קצב:n מסגד:m שחייה:m חולדה:o זהות:m כותל:m טיסה:m תבוסה:o שלום:a תשוקה:o" data-hit="ירושלים כנסייה מסגד כותל"></div>
+  <aside class="notes">"Temple", four. It gets Jerusalem, the church, the mosque and the Western Wall in a single word, and it stays clear of peace. It took a few milliseconds on a CPU. How many of you got four?</aside>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="kicker">The risk dial</div>
+  <div class="board" style="width:1000px" data-board="לוויין:n קנאה:o שניצל:m צב:m הצלחה:n עמק:o גלישה:n קוד:m עץ:n מכשפה:n רובוט:a גיטרה:n מקלדת:m תמנון:o מרכז:o עיצוב:o מסך:m מיץ:m חשמל:o מחשב:m תחנה:o תוכנה:m טלוויזיה:o טווס:n ארץ:m"></div>
+  <table>
+    <tr><td style="width:30%">Balanced</td><td class="he" style="width:25%">חומרה</td><td>2 · software, computer</td></tr>
+    <tr><td class="acc">Bold</td><td class="he acc">חומרה</td><td class="acc">4 · + keyboard, code</td></tr>
+  </table>
+  <aside class="notes">Here's a board for engineers, and the assassin is "robot". The clue is "hardware". On balanced it says two. On bold it says four and adds keyboard and code. Same clue, different bet, and you decide how much risk to take.</aside>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="kicker">The trap</div>
+  <div class="row">
+    <div class="grow">
+      <p style="font-size:56px"><span class="he blue">כריש · לוויתן · דולפין</span></p>
+      <p style="font-size:56px">assassin: <span class="he" style="background:#000;padding:0 16px;border:2px solid #666;border-radius:10px">ים</span></p>
+    </div>
+    <div class="grow" style="display:flex;flex-direction:column;gap:24px">
+      <p class="red" style="font-size:48px"><s><span class="he">אוקיינוס</span> 3</s> → you lose</p>
+      <div class="clue-chip" style="align-self:flex-start"><span class="he">סנפיר</span><small>3</small></div>
+    </div>
+  </div>
+  <aside class="notes">This one's a trap. Shark, whale and dolphin are ours, and "sea" is the assassin. Every human says "ocean", and you lose. The copilot says "fin", three. It's safety first and cleverness second.</aside>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <div class="kicker">Small vs big</div>
+  <table>
+    <tr><th></th><th>fastText + Numberbatch</th><th>DictaLM 12B</th></tr>
+    <tr><td>Size</td><td>static word vectors</td><td>12B parameters</td></tr>
+    <tr><td>Speed</td><td class="acc">instant, CPU</td><td>seconds, GPU</td></tr>
+    <tr><td>Clues</td><td class="acc">+20% blended, safe</td><td>illegal &amp; hallucinated</td></tr>
+  </table>
+  <aside class="notes">Then I tested it against a real Hebrew LLM, DictaLM, at 12 billion parameters. Blending fastText with the ConceptNet knowledge graph made clues twenty percent better and kept them safe. The LLM kept breaking the rules and making up words.</aside>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+  <h2>Scale isn't what<br>this task needs.</h2>
+  <p class="dim">It's a semantic-similarity problem disguised as a board game.</p>
+  <aside class="notes">I'm not claiming the small model won. My point is that scale isn't the bottleneck here. Codenames is a semantic-similarity problem disguised as a board game, and similarity is exactly what vectors are built for.</aside>
+</section>
+
+<!-- 13 -->
+<section class="slide">
+  <div class="kicker">Surprise #1</div>
+  <h1>The <span class="acc">vocabulary</span><br>beats the model.</h1>
+  <aside class="notes">Here's the first surprise. The model wasn't what moved quality the most. The biggest gain came from the list of words it was allowed to say.</aside>
+</section>
+
+<!-- 14 -->
+<section class="slide">
+  <div class="row">
+    <div class="grow">
+      <p class="kicker">Most frequent words</p>
+      <p class="he red" style="font-size:64px">של · גם · אשר · ־ים</p>
+    </div>
+    <div class="grow">
+      <p class="kicker">Curated nouns &amp; adjectives</p>
+      <p class="he blue" style="font-size:64px">מקדש · סנפיר · חומרה</p>
+    </div>
+  </div>
+  <p class="dim">A few thousand clean clue words. Offensive terms filtered out.</p>
+  <div class="todo">TODO: one vocab number (abstract: 8,476 · data/clue_vocab_openai.json: 4,286)</div>
+  <aside class="notes">Give it the most frequent words and you get "of", "also", word fragments. It's garbage. Narrow it to medium-frequency nouns and adjectives and clean out the slurs, and the clues got dramatically better overnight.</aside>
+</section>
+
+<!-- 15 -->
+<section class="slide">
+  <div class="kicker">Surprise #2</div>
+  <h2>Sometimes the honest answer is<br><span class="acc">"there is no safe clue."</span></h2>
+  <aside class="notes">The second surprise: the best feature is the copilot saying no. When every candidate drifts toward the assassin, it tells you there's no safe clue. That saves more games than any clever pun.</aside>
+</section>
+
+<!-- 16 -->
+<section class="slide">
+  <div class="kicker">Why Hebrew is harder</div>
+  <h2>Rule: a clue can't share<br>a <span class="acc">root</span> with a card.</h2>
+  <p style="font-size:64px"><span class="he">פחד · מפחיד · פחדן</span></p>
+  <p style="font-size:64px"><span class="he">כלב · כלבלב</span></p>
+  <aside class="notes">Now for Hebrew. The rule says a clue can't share a root with any card on the board. In English you'd just compare strings. In Hebrew, fear, scary and coward all share one root, and the word for puppy has the whole word for dog inside it.</aside>
+</section>
+
+<!-- 17 -->
+<section class="slide">
+  <div class="kicker">So it's layered</div>
+  <ul>
+    <li>Root lexicon from Wiktionary</li>
+    <li>Containment check for reduplication &amp; diminutives</li>
+    <li>Similarity gate so false roots don't block good clues</li>
+  </ul>
+  <p class="dim">Deterministic. Offline. No LLM.</p>
+  <aside class="notes">None of the Hebrew NLP tools I tried gave me a reliable root. So I built the check in layers: a root lexicon taken from Wiktionary, a containment check for words like puppy, and a similarity gate on top. It's all deterministic and offline.</aside>
+</section>
+
+<!-- 18 -->
+<section class="slide">
+  <div class="kicker">Polysemy</div>
+  <p style="font-size:72px"><span class="he">עלה</span> <span class="dim">= leaf? went up? cost?</span></p>
+  <table>
+    <tr><th>similarity of <span class="he">עלה</span> to…</th><th>alone</th><th>next to <span class="he">עץ, פרח</span></th></tr>
+    <tr><td>tree</td><td>0.09</td><td class="acc">0.21 ↑</td></tr>
+    <tr><td>money</td><td>0.27</td><td class="acc">0.17 ↓</td></tr>
+  </table>
+  <aside class="notes">Here one word has three meanings: leaf, went up, and cost. I feed the target cards into a small contextual encoder together, and attention picks the right meaning. "Leaf" moves toward tree and away from money, and there's still no LLM involved.</aside>
+</section>
+
+<!-- 19 -->
+<section class="slide">
+  <div class="kicker">Where it breaks</div>
+  <table>
+    <tr><th>cards</th><th>clue</th><th>why</th></tr>
+    <tr><td class="he">אריה · זאב</td><td class="he acc">אייל</td><td>Israeli first names, not animals</td></tr>
+    <tr><td class="he">כליה · כבד · זהב</td><td class="he acc">דולר</td><td>…the black market?</td></tr>
+  </table>
+  <p class="dim">Geometry finds associations, not intentions. Your 👎 fixes it.</p>
+  <aside class="notes">It still breaks, and here's how. For lion and wolf it says "Ayal". In Hebrew those are all first names, so geometry sees a list of names. For kidney, liver and gold it says "dollar". That's an association, but not one you want.</aside>
+</section>
+
+<!-- 20 -->
+<section class="slide">
+  <div class="row">
+    <div class="grow" style="display:flex;flex-direction:column;gap:26px">
+      <h2>No billions of parameters.</h2>
+      <p>Clean vocabulary. Safety first.<br>Real morphology.</p>
+      <p class="acc">Go beat it. Then 👎 its bad clues.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;align-items:center">
+      <div class="qr small"><!--QR--></div><span class="dim" style="font-size:22px">play</span>
+      <div class="qr small slot">Sessionize<br>feedback QR</div>
+    </div>
+  </div>
+  <aside class="notes">So: no billions of parameters. A clean vocabulary, safety first, and real morphology. It's live right now. Try to beat it, and when it gives you a bad clue, hit thumbs-down, because that's my training data. Thank you!</aside>
+</section>
+
+<script>
+  document.querySelectorAll('.board').forEach(b => {
+    const hit = new Set((b.dataset.hit || '').split(' ').filter(Boolean));
+    b.innerHTML = b.dataset.board.split(' ').map(t => {
+      const [w, r] = t.split(':');
+      return `<div class="${r}${hit.has(w) ? ' hit' : ''}">${w}</div>`;
+    }).join('');
+  });
+  const slides = document.querySelectorAll('.slide');
+  slides.forEach((s, k) => s.insertAdjacentHTML('beforeend', `<div class="num">${k + 1}</div>`));
+  const fit = () => document.documentElement.style.setProperty('--z', Math.min(1, (innerWidth - 40) / 1600));
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>
