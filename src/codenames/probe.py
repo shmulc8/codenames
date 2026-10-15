@@ -692,7 +692,10 @@ def encoder_clue_candidates(
     adj_my = adj[:, my_cols] if my_cols else np.zeros((len(cand), 0), np.float32)
     safe = adj_my > (enemy_ceiling[:, None] + safe_margin)  # beats every enemy word by margin
     if fixed:
-        g_team = adj_my.sum(1)  # honour the user's chosen targets
+        # honour the user's chosen targets: credit each one, and charge 1.0 for every target the
+        # clue does not keep above all danger words, so clues reaching every target safely rank
+        # first and partial ones are ordered by how many they reach.
+        g_team = adj_my.sum(1) - 1.0 * (~safe).sum(1)
     else:  # mean + minimum of the top-k *safe* team words (k <= m)
         safe_counts = safe.sum(1)
         sorted_safe = np.sort(np.where(safe, adj_my, -9.0), 1)[:, ::-1]
@@ -715,8 +718,8 @@ def encoder_clue_candidates(
         g = g - lam_soft * _listener_danger(adj, is_as, is_opp, soft_tau)
 
     def intended_of(bi) -> list[str]:
-        if fixed:
-            return my_words
+        if fixed:  # the targets this clue reaches safely, strongest first
+            return [my_words[j] for j in np.argsort(-adj_my[bi]) if safe[bi, j]]
         order = [j for j in np.argsort(-adj_my[bi]) if safe[bi, j]][:m]
         if not order and adj_my.shape[1]:
             order = [int(np.argmax(adj_my[bi]))]  # nothing clears the bar: best single word

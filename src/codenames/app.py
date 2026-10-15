@@ -611,7 +611,11 @@ def _analyze_clue(
 
     `targets` are the words the candidate was optimised for (focus / best-m); leak & risk are
     judged against them. The *recommended* number and the lit-up words, though, are the full
-    safe run, capped by `max_count` when a risk profile sets a maximum claim."""
+    safe run, capped by `max_count` when a risk profile sets a maximum claim.
+
+    With `focus` (the user picked the cards to connect) only focused cards are ever claimed: the
+    lit-up words are the focused cards inside the safe run — no other team card is substituted —
+    and `focus_missing` lists the focused cards this clue can't reach safely."""
     read = _read_clue(board, word)
     target_sims = [r["sim"] for r in read if r["word"] in targets]
     floor = min(target_sims) if target_sims else -1.0
@@ -647,9 +651,6 @@ def _analyze_clue(
     elif asim is not None and asim >= floor:
         no_clue = True
         note = f"כל רמז שמקרב את המילים שלך מקרב גם את המתנקש ({aw}). מסוכן מדי."
-    elif safe < 2 and not focus:
-        no_clue = True
-        note = "לא נמצאה מילה אחת שמחברת בין שתיים או יותר ממילות הצוות שלך. נסה לבחור יעדים אחרים או לחלק לתורות."
     elif leak:
         risky = True
         e = leak[0]
@@ -660,7 +661,9 @@ def _analyze_clue(
 
     focusset = set(focus or [])
     disp_intended = []
-    if not no_clue:
+    if not no_clue and focus:
+        disp_intended = [w for w in safe_words if w in focusset]
+    elif not no_clue:
         encoder = get_enc(GEO_ENC)
         cliff_factor = 0.4 if getattr(encoder, "model_id", "").startswith("blend_") else 0.5
         coh_floor = 0.15 if getattr(encoder, "model_id", "").startswith("blend_") else COH_FLOOR
@@ -676,6 +679,18 @@ def _analyze_clue(
         if max_count is not None:
             disp_intended = disp_intended[:max_count]
     disp_count = len(disp_intended)
+    focus_missing = [w for w in (focus or []) if w not in disp_intended]
+    if focus and not no_clue:
+        if not disp_intended:
+            no_clue = True
+            note = "אף אחת מהמילים שבחרת לא בטוחה עם הרמז הזה — מילה זרה קרובה אליו יותר."
+        elif focus_missing:
+            note = (
+                "אין רמז שמחבר בבטחה את כל המילים שבחרת. הרמז הזה בטוח רק ל־"
+                f"{' · '.join(disp_intended)}; את {' · '.join(focus_missing)} כדאי לתת בתור אחר."
+            )
+    elif disp_count == 1 and not no_clue and not note:
+        note = "רמז למילה אחת בלבד — לא נמצא רמז בטוח שמחבר שתיים או יותר ממילות הצוות."
     reason = reason or _geo_reason(disp_intended or targets, board, read)
     return {
         "word": word,
@@ -695,6 +710,7 @@ def _analyze_clue(
         "no_clue": no_clue,
         "risky": risky,
         "note": note,
+        **({"focus_missing": focus_missing} if focus else {}),
     }
 
 
@@ -735,13 +751,17 @@ def serve_clue(
     risk: str = "balanced",
     focus=None,
     profile=None,
-    vocab_mode: str = "curated",
+    vocab_mode: str = DEFAULT_VOCAB_MODE,
 ):
     """The geometry engine's clue options for a board, ordered exactly as
     /api/coach/spymaster serves them (best first). Pure — no request context — so the
     endpoint, the benchmarks, and tests all measure the identical served clue.
     `profile` overrides RISK_PROFILES[risk] (for tuning); `risk` still selects the ordering
-    policy. Returns (options, shortlist) where options[0] is the recommended clue."""
+    policy. Returns (options, shortlist) where options[0] is the recommended clue.
+
+    With `focus`, the profile's claim cap is lifted to the focus size (the user chose exactly
+    which cards to connect) and options are ordered by how many focused cards they reach safely,
+    then by score; options[0]["focus_missing"] is non-empty when no clue reaches all of them."""
     prof = profile or RISK_PROFILES[risk]
     focus = [w for w in (focus or []) if w in board.my] or None
     vocab, emb, lems, freq = geo_assets(vocab_mode)
@@ -765,16 +785,27 @@ def serve_clue(
         _analyze_clue(
             board,
             c["word"],
-            c["intended"],
+            c["intended"] or (focus or []),
             c["count"],
             c["score"],
             focus,
             keep_rel=prof["keep"],
-            max_count=prof["m"],
+            max_count=None if focus else prof["m"],
         )
         for c in cands
     ]
-    order = _risk_order(options, risk)
+    if focus:
+        order = sorted(
+            range(len(options)),
+            key=lambda i: (
+                options[i]["no_clue"],
+                -options[i]["count"],
+                options[i]["risky"],
+                -options[i]["score"],
+            ),
+        )
+    else:
+        order = _risk_order(options, risk)
     return [options[i] for i in order], [cands[i] for i in order]
 
 
@@ -876,6 +907,7 @@ def coach_spymaster():
         risky=top["risky"],
         safe=top["safe"],
         note=top["note"],
+        **({"focus_missing": top["focus_missing"]} if "focus_missing" in top else {}),
     )
 
 
