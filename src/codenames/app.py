@@ -728,33 +728,17 @@ def _analyze_clue(
 
 
 def _risk_order(options: list[dict], risk: str) -> list[int]:
-    """Order analyzed geometry options by the risk *policy* (not just the scoring weight):
-    refuse-clues always sink last; a single-word clue is a last resort, so any multi-word clue
-    outranks it; bold then maximises coverage (count) then safety; cautious and balanced put
-    safety first, then coverage. Returns option indices best-first."""
-
-    def single(i: int) -> int:
-        return 1 if options[i]["count"] <= 1 else 0
+    """Order analyzed geometry options by the risk *policy*: refuse-clues sink last and a
+    single-word clue is a last resort (any multi-word clue outranks it); then bold prefers more
+    claimed words, cautious/balanced prefer clues not flagged risky. Within that, the scoring
+    objective decides, with the claimed safe words (min(safe run, count)) only breaking ties —
+    a long unclaimed safe tail never outranks a better-scored clue. Returns indices best-first."""
 
     def key(i: int):
-        if risk == "bold":
-            # bold maximises coverage (count) then safety
-            return (
-                1 if options[i]["no_clue"] else 0,
-                single(i),
-                -options[i]["count"],
-                -options[i]["safe"],
-                -options[i]["score"],
-            )
-        # cautious/balanced put safety first, then coverage
-        return (
-            1 if options[i]["no_clue"] else 0,
-            single(i),
-            1 if options[i]["risky"] else 0,
-            -options[i]["safe"],
-            -options[i]["count"],
-            -options[i]["score"],
-        )
+        o = options[i]
+        head = (1 if o["no_clue"] else 0, 1 if o["count"] <= 1 else 0)
+        policy = (-o["count"],) if risk == "bold" else (1 if o["risky"] else 0,)
+        return (*head, *policy, -o["score"], -min(o["safe"], o["count"]))
 
     return sorted(range(len(options)), key=key)
 
