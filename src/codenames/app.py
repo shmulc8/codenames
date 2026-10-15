@@ -65,7 +65,7 @@ RISK_PROFILES = {
     # (keep_rel) claims a team word only when its similarity is >= keep · the top target's; keep
     # ordering stays cautious >= balanced >= bold.
     "cautious": dict(m=2, lam_a=3.0, lam_opp=1.3, lam_neu=0.7, keep=0.68, safe_margin=0.05),
-    "balanced": dict(m=2, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.68, safe_margin=0.05),
+    "balanced": dict(m=3, lam_a=2.5, lam_opp=0.9, lam_neu=0.6, keep=0.68, safe_margin=0.05),
     "bold": dict(m=4, lam_a=1.8, lam_opp=0.7, lam_neu=0.4, keep=0.62, safe_margin=0.0),
 }
 _CAND_KEYS = ("m", "lam_a", "lam_opp", "lam_neu", "safe_margin")
@@ -787,7 +787,8 @@ def serve_clue(
             c["score"],
             focus,
             keep_rel=prof["keep"],
-            max_count=None if focus else prof["m"],
+            # balanced searches up to m=3 but claims only what clears the safety margin
+            max_count=None if focus else (c["count"] if risk == "balanced" else prof["m"]),
         )
         for c in cands
     ]
