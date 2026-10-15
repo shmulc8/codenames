@@ -22,3 +22,6 @@ via kaikki.org.*
 Run `build_root_lexicon.py` (see its header for the one-line download of the source JSONL).
 The source `kaikki_hebrew.jsonl` (~53 MB) is intentionally **not** vendored — only the
 distilled `word2root.json` is.
+
+The file also carries roots merged from the Dicta wordlist (CC BY-NC 4.0) and LLM-assigned
+roots for uncovered engine words — see `DICTA_WORDLIST_NOTICE.md`.

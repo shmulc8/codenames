@@ -7,3 +7,6 @@ clue-legality check. Derived from the **Hebrew Wiktionary** extract at
 
 Wiktionary content is dual-licensed **CC BY-SA 3.0** and **GFDL 1.3**; this derived dataset
 is redistributed under the same terms. Attribution: *Wiktionary contributors, via kaikki.org.*
+
+The file also carries roots merged from the Dicta wordlist (CC BY-NC 4.0) and LLM-assigned
+roots for uncovered engine words — see `DICTA_WORDLIST_NOTICE.md`.

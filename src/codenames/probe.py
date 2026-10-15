@@ -984,7 +984,14 @@ def _board_root_signals(board: Board, lemmas=None):
     ]
 
 
+_ROOT_FINALS = str.maketrans("ךםןףץ", "כמנפצ")
+
+
 def _normalize_root(r: str) -> str:
+    """Comparison key for a root: letters in non-final form, and for a triliteral root a final
+    weak radical (ו/י/ה) or a doubled last radical dropped — the lexicons disagree on how to
+    write these (Dicta ראי/עלי vs Wiktionary ראה/עלה), so ראה ≡ ראי ≡ ראו and עלה ≡ עלל."""
+    r = r.translate(_ROOT_FINALS)
     if len(r) == 3:
         if r[-1] in ("ה", "י", "ו"):
             return r[:-1]
