@@ -40,5 +40,5 @@ EXPOSE 7860
 # create_app(); --timeout covers that cold boot (gthread workers heartbeat from the main loop,
 # so it is a liveness bound, not a per-request one).
 CMD ["gunicorn", "--worker-class", "gthread", "--workers", "1", "--threads", "8", \
-     "--timeout", "180", "--graceful-timeout", "30", "--keep-alive", "5", "--backlog", "256", \
+     "--timeout", "600", "--graceful-timeout", "30", "--keep-alive", "5", "--backlog", "256", \
      "--bind", "0.0.0.0:7860", "--access-logfile", "-", "codenames.app:create_app()"]

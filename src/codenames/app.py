@@ -1101,7 +1101,7 @@ def feedback():
         "revealed": _fb_revealed(j.get("revealed")),  # cards already flipped
         "option": option,  # full clue option: reason, leak, assassin, score, read…
     }
-    if not _fb_rate_ok(ipsig or row["uid"] or "anon"):
+    if not _fb_rate_ok(row["uid"] or ipsig or "anon"):
         abort(429, "יותר מדי משובים בזמן קצר — נסו שוב בעוד דקה")
     try:
         with (
