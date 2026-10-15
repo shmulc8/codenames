@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { fullBoard, useAppStore, type UsedClue } from '../../state/store';
 import type { ClueOption, FeedbackPayload, RevealedEntry, Risk } from '../../types/api';
-import { enqueueFeedback } from './queue';
+import { enqueueFeedback, type FeedbackOutcome } from './queue';
 import './feedback.css';
 
 interface FeedbackControlsProps {
@@ -13,7 +13,7 @@ interface FeedbackControlsProps {
 
 type Verdict = 'up' | 'down';
 type Why = NonNullable<FeedbackPayload['why']>;
-type SendState = 'idle' | 'sending' | 'sent';
+type SendState = 'idle' | 'sending' | FeedbackOutcome;
 
 const whyOptions: ReadonlyArray<{ value: Why; label: string }> = [
   { value: 'opposite', label: 'הפוך' },
@@ -26,15 +26,32 @@ const whyOptions: ReadonlyArray<{ value: Why; label: string }> = [
 const OUTCOME_DEBOUNCE_MS = 5_000;
 const sentRevealCounts = new Map<number, number>();
 
+let memoryUid: string | null = null;
+
+// localStorage can throw (iOS private mode, blocked storage); fall back to a per-page-load id.
 export function getUid(): string {
-  const existing = window.localStorage.getItem('cn-uid');
-  if (existing) return existing;
+  if (memoryUid) return memoryUid;
+
+  try {
+    const existing = window.localStorage.getItem('cn-uid');
+    if (existing) {
+      memoryUid = existing;
+      return existing;
+    }
+  } catch {
+    // fall through to a generated id
+  }
 
   const uid =
-    typeof crypto.randomUUID === 'function'
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
       : `cn-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  window.localStorage.setItem('cn-uid', uid);
+  memoryUid = uid;
+  try {
+    window.localStorage.setItem('cn-uid', uid);
+  } catch {
+    // keep the in-memory id
+  }
   return uid;
 }
 
@@ -96,10 +113,15 @@ export function FeedbackControls({ option, mode, risk }: FeedbackControlsProps):
     nextComment?: string,
   ): Promise<void> => {
     setSendState('sending');
-    await enqueueFeedback(
-      buildFeedbackPayload(option, mode, risk, nextVerdict, nextWhy, nextComment),
-    );
-    setSendState('sent');
+    try {
+      setSendState(
+        await enqueueFeedback(
+          buildFeedbackPayload(option, mode, risk, nextVerdict, nextWhy, nextComment),
+        ),
+      );
+    } catch {
+      setSendState('rejected');
+    }
   };
 
   const handleLike = (): void => {
@@ -212,10 +234,23 @@ export function FeedbackControls({ option, mode, risk }: FeedbackControlsProps):
         </p>
       ) : null}
 
-      {sendState === 'sent' ? (
+      {sendState === 'accepted' ? (
         <p className="feedback-controls__sent" data-testid="feedback-sent" role="status">
           <span aria-hidden="true">✓</span>
           תודה! זה עוזר לאמן את המודל
+        </p>
+      ) : null}
+
+      {sendState === 'queued' ? (
+        <p className="feedback-controls__sent" data-testid="feedback-queued" role="status">
+          <span aria-hidden="true">…</span>
+          אין חיבור כרגע — המשוב נשמר ויישלח כשיהיה אפשר
+        </p>
+      ) : null}
+
+      {sendState === 'rejected' ? (
+        <p className="feedback-controls__status" data-testid="feedback-rejected" role="alert">
+          לא הצלחנו לשלוח את המשוב
         </p>
       ) : null}
     </section>

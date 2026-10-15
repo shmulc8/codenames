@@ -1,4 +1,4 @@
-import { postFeedback } from '../../api/client';
+import { ApiError, postFeedback } from '../../api/client';
 import type { FeedbackPayload } from '../../types/api';
 
 const RETRY_INTERVAL_MS = 30_000;
@@ -15,12 +15,29 @@ function scheduleRetry(): void {
   }, RETRY_INTERVAL_MS);
 }
 
-export async function enqueueFeedback(payload: FeedbackPayload): Promise<void> {
+export type FeedbackOutcome = 'accepted' | 'queued' | 'rejected';
+
+// A 4xx (other than timeout / rate limit) means the server will never accept this payload,
+// so retrying is pointless. Network errors and 5xx are worth retrying.
+function isPermanentRejection(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    error.status >= 400 &&
+    error.status < 500 &&
+    error.status !== 408 &&
+    error.status !== 429
+  );
+}
+
+export async function enqueueFeedback(payload: FeedbackPayload): Promise<FeedbackOutcome> {
   try {
     await postFeedback(payload);
-  } catch {
+    return 'accepted';
+  } catch (error) {
+    if (isPermanentRejection(error)) return 'rejected';
     pending.push(payload);
     scheduleRetry();
+    return 'queued';
   }
 }
 
@@ -34,8 +51,8 @@ export async function flushFeedbackQueue(): Promise<void> {
   for (const payload of batch) {
     try {
       await postFeedback(payload);
-    } catch {
-      failed.push(payload);
+    } catch (error) {
+      if (!isPermanentRejection(error)) failed.push(payload);
     }
   }
 
