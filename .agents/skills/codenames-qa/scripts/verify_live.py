@@ -54,7 +54,11 @@ def main() -> int:
         st, r = post(
             base,
             "/api/coach/check",
-            {"words": [w0, "כלב", "ים", "שולחן"], "roles": {w0: "my"}, "clue": clue},
+            {
+                "words": [w0, "כלב", "ים", "שולחן"],
+                "roles": {w0: "my", "כלב": "opp", "ים": "neutral", "שולחן": "assassin"},
+                "clue": clue,
+            },
         )
         got = isinstance(r, dict) and r.get("illegal")
         check(
